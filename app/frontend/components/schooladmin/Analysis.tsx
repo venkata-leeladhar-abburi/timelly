@@ -77,12 +77,12 @@ import {
   peekSchoolAnalysis,
   peekSchoolAnalysisAny,
   type AnalysisSection,
-} from "@/lib/loadSchoolAnalysis";
+} from "@/lib/school/loadSchoolAnalysis";
 import {
   analysisCacheKey,
   setSchoolAnalysisCached,
-} from "@/lib/schoolAnalysisClientCache";
-import type { SchoolAnalysisPayload } from "@/lib/schoolAnalysisTypes";
+} from "@/lib/school/schoolAnalysisClientCache";
+import type { SchoolAnalysisPayload } from "@/lib/school/schoolAnalysisTypes";
 
 type AnalysisResponse = SchoolAnalysisPayload;
 

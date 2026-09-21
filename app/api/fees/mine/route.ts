@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { buildParentFeesMine } from "@/lib/buildParentFeesMine";
+import { authOptions } from "@/lib/auth/authOptions";
+import { buildParentFeesMine } from "@/lib/parent/buildParentFeesMine";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
-} from "@/lib/parentPortalSwr";
+} from "@/lib/parent/parentPortalSwr";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);

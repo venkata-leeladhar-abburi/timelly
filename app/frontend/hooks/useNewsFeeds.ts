@@ -5,7 +5,7 @@ import {
   loadNewsFeeds,
   peekNewsFeeds,
   setNewsFeedsCache,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 export interface NewsFeedItem {
   id: string;

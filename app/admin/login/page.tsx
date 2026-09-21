@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/app/frontend/constants/routes";
 import LoginForm from "@/components/auth/LoginForm";
-import { shouldForceSuperAdminRelogin } from "@/lib/superAdminBrowserSession";
+import { shouldForceSuperAdminRelogin } from "@/lib/auth/superAdminBrowserSession";
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();

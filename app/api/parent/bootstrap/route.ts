@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { buildParentBootstrap } from "@/lib/buildParentBootstrap";
-import { getParentPortalServerCached } from "@/lib/parentPortalServerCache";
+import { authOptions } from "@/lib/auth/authOptions";
+import { buildParentBootstrap } from "@/lib/parent/buildParentBootstrap";
+import { getParentPortalServerCached } from "@/lib/parent/parentPortalServerCache";
 
 export async function GET(request: Request) {
   try {

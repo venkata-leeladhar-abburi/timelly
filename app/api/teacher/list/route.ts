@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
+} from "@/lib/school/schoolDashboardServerCache";
 
 export async function GET() {
   try {

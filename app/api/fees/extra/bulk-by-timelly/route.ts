@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { Prisma } from "@prisma/client";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 
 const MAX_ROWS = 800;
 const WRITE_BATCH_SIZE = 100;

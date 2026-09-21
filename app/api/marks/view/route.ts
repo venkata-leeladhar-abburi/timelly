@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
-} from "@/lib/parentPortalSwr";
+} from "@/lib/parent/parentPortalSwr";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; studentId?: string | null };

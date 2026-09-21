@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import {
   buildSchoolDashboardCollection,
   buildSchoolDashboardCollectionByHead,
   buildSchoolDashboardCollectionSummary,
-} from "@/lib/buildSchoolDashboardCollection";
-import { resolveSchoolAdminSchoolId } from "@/lib/resolveSchoolAdminSchoolId";
+} from "@/lib/school/buildSchoolDashboardCollection";
+import { resolveSchoolAdminSchoolId } from "@/lib/school/resolveSchoolAdminSchoolId";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
+} from "@/lib/school/schoolDashboardServerCache";
 
 /** Day collection — ?from=YYYY-MM-DD&to=YYYY-MM-DD&part=summary | heads (fast) or full payload. */
 export async function GET(request: Request) {

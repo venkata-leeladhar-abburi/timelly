@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { extraFeeAppliesToStudent } from "@/lib/extraFeeResidencyScope";
-import { snapshotExtraFeeNameOnAllocations } from "@/lib/backfillPaymentAllocationComponentNames";
-import { patchExtraFeeWithInstallmentSupport } from "@/lib/extraFeeInstallmentDb";
-import { invalidateSchoolFeeReadCaches } from "@/lib/studentFeeReadCache";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
+import { snapshotExtraFeeNameOnAllocations } from "@/lib/fees/backfillPaymentAllocationComponentNames";
+import { patchExtraFeeWithInstallmentSupport } from "@/lib/fees/extraFeeInstallmentDb";
+import { invalidateSchoolFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { Prisma } from "@prisma/client";
 
 const STUDENT_FEE_UPDATE_CHUNK = 200;

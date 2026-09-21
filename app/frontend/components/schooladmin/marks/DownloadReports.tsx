@@ -10,8 +10,8 @@ import {
   X,
   Search,
 } from "lucide-react";
-import { downloadConsolidatedMarksPdf } from "@/lib/consolidatedMarksPdf";
-import { normalizeExamTypes } from "@/lib/examTypes";
+import { downloadConsolidatedMarksPdf } from "@/lib/exams/consolidatedMarksPdf";
+import { normalizeExamTypes } from "@/lib/exams/examTypes";
 
 type ClassOption = {
   id: string;

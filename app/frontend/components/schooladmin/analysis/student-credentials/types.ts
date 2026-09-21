@@ -1,4 +1,4 @@
-import type { StudentCredentialRow } from "@/lib/computeStudentCredentials";
+import type { StudentCredentialRow } from "@/lib/students/computeStudentCredentials";
 
 export type ClassItem = { id: string; name: string; section: string | null };
 

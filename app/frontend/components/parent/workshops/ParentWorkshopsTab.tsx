@@ -9,7 +9,7 @@ import EventCard from "../../schooladmin/workshops/EventCard";
 import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import { useSession } from "next-auth/react";
-import { fetchParentEventsList, peekParentPortalAny } from "@/lib/loadParentPortal";
+import { fetchParentEventsList, peekParentPortalAny } from "@/lib/parent/loadParentPortal";
 
 /* ================= TYPES ================= */
 

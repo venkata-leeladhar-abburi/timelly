@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { LeaveType } from "@prisma/client";
 import {
   createNotificationsForUserIds,
   getClassStaffNotifyUserIds,
 } from "@/lib/notificationService";
-import { invalidateParentPortalCaches } from "@/lib/invalidateParentPortalCaches";
+import { invalidateParentPortalCaches } from "@/lib/parent/invalidateParentPortalCaches";
 
 export async function POST(req: Request) {
   try {

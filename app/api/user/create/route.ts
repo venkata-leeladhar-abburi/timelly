@@ -1,11 +1,11 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
-import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
-import { purgeSchoolDashboardServerCacheMatching } from "@/lib/schoolDashboardServerCache";
-import { sanitizeTeachingClassIds } from "@/lib/teacherClassAccess";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
+import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
+import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
 
 export async function POST(req: NextRequest) {
   try {

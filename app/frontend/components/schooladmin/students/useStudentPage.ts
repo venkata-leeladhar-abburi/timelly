@@ -12,14 +12,14 @@ import {
   StudentStatusFilter,
 } from "./types";
 import { mergeStudentAfterEdit, sortStudentsForDisplay, toStudentForm } from "./utils";
-import { downloadStudentListPdf } from "@/lib/studentListPdf";
-import { invalidateStudentDetailsFast as invalidateStudentDetailsBundleCache } from "@/lib/fetchStudentDetailsFast";
+import { downloadStudentListPdf } from "@/lib/students/studentListPdf";
+import { invalidateStudentDetailsFast as invalidateStudentDetailsBundleCache } from "@/lib/students/fetchStudentDetailsFast";
 import {
   clearStudentListCache,
   readStudentListCache,
   writeStudentListCache,
   type StudentListCacheScope,
-} from "@/lib/studentListSessionCache";
+} from "@/lib/students/studentListSessionCache";
 
 type Props = {
   classes?: ClassItem[];

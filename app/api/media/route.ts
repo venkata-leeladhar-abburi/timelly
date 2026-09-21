@@ -1,5 +1,19 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/authOptions";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
+
+/**
+ * Internal server-to-server callers (e.g. serverPdfLogo.ts during PDF generation)
+ * have no browser session cookie to forward. They authenticate instead with this
+ * shared secret, which — like NEXTAUTH_SECRET — never leaves the server.
+ */
+function isInternalCaller(req: Request): boolean {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) return false;
+  const header = req.headers.get("x-internal-secret");
+  return header === secret;
+}
 
 function parseSupabaseStorageUrl(url: string): { bucket: string; path: string } | null {
   // Expected formats:
@@ -25,6 +39,13 @@ function parseSupabaseStorageUrl(url: string): { bucket: string; path: string } 
 
 export async function GET(req: Request) {
   try {
+    if (!isInternalCaller(req)) {
+      const session = await getServerSession(authOptions);
+      if (!session) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     if (!supabaseAdmin) {
       return NextResponse.json({ message: "Media proxy not configured" }, { status: 503 });
     }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { generateSchoolFeesBackupBuffer } from "@/lib/generateSchoolFeesBackupBuffer";
+import { authOptions } from "@/lib/auth/authOptions";
+import { generateSchoolFeesBackupBuffer } from "@/lib/fees/generateSchoolFeesBackupBuffer";
 
 /**
  * Download a full fees backup Excel for one school (superadmin only).

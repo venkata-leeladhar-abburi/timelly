@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   computeStudentCredentials,
   type StudentCredentialRow,
-} from "@/lib/computeStudentCredentials";
-import { isRedisEnabled } from "@/lib/redis";
-import { tenantCacheKey, swrGet, swrSet } from "@/lib/tenantCache";
+} from "@/lib/students/computeStudentCredentials";
+import { isRedisEnabled } from "@/lib/cache/redis";
+import { tenantCacheKey, swrGet, swrSet } from "@/lib/cache/tenantCache";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
+} from "@/lib/school/schoolDashboardServerCache";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null };

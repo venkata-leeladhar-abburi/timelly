@@ -6,7 +6,7 @@ import {
   fetchParentHomeworkList,
   patchParentHomeworkAfterSubmit,
   peekParentPortalAny,
-} from '@/lib/loadParentPortal';
+} from '@/lib/parent/loadParentPortal';
 import HomeworkHeader from './HomeworkHeader';
 import HomeworkStats from './HomeworkStats';
 import HomeworkFilters from './HomeworkFilters';

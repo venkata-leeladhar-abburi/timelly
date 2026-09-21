@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import * as XLSX from "xlsx";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
-import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { randomUUID } from "crypto";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
-import { setApplicationEnrolled } from "@/lib/admissionsListQuery";
-import { upsertStudentFeeFromStructure } from "@/lib/studentTuitionFromStructure";
+import { setApplicationEnrolled } from "@/lib/admission/admissionsListQuery";
+import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { parseDobToDate } from "@/lib/dobCalendar";
 
 function toStr(value: unknown) {

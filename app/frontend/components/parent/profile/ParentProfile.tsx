@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import ProfileReportTemplate, { type ProfileReportData } from "../../pdf/ProfileReportTemplate";
-import { downloadParentPortalPdf } from "@/lib/downloadParentPortalPdf";
-import { currentAcademicYearLabel, resolveSchoolBrand } from "@/lib/resolveSchoolBrand";
+import { downloadParentPortalPdf } from "@/lib/parent/downloadParentPortalPdf";
+import { currentAcademicYearLabel, resolveSchoolBrand } from "@/lib/school/resolveSchoolBrand";
 import PageHeader from "../../common/PageHeader";
 import {
   fetchParentHomeworkList,
@@ -29,7 +29,7 @@ import {
   fetchParentProfileShell,
   peekParentDashboard,
   peekParentProfileShell,
-} from "@/lib/loadParentPortal";
+} from "@/lib/parent/loadParentPortal";
 
 type StudentProfile = {
   student: {

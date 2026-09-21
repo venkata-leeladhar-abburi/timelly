@@ -20,13 +20,13 @@ import {
   peekParentFees,
   peekParentProfileShell,
   type ParentFeesPayload,
-} from "@/lib/loadParentPortal";
+} from "@/lib/parent/loadParentPortal";
 import FeePaymentReceiptTemplate, {
   type FeePaymentReceiptData,
 } from "../../pdf/FeePaymentReceiptTemplate";
-import { currentAcademicYearLabel } from "@/lib/resolveSchoolBrand";
-import { downloadParentPortalPdf } from "@/lib/downloadParentPortalPdf";
-import { formatReceiptGeneratedDate } from "@/lib/receiptDates";
+import { currentAcademicYearLabel } from "@/lib/school/resolveSchoolBrand";
+import { downloadParentPortalPdf } from "@/lib/parent/downloadParentPortalPdf";
+import { formatReceiptGeneratedDate } from "@/lib/fees/receiptDates";
 
 type DueHeadRow = {
   key: string;

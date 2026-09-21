@@ -8,7 +8,7 @@ import {
   loadParentAnalytics,
   peekParentAnalytics,
   peekParentPortalAny,
-} from "@/lib/loadParentPortal";
+} from "@/lib/parent/loadParentPortal";
 import {
   TrendingUp,
   Award,
@@ -19,8 +19,8 @@ import {
 import ProgressReport from "./ProgressReport";
 import SubjectPerformance from "./SubjetPerformance";
 import ParentTimellyLoader from "../ParentTimellyLoader";
-import { downloadParentPortalPdf } from "@/lib/downloadParentPortalPdf";
-import { currentAcademicYearLabel, resolveSchoolBrand, type SchoolBrand } from "@/lib/resolveSchoolBrand";
+import { downloadParentPortalPdf } from "@/lib/parent/downloadParentPortalPdf";
+import { currentAcademicYearLabel, resolveSchoolBrand, type SchoolBrand } from "@/lib/school/resolveSchoolBrand";
 import MarksReportTemplate, { type MarksReportData } from "../../pdf/MarksReportTemplate";
 import { useRef } from "react";
 

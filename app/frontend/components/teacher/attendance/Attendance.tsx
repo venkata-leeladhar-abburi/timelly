@@ -26,7 +26,7 @@ import { useToastContext } from "../../../context/ToastContext";
 import {
   loadTeacherAttendanceClasses,
   peekTeacherAttendanceClasses,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 type AttendanceStatus = "present" | "absent" | "late";
 

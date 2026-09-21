@@ -7,25 +7,25 @@ import { SidebarList } from "./components/SidebarList";
 import { CollectionStatCard } from "./components/CollectionStatCard";
 import { DayCollectionByHeadCard } from "./components/DayCollectionByHeadCard";
 import { Users, GraduationCap, UserCheck, Wallet } from "lucide-react";
-import { todayYmdLocal } from "@/lib/schoolDashboardCollection";
+import { todayYmdLocal } from "@/lib/school/schoolDashboardCollection";
 import {
   loadSchoolDashboardCollectionHeads,
   loadSchoolDashboardCollectionSummary,
   peekSchoolDashboardCollectionHeads,
   setSchoolDashboardCollectionHeadsCached,
   warmSchoolDashboardCollectionHeads,
-} from "@/lib/loadSchoolDashboardCollection";
+} from "@/lib/school/loadSchoolDashboardCollection";
 import {
   fetchSchoolDashboard,
   fetchSchoolDashboardFast,
   peekSchoolDashboard,
   peekSchoolDashboardAny,
   type SchoolDashboardPayload,
-} from "@/lib/loadSchoolDashboard";
+} from "@/lib/school/loadSchoolDashboard";
 import {
   dashboardCacheKey,
   setSchoolDashboardCached,
-} from "@/lib/schoolDashboardClientCache";
+} from "@/lib/school/schoolDashboardClientCache";
 import { useRouter } from "next/navigation";
 import { SchoolDashboardLoader } from "./components/SchoolDashboardLoader";
 import { ROUTES } from "@/app/frontend/constants/routes";

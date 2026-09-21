@@ -3,8 +3,8 @@
 import { LayoutList } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
-import { prefetchFeesSection } from "@/lib/loadSchoolFeesPage";
-import type { FeesSection } from "@/lib/feesPageRequirements";
+import { prefetchFeesSection } from "@/lib/fees/loadSchoolFeesPage";
+import type { FeesSection } from "@/lib/fees/feesPageRequirements";
 
 const FEES_SECTIONS: { slug: string; label: string }[] = [
   { slug: "", label: "Overview / Summary" },

@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ROUTES } from "@/app/frontend/constants/routes";
-import { shouldForceSuperAdminRelogin } from "@/lib/superAdminBrowserSession";
+import { shouldForceSuperAdminRelogin } from "@/lib/auth/superAdminBrowserSession";
 import Spinner from "./frontend/components/common/Spinner";
 import LoginForm from "./frontend/auth/LoginForm";
 

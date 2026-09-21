@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
-import { activeStudentWhere } from "@/lib/studentStatus";
-import { getTeacherAccessibleClassIds } from "@/lib/teacherClassAccess";
+} from "@/lib/school/schoolDashboardServerCache";
+import { activeStudentWhere } from "@/lib/students/studentStatus";
+import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;

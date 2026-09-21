@@ -13,7 +13,7 @@ import {
   peekEventsPage,
   setEventsPageCache,
   type EventItem,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 import { CalendarDays, CheckCircle, List, LucideIcon, Plus, Search, Users, X } from "lucide-react";
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 

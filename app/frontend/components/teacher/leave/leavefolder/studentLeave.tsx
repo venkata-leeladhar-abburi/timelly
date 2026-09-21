@@ -14,7 +14,7 @@ import {
   peekTeacherStudentLeaves,
   setTeacherStudentLeavesCache,
   type TeacherStudentLeave,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 type StudentLeaveItem = TeacherStudentLeave;
 

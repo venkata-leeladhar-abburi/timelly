@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/feePaymentStatuses";
-import { structureMultiplierAfterDiscount } from "@/lib/studentTuitionFromStructure";
+import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
+import { structureMultiplierAfterDiscount } from "@/lib/fees/studentTuitionFromStructure";
 import type { Prisma } from "@prisma/client";
-import { extraFeeAppliesToStudent } from "@/lib/extraFeeResidencyScope";
-import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/studentRte";
+import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
+import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;

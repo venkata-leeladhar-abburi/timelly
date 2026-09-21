@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import {
   buildSchoolAnalysisFast,
   buildSchoolAnalysisFull,
   buildSchoolAnalysisTables,
   type SchoolAnalysisTableSection,
-} from "@/lib/buildSchoolAnalysis";
-import { resolveAnalysisStartYear } from "@/lib/schoolAnalysisYear";
-import { resolveSchoolAdminSchoolId } from "@/lib/resolveSchoolAdminSchoolId";
+} from "@/lib/school/buildSchoolAnalysis";
+import { resolveAnalysisStartYear } from "@/lib/school/schoolAnalysisYear";
+import { resolveSchoolAdminSchoolId } from "@/lib/school/resolveSchoolAdminSchoolId";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
+} from "@/lib/school/schoolDashboardServerCache";
 
 export const dynamic = "force-dynamic";
 

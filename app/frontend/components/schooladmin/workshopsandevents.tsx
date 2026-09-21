@@ -16,7 +16,7 @@ import {
   peekEventDetails,
   peekEventsPage,
   setEventsPageCache,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 interface EventItem {
   id: string;

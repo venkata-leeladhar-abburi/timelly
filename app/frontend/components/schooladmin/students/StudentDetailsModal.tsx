@@ -4,8 +4,8 @@ import { X } from "lucide-react";
 import { StudentRow } from "./types";
 import { getAge } from "./utils";
 import { AVATAR_URL } from "../../../constants/images";
-import { formatStoredAddressForDisplay } from "@/lib/studentAddressFormat";
-import { formatResidencyTypeForDisplay } from "@/lib/residencyDisplay";
+import { formatStoredAddressForDisplay } from "@/lib/students/studentAddressFormat";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 
 type Props = {
   student: StudentRow;

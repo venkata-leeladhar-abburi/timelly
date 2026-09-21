@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "../services/toast.service";
 import { assignStudentsToClass } from "../services/student.service";
 import { PRIMARY_COLOR } from "../constants/colors";
-import { downloadBulkStudentTemplateXlsx } from "@/lib/bulkStudentTemplateXlsx";
+import { downloadBulkStudentTemplateXlsx } from "@/lib/students/bulkStudentTemplateXlsx";
 
 export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
   const [file, setFile] = useState<File | null>(null);

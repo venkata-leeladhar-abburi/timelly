@@ -6,7 +6,7 @@ import RequiredRoles from "../../../auth/RequiredRoles";
 import AppLayout from "../../../AppLayout";
 import { SCHOOLADMIN_MENU_ITEMS } from "../../../constants/sidebar";
 import FeesTab from "../../../components/schooladmin/Fees";
-import { warmSchoolFeesPage } from "@/lib/loadSchoolFeesPage";
+import { warmSchoolFeesPage } from "@/lib/fees/loadSchoolFeesPage";
 
 type FeesSection =
   | "overview"

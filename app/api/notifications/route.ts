@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { NotificationType } from "@prisma/client";
-import { apiMemGetSwr, apiMemSet } from "@/lib/apiMemoryCache";
+import { apiMemGetSwr, apiMemSet } from "@/lib/cache/apiMemoryCache";
 
 export async function GET(req: Request) {
   try {

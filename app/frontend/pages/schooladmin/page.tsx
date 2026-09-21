@@ -24,14 +24,14 @@ import SchoolAdminTeacherTab from "../../components/schooladmin/TeachersTab";
 import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
 import SchoolAdminTimetableTab from "../../components/schooladmin/Timetable";
 import AdmissionTab from "../../components/teacher/admission/Admission";
-import { fetchSchoolDashboardFast } from "@/lib/loadSchoolDashboard";
-import { warmSchoolDashboardCollectionHeads } from "@/lib/loadSchoolDashboardCollection";
-import { warmSchoolAnalysisPage } from "@/lib/loadSchoolAnalysis";
-import { warmSchoolFeesPage } from "@/lib/loadSchoolFeesPage";
-import { warmAddUserPage } from "@/lib/fetchAddUserPage";
-import { warmTeachersPage } from "@/lib/fetchTeachersPage";
-import { warmSchoolAdminFastTabs, warmSchoolAdminTab } from "@/lib/loadSchoolAdminFastTabs";
-import { todayYmdLocal } from "@/lib/schoolDashboardCollection";
+import { fetchSchoolDashboardFast } from "@/lib/school/loadSchoolDashboard";
+import { warmSchoolDashboardCollectionHeads } from "@/lib/school/loadSchoolDashboardCollection";
+import { warmSchoolAnalysisPage } from "@/lib/school/loadSchoolAnalysis";
+import { warmSchoolFeesPage } from "@/lib/fees/loadSchoolFeesPage";
+import { warmAddUserPage } from "@/lib/school/fetchAddUserPage";
+import { warmTeachersPage } from "@/lib/teacher/fetchTeachersPage";
+import { warmSchoolAdminFastTabs, warmSchoolAdminTab } from "@/lib/school/loadSchoolAdminFastTabs";
+import { todayYmdLocal } from "@/lib/school/schoolDashboardCollection";
 import TimellyLoader from "../../components/common/TimellyLoader";
 
 function SchoolAdminContent() {

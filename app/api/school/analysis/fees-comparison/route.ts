@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { buildFeesComparisonReport } from "@/lib/buildFeesComparisonReport";
-import { resolveSchoolAdminSchoolId } from "@/lib/resolveSchoolAdminSchoolId";
+import { authOptions } from "@/lib/auth/authOptions";
+import { buildFeesComparisonReport } from "@/lib/fees/buildFeesComparisonReport";
+import { resolveSchoolAdminSchoolId } from "@/lib/school/resolveSchoolAdminSchoolId";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
+} from "@/lib/school/schoolDashboardServerCache";
 
 export const dynamic = "force-dynamic";
 

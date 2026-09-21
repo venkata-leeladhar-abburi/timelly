@@ -11,7 +11,7 @@ import {
   loadFeesComparisonReport,
   peekFeesComparisonReport,
   type FeesComparisonQuery,
-} from "@/lib/loadFeesComparisonReport";
+} from "@/lib/fees/loadFeesComparisonReport";
 
 type ComparisonRow = {
   key: string;

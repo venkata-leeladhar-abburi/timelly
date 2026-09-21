@@ -12,13 +12,13 @@ import {
   loadTeacherMarksClasses,
   peekTeacherMarksClasses,
   type LiteClassOption,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 import {
   normalizeExamTypes,
   maxMarksForExamType,
   sectionsForExamType,
   type ExamTypeOption,
-} from "@/lib/examTypes";
+} from "@/lib/exams/examTypes";
 
 const TeacherReportCard = lazy(() => import("./ReportCard"));
 const TeacherDownloadReports = lazy(() => import("./DownloadReports"));

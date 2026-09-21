@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { purgeExpiredNewsFeeds } from "@/lib/newsfeedRetention";
 import {
   buildParentDashboardFast,
   buildParentDashboardFull,
-} from "@/lib/buildParentDashboard";
-import { isActiveStudent } from "@/lib/studentStatus";
+} from "@/lib/parent/buildParentDashboard";
+import { isActiveStudent } from "@/lib/students/studentStatus";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
   PARENT_DASHBOARD_FAST_TTL,
   PARENT_DASHBOARD_FULL_TTL,
-} from "@/lib/parentPortalSwr";
+} from "@/lib/parent/parentPortalSwr";
 
 declare const globalThis: {
   parentDashboardPurgeLastRunAt?: number;

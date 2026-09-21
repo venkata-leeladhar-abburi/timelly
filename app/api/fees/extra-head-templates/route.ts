@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { extraHeadTemplatesErrorResponse } from "./mapPrismaError";
 import { resolveFeesSchoolIdForSession } from "./resolveSchoolId";
-import { invalidateAssignCatalogServerCache } from "@/lib/assignCatalogServerCache";
+import { invalidateAssignCatalogServerCache } from "@/lib/fees/assignCatalogServerCache";
 
 function canManage(session: { user?: { role?: string | null } }) {
   const r = String(session.user?.role ?? "");

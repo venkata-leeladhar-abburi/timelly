@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";

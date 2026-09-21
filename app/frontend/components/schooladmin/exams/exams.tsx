@@ -9,8 +9,8 @@ import {
     loadExamsPage,
     peekExamsPage,
     setExamsPageCache,
-} from "@/lib/loadSchoolAdminFastTabs";
-import type { ExamTypeOption } from "@/lib/examTypes";
+} from "@/lib/school/loadSchoolAdminFastTabs";
+import type { ExamTypeOption } from "@/lib/exams/examTypes";
 
 interface SyllabusUnit {
     id: string;

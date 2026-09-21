@@ -7,7 +7,7 @@ import {
   peekTeacherMyLeaves,
   setTeacherMyLeavesCache,
   type TeacherMyLeave,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 const LEAVE_TYPE_OPTIONS = [
   { label: "Sick Leave", value: "SICK" },

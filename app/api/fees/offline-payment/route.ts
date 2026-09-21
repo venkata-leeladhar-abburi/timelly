@@ -1,37 +1,37 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/feePaymentStatuses";
-import { redistributeBaseMinusOneAllocations } from "@/lib/redistributeBaseMinusOneAllocations";
-import { isPreviousYearFeeHeadName } from "@/lib/feeYearClassification";
-import { normalizeFeeAllocationKey } from "@/lib/feeAllocationKeys";
-import { rollupOrphanExtraFeeAllocations } from "@/lib/rollupOrphanExtraFeeAllocations";
-import { invalidateStudentFeeReadCaches } from "@/lib/studentFeeReadCache";
-import { FEE_MUTATION_TX } from "@/lib/prismaFeeMutationTx";
-import { loadExtraFeesForStudentScope } from "@/lib/loadExtraFeesForStudentScope";
-import { discountedSnapshotDueForHead, studentFeeDiscountFromRecord } from "@/lib/studentFeeHeadDiscount";
-import { extraFeeAppliesToStudent } from "@/lib/extraFeeResidencyScope";
-import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/studentRte";
-import { canonicalizeGatewayForStorage } from "@/lib/feePaymentGateway";
+import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
+import { redistributeBaseMinusOneAllocations } from "@/lib/fees/redistributeBaseMinusOneAllocations";
+import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
+import { normalizeFeeAllocationKey } from "@/lib/fees/feeAllocationKeys";
+import { rollupOrphanExtraFeeAllocations } from "@/lib/fees/rollupOrphanExtraFeeAllocations";
+import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { FEE_MUTATION_TX } from "@/lib/fees/prismaFeeMutationTx";
+import { loadExtraFeesForStudentScope } from "@/lib/fees/loadExtraFeesForStudentScope";
+import { discountedSnapshotDueForHead, studentFeeDiscountFromRecord } from "@/lib/fees/studentFeeHeadDiscount";
+import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
+import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
+import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
 import {
   findExistingOfflinePaymentByRef,
   resolveOfflinePaymentTransactionId,
-} from "@/lib/offlinePaymentIdempotency";
+} from "@/lib/fees/offlinePaymentIdempotency";
 import {
   planSameRefPayment,
   type ExistingPaymentAllocation,
-} from "@/lib/offlinePaymentSameRef";
+} from "@/lib/fees/offlinePaymentSameRef";
 import {
   labelForPaymentAllocation,
-} from "@/lib/paymentFeeHeadLines";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { resolveOfflinePaymentCollectorFromSession } from "@/lib/offlinePaymentCollector";
+} from "@/lib/fees/paymentFeeHeadLines";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { resolveOfflinePaymentCollectorFromSession } from "@/lib/fees/offlinePaymentCollector";
 import {
   canUseFastOfflineFeePayment,
   recordFastOfflineFeePayment,
-} from "@/lib/recordFastOfflineFeePayment";
-import { reconcileStudentFeeIntegrity } from "@/lib/reconcileStudentFeeIntegrity";
+} from "@/lib/fees/recordFastOfflineFeePayment";
+import { reconcileStudentFeeIntegrity } from "@/lib/fees/reconcileStudentFeeIntegrity";
 import { roundRupee } from "@/lib/formatRupee";
 
 export async function POST(req: Request) {

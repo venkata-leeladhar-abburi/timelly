@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { saveClassFeeStructureAndSyncStudents } from "@/lib/classFeeStructureApply";
-import { finalFeeFromStructureAndExtras, sumExtraFeesForStudent } from "@/lib/studentTuitionFromStructure";
-import { invalidateSchoolFeeReadCaches } from "@/lib/studentFeeReadCache";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { saveClassFeeStructureAndSyncStudents } from "@/lib/fees/classFeeStructureApply";
+import { finalFeeFromStructureAndExtras, sumExtraFeesForStudent } from "@/lib/fees/studentTuitionFromStructure";
+import { invalidateSchoolFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
+} from "@/lib/school/schoolDashboardServerCache";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);

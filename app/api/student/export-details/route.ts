@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   buildStudentDetailsExportWorkbook,
   studentToDetailsExportRow,
-} from "@/lib/studentDetailsExport";
-import { resolveStudentDisplayClass } from "@/lib/resolveStudentDisplayClass";
+} from "@/lib/students/studentDetailsExport";
+import { resolveStudentDisplayClass } from "@/lib/students/resolveStudentDisplayClass";
 
 const MAX_EXPORT = 5000;
 

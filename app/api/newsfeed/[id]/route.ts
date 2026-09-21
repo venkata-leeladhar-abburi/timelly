@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 
 async function verifyAndGetFeed(id: string, schoolId: string) {
@@ -57,8 +57,11 @@ export async function PUT(
         { message: "News feed updated successfully", newsFeed: updated },
         { status: 200 }
       );
-    } catch {
-      // Fallback: raw SQL update
+    } catch (prismaError: unknown) {
+      // Fallback: raw SQL update (Prisma delegate can lag behind migrations).
+      // Log first — otherwise a real error (bad data, constraint violation) gets
+      // silently masked by the raw-SQL retry instead of surfacing.
+      console.error("newsFeed.update failed, falling back to raw SQL:", prismaError);
       const parts: string[] = [];
       const values: unknown[] = [];
       let idx = 1;
@@ -122,7 +125,8 @@ export async function DELETE(
 
     try {
       await prisma.newsFeed.delete({ where: { id } });
-    } catch {
+    } catch (prismaError: unknown) {
+      console.error("newsFeed.delete failed, falling back to raw SQL:", prismaError);
       await prisma.$executeRawUnsafe(
         `DELETE FROM "NewsFeed" WHERE id = $1 AND "schoolId" = $2`,
         id,

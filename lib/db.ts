@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { PrismaClient } from "@prisma/client";
-import { bumpTenantCacheVersion } from "@/lib/redis";
+import { bumpTenantCacheVersion } from "@/lib/cache/redis";
 
 /** Bulk writes (e.g. recalculate all fees) bump Redis once at the end, not per row. */
 const deferredInvalidation = new AsyncLocalStorage<{ active: boolean }>();
@@ -25,13 +25,11 @@ export async function runWithDeferredCacheInvalidation<T>(fn: () => Promise<T>):
   });
 }
 
-// Prefer DATABASE_URL (port 6543, transaction pooler) in production.
-// In local/dev, prefer DIRECT_URL (session pooler :5432) — far more reliable for
-// long-lived Next.js + auth when the transaction pooler is saturated/slow.
-const base =
-  process.env.NODE_ENV === "development" && process.env.DIRECT_URL
-    ? process.env.DIRECT_URL
-    : process.env.DATABASE_URL || process.env.DIRECT_URL;
+// Always prefer the PgBouncer transaction pooler (DATABASE_URL, :6543) when available.
+// It multiplexes many short-lived connections cheaply, which matters far more than
+// raw round-trip latency once concurrent requests fan out (see lib/db.ts pool sizing below).
+// DIRECT_URL (:5432, unpooled) is reserved as a fallback when the pooler isn't configured.
+const base = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
 if (!base) {
   console.error("DATABASE_URL or DIRECT_URL environment variable is not set");
@@ -49,20 +47,27 @@ function withParam(url: string, key: string, value: string) {
 
 let connectionString = base || "";
 if (connectionString) {
-  // Supabase transaction pooler (6543 / pgbouncer=true): keep Prisma's pool modest.
-  // connection_limit=1 breaks Promise.all dashboards; too high exhausts PgBouncer.
+  // Supabase transaction pooler (6543 / pgbouncer=true): PgBouncer connections are cheap,
+  // so size Prisma's pool for real concurrency. connection_limit=1 was previously forcing
+  // every Promise.all([...]) fan-out to serialize through a single connection — measured
+  // to turn a ~5ms-server-side query batch into 6-9s of client-side queueing.
   const isPgBouncer =
     /(?:^|[?&])pgbouncer=true(?:&|$)/i.test(connectionString) ||
     /:6543(?:\/|\?|$)/.test(connectionString);
   if (!isPgBouncer) {
     connectionString = withParam(connectionString, "statement_timeout", "120000");
   }
+  // Production runs as Vercel serverless functions: each concurrent invocation can be
+  // a separate instance with its OWN pool, so this value gets multiplied by however many
+  // instances are warm at once (a traffic spike can mean dozens). Keep it just above what
+  // one request's Promise.all([...]) fan-out needs (3-6 parallel queries is typical here),
+  // not sized like a single long-lived dev server's pool.
   const poolLimit =
     process.env.PRISMA_CONNECTION_LIMIT ||
     (isPgBouncer
       ? process.env.NODE_ENV === "development"
-        ? "2"
-        : "1"
+        ? "10"
+        : "5"
       : "5");
   connectionString = withParam(connectionString, "connection_limit", poolLimit);
   connectionString = withParam(connectionString, "pool_timeout", "30");

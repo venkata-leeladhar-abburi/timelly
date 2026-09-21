@@ -1,10 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
-import { purgeSchoolDashboardServerCacheMatching } from "@/lib/schoolDashboardServerCache";
-import { sanitizeTeachingClassIds } from "@/lib/teacherClassAccess";
+import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
+import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
 
 type Params = Promise<{ id: string }>;
 

@@ -24,7 +24,7 @@ import {
   loadSettingsUser,
   peekSettingsUser,
   setSettingsUserCache,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 type UserMe = {
   id: string;

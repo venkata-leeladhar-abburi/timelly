@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, FileSpreadsheet, Loader2, Upload, X, XCircle } from "lucide-react";
-import { downloadBulkStudentTemplateXlsx } from "@/lib/bulkStudentTemplateXlsx";
+import { downloadBulkStudentTemplateXlsx } from "@/lib/students/bulkStudentTemplateXlsx";
 
 type Props = {
   uploadFile: File | null;

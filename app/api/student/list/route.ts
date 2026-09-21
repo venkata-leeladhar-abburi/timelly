@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { requireSchoolId } from "@/lib/tenant";
+import { requireSchoolId } from "@/lib/auth/tenant";
 import { formatDobYmd } from "@/lib/dobCalendar";
-import { withRequestTiming } from "@/lib/requestTiming";
-import { tenantCacheKey, swrGet, swrSet } from "@/lib/tenantCache";
+import { withRequestTiming } from "@/lib/cache/requestTiming";
+import { tenantCacheKey, swrGet, swrSet } from "@/lib/cache/tenantCache";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
-import { activeStudentWhere, studentStatusFilter } from "@/lib/studentStatus";
-import { resolveStudentDisplayClass } from "@/lib/resolveStudentDisplayClass";
+} from "@/lib/school/schoolDashboardServerCache";
+import { activeStudentWhere, studentStatusFilter } from "@/lib/students/studentStatus";
+import { resolveStudentDisplayClass } from "@/lib/students/resolveStudentDisplayClass";
 
 /** Admission / roll tokens usually include digits; pure letter queries are treated as names. */
 function studentSearchQueryLooksLikeAdmissionOrRoll(q: string): boolean {

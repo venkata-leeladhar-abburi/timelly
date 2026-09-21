@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { saveClassFeeStructureAndSyncStudents } from "@/lib/classFeeStructureApply";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { saveClassFeeStructureAndSyncStudents } from "@/lib/fees/classFeeStructureApply";
 
 function normHeader(k: string) {
   return k

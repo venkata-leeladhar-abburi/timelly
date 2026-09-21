@@ -21,7 +21,7 @@ import {
   peekTeacherProfile,
   setTeacherProfileCache,
   type TeacherProfilePagePayload,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 type ProfileTab = "overview" | "edit";
 

@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   extraFeeAppliesToStudent,
   parseExtraFeeResidencyScopeBody,
   suggestedResidencyScopeForExtraFeeName,
-} from "@/lib/extraFeeResidencyScope";
-import { createExtraFeeRows, migrateUnsplitLumpExtraFees, type ExtraFeeCreatePayload } from "@/lib/extraFeeInstallmentDb";
-import { isUnsplitLumpExtraFee } from "@/lib/extraFeeInstallments";
+} from "@/lib/fees/extraFeeResidencyScope";
+import { createExtraFeeRows, migrateUnsplitLumpExtraFees, type ExtraFeeCreatePayload } from "@/lib/fees/extraFeeInstallmentDb";
+import { isUnsplitLumpExtraFee } from "@/lib/fees/extraFeeInstallments";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
-import { invalidateAssignCatalogServerCache } from "@/lib/assignCatalogServerCache";
-import { invalidateStudentFeeReadCaches } from "@/lib/studentFeeReadCache";
+} from "@/lib/school/schoolDashboardServerCache";
+import { invalidateAssignCatalogServerCache } from "@/lib/fees/assignCatalogServerCache";
+import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;

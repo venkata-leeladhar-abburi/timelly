@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { buildParentProfileShell } from "@/lib/buildParentProfileShell";
+import { authOptions } from "@/lib/auth/authOptions";
+import { buildParentProfileShell } from "@/lib/parent/buildParentProfileShell";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
-} from "@/lib/parentPortalSwr";
+} from "@/lib/parent/parentPortalSwr";
 
 export async function GET(request: Request) {
   try {

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { getApplicationGateRow, setApplicationWorkflowPendingOrUpcoming } from "@/lib/admissionsListQuery";
+import { getApplicationGateRow, setApplicationWorkflowPendingOrUpcoming } from "@/lib/admission/admissionsListQuery";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../../_utils";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {

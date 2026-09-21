@@ -13,7 +13,7 @@ import {
   loadParentDashboard,
   peekParentDashboard,
   type ParentDashboardPayload,
-} from "@/lib/loadParentPortal";
+} from "@/lib/parent/loadParentPortal";
 
 function getGreeting() {
   const hour = new Date().getHours();

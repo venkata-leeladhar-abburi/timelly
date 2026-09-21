@@ -5,11 +5,11 @@ import FeePaymentReceiptTemplate, {
   type FeePaymentReceiptData,
 } from "../../../pdf/FeePaymentReceiptTemplate";
 import { printFromElement } from "@/lib/pdfUtils";
-import { formatReceiptGeneratedDate, formatReceiptTransactionDate } from "@/lib/receiptDates";
-import { formatResidencyTypeForDisplay } from "@/lib/residencyDisplay";
-import { isOfflinePaymentGateway } from "@/lib/feePaymentGateway";
-import type { AdminStudentFeeBreakdownResult } from "@/lib/computeAdminStudentFeeBreakdown";
-import { isPreviousYearFeeHeadName } from "@/lib/feeYearClassification";
+import { formatReceiptGeneratedDate, formatReceiptTransactionDate } from "@/lib/fees/receiptDates";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
+import { isOfflinePaymentGateway } from "@/lib/fees/feePaymentGateway";
+import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
+import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
 
 type PaymentFeeAllocationLine = { name: string; amount: number };
 

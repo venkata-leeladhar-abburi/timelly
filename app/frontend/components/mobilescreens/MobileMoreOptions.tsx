@@ -8,7 +8,7 @@ import { useEffect } from "react";
 import { SidebarItem } from "../../types/sidebar";
 import { PRIMARY_COLOR } from "../../constants/colors";
 import { useSession } from "next-auth/react";
-import { useAllowedFeatures } from "@/lib/usePermissions";
+import { useAllowedFeatures } from "@/lib/auth/usePermissions";
 
 export default function MobileMoreOptions({
   items,

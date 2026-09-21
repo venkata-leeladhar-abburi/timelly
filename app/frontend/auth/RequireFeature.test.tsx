@@ -15,11 +15,11 @@ jest.mock("next/navigation", () => ({
 
 const useSession = require("next-auth/react").useSession;
 
-jest.mock("@/lib/usePermissions", () => ({
+jest.mock("@/lib/auth/usePermissions", () => ({
   useAllowedFeatures: jest.fn(),
 }));
 
-const useAllowedFeatures = require("@/lib/usePermissions").useAllowedFeatures;
+const useAllowedFeatures = require("@/lib/auth/usePermissions").useAllowedFeatures;
 
 describe("RequireFeature (frontend)", () => {
   beforeEach(() => {

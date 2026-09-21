@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { computeCurrentAndPreviousFeeStats } from "@/lib/computeFeeSummaryStats";
+import { computeCurrentAndPreviousFeeStats } from "@/lib/fees/computeFeeSummaryStats";
 
 function dateRangeFromYmd(ymd: string | null) {
   const valid = typeof ymd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? ymd : null;

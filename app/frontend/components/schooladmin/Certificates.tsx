@@ -10,7 +10,7 @@ import {
   patchCertificateRequest,
   peekCertificatesPage,
   setCertificatesPageCache,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 export type CertificateRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 

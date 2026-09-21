@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
-import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { randomUUID } from "crypto";
 import {
   computeStudentTuitionTotalFee,
   upsertStudentFeeFromStructure,
-} from "@/lib/studentTuitionFromStructure";
-import { setApplicationEnrolled } from "@/lib/admissionsListQuery";
-import { studentApplicationForStudentCreateSelect } from "@/lib/studentApplicationSafeSelect";
-import { canonicalizeResidencyType } from "@/lib/residencyDisplay";
-import { invalidateStudentListCaches } from "@/lib/invalidateStudentListCaches";
+} from "@/lib/fees/studentTuitionFromStructure";
+import { setApplicationEnrolled } from "@/lib/admission/admissionsListQuery";
+import { studentApplicationForStudentCreateSelect } from "@/lib/admission/studentApplicationSafeSelect";
+import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
+import { invalidateStudentListCaches } from "@/lib/students/invalidateStudentListCaches";
 import { parseDobToDate } from "@/lib/dobCalendar";
 
 function normalizeResidencyType(value: unknown) {

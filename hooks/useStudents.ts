@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { fetchAllStudents } from "@/lib/fetchAllStudents";
+import { fetchAllStudents } from "@/lib/students/fetchAllStudents";
 
 export interface StudentWithRelations {
   id: string;

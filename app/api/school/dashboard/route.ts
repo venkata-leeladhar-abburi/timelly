@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { purgeExpiredNewsFeeds } from "@/lib/newsfeedRetention";
-import { buildSchoolDashboardCollectionSummary } from "@/lib/buildSchoolDashboardCollection";
-import { buildSchoolDashboardFast } from "@/lib/buildSchoolDashboardFast";
-import { getSchoolDashboardFeeTotals } from "@/lib/schoolDashboardFeeTotals";
-import { resolveSchoolAdminSchoolId } from "@/lib/resolveSchoolAdminSchoolId";
-import { todayYmdLocal } from "@/lib/schoolDashboardCollection";
+import { buildSchoolDashboardCollectionSummary } from "@/lib/school/buildSchoolDashboardCollection";
+import { buildSchoolDashboardFast } from "@/lib/school/buildSchoolDashboardFast";
+import { getSchoolDashboardFeeTotals } from "@/lib/fees/schoolDashboardFeeTotals";
+import { resolveSchoolAdminSchoolId } from "@/lib/school/resolveSchoolAdminSchoolId";
+import { todayYmdLocal } from "@/lib/school/schoolDashboardCollection";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
-import { activeStudentWhere } from "@/lib/studentStatus";
+} from "@/lib/school/schoolDashboardServerCache";
+import { activeStudentWhere } from "@/lib/students/studentStatus";
 
 declare const globalThis: {
   schoolDashboardPurgeLastRunAt?: number;

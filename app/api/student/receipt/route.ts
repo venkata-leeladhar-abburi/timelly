@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { generateReceiptPDFServer } from "@/lib/receiptGeneratorServer";
+import { generateReceiptPDFServer } from "@/lib/fees/receiptGeneratorServer";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role?: string } }) {
     let schoolId = session.user.schoolId;

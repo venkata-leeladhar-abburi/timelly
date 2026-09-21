@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/feePaymentStatuses";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
+import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import {
   buildFeeDueReportPayload,
   fillMissingClassFeeStructuresFromSiblings,
   type ExtraFeeLite,
   type StudentFeeDueInput,
-} from "@/lib/feeDueReportCompute";
-import { buildFeeDueReportWorkbook } from "@/lib/feeDueReportExcel";
-import { studentStatusFilter } from "@/lib/studentStatus";
+} from "@/lib/fees/feeDueReportCompute";
+import { buildFeeDueReportWorkbook } from "@/lib/fees/feeDueReportExcel";
+import { studentStatusFilter } from "@/lib/students/studentStatus";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);

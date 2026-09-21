@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { parseScheduleTime } from "@/lib/backupScheduleUtils";
-import { getOrCreateBackupSchedule } from "@/lib/sendFeesBackupEmail";
+import { getOrCreateBackupSchedule } from "@/lib/fees/sendFeesBackupEmail";
 
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);

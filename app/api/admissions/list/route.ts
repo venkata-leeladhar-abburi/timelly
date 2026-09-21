@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 import {
@@ -9,12 +9,12 @@ import {
   admissionRawIdsPage,
   admissionWorkflowByIds,
   studentApplicationHasWorkflowColumn,
-} from "@/lib/admissionsListQuery";
+} from "@/lib/admission/admissionsListQuery";
 import {
   admissionsListCacheKey,
   getAdmissionsListCached,
   setAdmissionsListCached,
-} from "@/lib/admissionsListServerCache";
+} from "@/lib/admission/admissionsListServerCache";
 
 function parseIntSafe(value: string | null, fallback: number) {
   const n = value ? Number.parseInt(value, 10) : NaN;

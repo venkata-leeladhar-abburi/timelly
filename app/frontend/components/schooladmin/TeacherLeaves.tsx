@@ -17,7 +17,7 @@ import {
   setTeacherLeavesPageCache,
   type LeaveStatus,
   type SchoolAdminLeave,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 /* ---------------- TYPES ---------------- */
 

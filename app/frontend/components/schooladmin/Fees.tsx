@@ -22,15 +22,15 @@ import {
   feesPageReady,
   feesRequirementsForSection,
   type FeesSection,
-} from "@/lib/feesPageRequirements";
-import { invalidateFeesTransactionsCache } from "@/lib/feesTransactionsCache";
+} from "@/lib/fees/feesPageRequirements";
+import { invalidateFeesTransactionsCache } from "@/lib/fees/feesTransactionsCache";
 import {
   invalidateSchoolFeesPageCache,
   loadSchoolFeesPage,
   peekLastFeesSchoolId,
   peekSchoolFeesPageForSection,
   warmSchoolFeesPage,
-} from "@/lib/loadSchoolFeesPage";
+} from "@/lib/fees/loadSchoolFeesPage";
 
 type FeesTabProps = {
   section?: FeesSection;

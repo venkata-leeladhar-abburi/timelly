@@ -4,7 +4,7 @@ import { MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SidebarItem } from "../../types/sidebar";
 import { useSession } from "next-auth/react";
-import { useAllowedFeatures } from "@/lib/usePermissions";
+import { useAllowedFeatures } from "@/lib/auth/usePermissions";
 
 export default function BottomNavBar({
   menuItems,

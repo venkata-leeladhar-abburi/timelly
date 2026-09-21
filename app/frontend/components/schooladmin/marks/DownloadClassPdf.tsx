@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { normalizeExamTypes } from "@/lib/examTypes";
-import { downloadClassReportCardsTwoUpPdf } from "@/lib/classReportCardsTwoUpPdf";
+import { normalizeExamTypes } from "@/lib/exams/examTypes";
+import { downloadClassReportCardsTwoUpPdf } from "@/lib/exams/classReportCardsTwoUpPdf";
 
 type ClassOption = {
   id: string;

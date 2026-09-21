@@ -23,7 +23,7 @@ import {
   listCacheKey,
   peekUserListPage,
   warmAddUserPage,
-} from "@/lib/fetchAddUserPage";
+} from "@/lib/school/fetchAddUserPage";
 
 export {
   validateUserForm,

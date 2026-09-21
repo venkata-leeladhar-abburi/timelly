@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { shouldRunScheduledBackup } from "@/lib/backupScheduleUtils";
-import { sendFeesBackupEmail } from "@/lib/sendFeesBackupEmail";
+import { sendFeesBackupEmail } from "@/lib/fees/sendFeesBackupEmail";
 
 function isAuthorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET?.trim();

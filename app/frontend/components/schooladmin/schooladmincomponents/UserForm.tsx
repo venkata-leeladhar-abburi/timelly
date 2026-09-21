@@ -15,7 +15,7 @@ import {
   fetchUserFormMeta,
   invalidateAddUserPageCache,
   peekUserFormMeta,
-} from "@/lib/fetchAddUserPage";
+} from "@/lib/school/fetchAddUserPage";
 
 interface UserFormData {
   name: string;

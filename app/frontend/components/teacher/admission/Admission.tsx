@@ -11,13 +11,13 @@ import InputField from "../../schooladmin/schooladmincomponents/InputField";
 import DataTable from "../../common/TableLayout";
 import SearchInput from "../../common/SearchInput";
 import AdmissionReceiptTemplate, { type AdmissionReceiptData } from "../../pdf/AdmissionReceiptTemplate";
-import { formatResidencyTypeForDisplay } from "@/lib/residencyDisplay";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 import {
   invalidateAssignCatalogCache,
   peekAssignFeeCatalog,
-} from "@/lib/assignFeeCatalogCache";
-import { loadAssignFeeCatalog } from "@/lib/loadAssignFeeCatalog";
-import { invalidateFeeBreakdownCache } from "@/lib/feeBreakdownClientCache";
+} from "@/lib/fees/assignFeeCatalogCache";
+import { loadAssignFeeCatalog } from "@/lib/fees/loadAssignFeeCatalog";
+import { invalidateFeeBreakdownCache } from "@/lib/fees/feeBreakdownClientCache";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import {
   studentDetailsFeesUrlForPathname,

@@ -24,8 +24,8 @@ import {
   peekTeachersListAny,
   setTeacherAttendanceCache,
   warmTeachersPage,
-} from "@/lib/fetchTeachersPage";
-import { downloadTeacherAttendanceReportPdf } from "@/lib/teacherAttendanceReportPdf";
+} from "@/lib/teacher/fetchTeachersPage";
+import { downloadTeacherAttendanceReportPdf } from "@/lib/teacher/teacherAttendanceReportPdf";
 
 const ATTENDANCE_STATUSES = ["PRESENT", "ABSENT", "LATE", "ON_LEAVE"] as const;
 type AttendanceStatus = typeof ATTENDANCE_STATUSES[number];

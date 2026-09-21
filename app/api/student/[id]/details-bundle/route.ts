@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import {
   buildStudentDetailsCoreBundle,
@@ -9,12 +9,12 @@ import {
   buildStudentDetailsShellPayload,
   buildStudentDetailsTabExtras,
   buildStudentDetailsTabPayload,
-} from "@/lib/buildStudentDetailsTabPayload";
-import { computeAdminStudentFeeBreakdown } from "@/lib/computeAdminStudentFeeBreakdown";
+} from "@/lib/students/buildStudentDetailsTabPayload";
+import { computeAdminStudentFeeBreakdown } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import {
   getShellCached,
   setShellCached,
-} from "@/lib/studentFeeReadCache";
+} from "@/lib/fees/studentFeeReadCache";
 
 type RouteParams =
   | { params: { id: string } }

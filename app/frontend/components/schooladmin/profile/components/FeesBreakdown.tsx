@@ -7,12 +7,12 @@ import { ModifyFeeModal, DISCOUNT_HEAD_OVERALL_KEY, type FeeHeadOption, type Fee
 import { AddExtraFeeModal } from "./AddExtraFeeModal";
 import { AssignFeeHeadsCatalogModal } from "./AssignFeeHeadsCatalogModal";
 import { EditExtraFeeModal } from "./EditExtraFeeModal";
-import { splitFeeHeadsForDisplay } from "@/lib/feeHeadInstallmentDisplay";
-import { storedDiscountRupeeAmount } from "@/lib/studentFeeHeadDiscount";
+import { splitFeeHeadsForDisplay } from "@/lib/fees/feeHeadInstallmentDisplay";
+import { storedDiscountRupeeAmount } from "@/lib/fees/studentFeeHeadDiscount";
 import { formatRupee, roundRupee } from "@/lib/formatRupee";
-import { grossTotalFromBreakdown, netTotalFromBreakdown } from "@/lib/feeBreakdownTotals";
-import type { AdminStudentFeeBreakdownResult } from "@/lib/computeAdminStudentFeeBreakdown";
-import { isPreviousYearFeeHeadName } from "@/lib/feeYearClassification";
+import { grossTotalFromBreakdown, netTotalFromBreakdown } from "@/lib/fees/feeBreakdownTotals";
+import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
+import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
 
 function baseComponentIndexFromHead(head: {
   key: string;

@@ -5,7 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   clearSuperAdminBrowserSession,
   shouldForceSuperAdminRelogin,
-} from "@/lib/superAdminBrowserSession";
+} from "@/lib/auth/superAdminBrowserSession";
 
 /** Forces superadmin re-login when opening the app with a stale cookie (no active browser session). */
 export default function SuperAdminSessionGuard() {

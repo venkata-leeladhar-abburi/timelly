@@ -40,7 +40,7 @@ import {
   setClassesPageCache,
   type ClassesPagePayload,
   type SchoolAdminClassRow,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 export default function SchoolAdminClassesTab() {
   const router = useRouter();

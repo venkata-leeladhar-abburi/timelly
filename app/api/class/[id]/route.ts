@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { activeStudentWhere } from "@/lib/studentStatus";
-import { purgeSchoolDashboardServerCacheMatching } from "@/lib/schoolDashboardServerCache";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { activeStudentWhere } from "@/lib/students/studentStatus";
+import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 
 export async function GET(
   req: Request,

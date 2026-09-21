@@ -25,7 +25,7 @@ import ParentSubscriptionTab from "../../components/parent/subscription/ParentSu
 import {
   peekParentDetailsFromBootstrap,
   warmParentPortalBootstrap,
-} from "@/lib/loadParentPortal";
+} from "@/lib/parent/loadParentPortal";
 import { Lock } from "lucide-react";
 
 const PARENT_TAB_TITLES: Record<string, string> = {

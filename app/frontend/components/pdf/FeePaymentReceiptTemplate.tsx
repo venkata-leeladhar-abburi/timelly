@@ -2,7 +2,7 @@ import React, { forwardRef } from "react";
 import {
   formatReceiptGeneratedDate,
   formatReceiptTransactionDate,
-} from "@/lib/receiptDates";
+} from "@/lib/fees/receiptDates";
 import { ParentPortalDocumentShell, ParentPortalPdfMount } from "./ParentPortalDocumentShell";
 
 export interface FeePaymentReceiptData {

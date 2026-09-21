@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { peekAssignFeeCatalog } from "@/lib/assignFeeCatalogCache";
-import { loadAssignFeeCatalog } from "@/lib/loadAssignFeeCatalog";
-import { invalidateFeeBreakdownCache } from "@/lib/feeBreakdownClientCache";
-import { invalidateAssignCatalogCache } from "@/lib/assignFeeCatalogCache";
-import { formatResidencyTypeForDisplay } from "@/lib/residencyDisplay";
+import { peekAssignFeeCatalog } from "@/lib/fees/assignFeeCatalogCache";
+import { loadAssignFeeCatalog } from "@/lib/fees/loadAssignFeeCatalog";
+import { invalidateFeeBreakdownCache } from "@/lib/fees/feeBreakdownClientCache";
+import { invalidateAssignCatalogCache } from "@/lib/fees/assignFeeCatalogCache";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 
 type FeeAssignRow = {
   id: string;

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { CalendarDays, Download } from "lucide-react";
-import { formatDdMmYyyyFromYmdInput } from "@/lib/feeDayReportExcel";
-import type { CollectionByHeadRow } from "@/lib/feeDayReportExcel";
-import { exportDayReportXlsx } from "@/lib/exportDayReportXlsx";
+import { formatDdMmYyyyFromYmdInput } from "@/lib/fees/feeDayReportExcel";
+import type { CollectionByHeadRow } from "@/lib/fees/feeDayReportExcel";
+import { exportDayReportXlsx } from "@/lib/fees/exportDayReportXlsx";
 
 type Props = {
   fromDate: string;

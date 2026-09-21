@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { getTeacherAccessibleClassIds } from "@/lib/teacherClassAccess";
+import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 
 export async function GET() {
   try {

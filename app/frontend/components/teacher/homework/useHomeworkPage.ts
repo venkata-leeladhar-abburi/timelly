@@ -8,7 +8,7 @@ import {
   loadTeacherHomework,
   peekTeacherHomework,
   setTeacherHomeworkCache,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 export default function useHomeworkPage() {
   const { data: session, status } = useSession();

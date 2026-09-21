@@ -4,7 +4,7 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
 import { StudentRow } from "./types";
 import { getAge } from "./utils";
-import { formatResidencyTypeForDisplay } from "@/lib/residencyDisplay";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 
 const getResidencyLabel = (value?: string) => {
   const raw = (value || "").trim();

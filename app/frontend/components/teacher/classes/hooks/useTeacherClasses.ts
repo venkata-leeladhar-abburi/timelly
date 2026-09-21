@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { fetchAllStudents } from "@/lib/fetchAllStudents";
+import { fetchAllStudents } from "@/lib/students/fetchAllStudents";
 import {
   loadTeacherClasses,
   peekTeacherClasses,
   setTeacherClassesCache,
   type TeacherClassesPayload,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 export type TeacherClass = {
   id: string;

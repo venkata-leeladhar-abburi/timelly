@@ -1,4 +1,4 @@
-import { warmStudentDetailsBundle } from "@/lib/loadStudentDetailsBundle";
+import { warmStudentDetailsBundle } from "@/lib/students/loadStudentDetailsBundle";
 
 function buildStudentDetailsUrl(basePath: string, studentId: string, focus?: "fees") {
   const p = new URLSearchParams({

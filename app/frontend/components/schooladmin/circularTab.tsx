@@ -13,7 +13,7 @@ import {
   invalidateCirculars,
   loadCirculars,
   peekCirculars,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 export default function SchoolAdminCircularsTab() {
   const [circulars, setCirculars] = useState<CircularRow[]>([]);

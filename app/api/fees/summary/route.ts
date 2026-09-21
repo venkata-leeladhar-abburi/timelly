@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/feePaymentStatuses";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { structureMultiplierAfterDiscount } from "@/lib/studentTuitionFromStructure";
-import { extraFeeAppliesToStudent } from "@/lib/extraFeeResidencyScope";
-import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/studentRte";
-import { computeCurrentAndPreviousFeeStats } from "@/lib/computeFeeSummaryStats";
-import { withRequestTiming } from "@/lib/requestTiming";
-import { tenantCacheKey, swrGet, swrSet } from "@/lib/tenantCache";
+import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { structureMultiplierAfterDiscount } from "@/lib/fees/studentTuitionFromStructure";
+import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
+import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
+import { computeCurrentAndPreviousFeeStats } from "@/lib/fees/computeFeeSummaryStats";
+import { withRequestTiming } from "@/lib/cache/requestTiming";
+import { tenantCacheKey, swrGet, swrSet } from "@/lib/cache/tenantCache";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
-import { activeStudentWhere } from "@/lib/studentStatus";
+} from "@/lib/school/schoolDashboardServerCache";
+import { activeStudentWhere } from "@/lib/students/studentStatus";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);

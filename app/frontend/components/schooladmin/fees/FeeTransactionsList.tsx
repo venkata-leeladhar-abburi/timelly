@@ -16,8 +16,8 @@ import {
   fetchFeesTransactions,
   peekFeesTransactions,
   resolveFeesTransactionsCacheKey,
-} from "@/lib/feesTransactionsCache";
-import { isOfflinePaymentGateway } from "@/lib/feePaymentGateway";
+} from "@/lib/fees/feesTransactionsCache";
+import { isOfflinePaymentGateway } from "@/lib/fees/feePaymentGateway";
 
 const PAGE_SIZE = 20;
 

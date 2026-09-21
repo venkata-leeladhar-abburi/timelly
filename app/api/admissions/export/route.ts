@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 import * as XLSX from "xlsx";
-import { formatResidencyTypeForDisplay } from "@/lib/residencyDisplay";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 import {
   admissionListWhereSql,
   admissionRawIdsPage,
   studentApplicationHasWorkflowColumn,
-} from "@/lib/admissionsListQuery";
+} from "@/lib/admission/admissionsListQuery";
 
 function formatDate(value: Date | null | undefined) {
   if (!value) return "";

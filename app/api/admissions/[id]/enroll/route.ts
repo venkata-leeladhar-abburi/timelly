@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { getApplicationGateRow } from "@/lib/admissionsListQuery";
+import { getApplicationGateRow } from "@/lib/admission/admissionsListQuery";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../../_utils";
-import { enrollStudentFromAdmissionApplication } from "@/lib/enrollStudentFromAdmissionApplication";
+import { enrollStudentFromAdmissionApplication } from "@/lib/admission/enrollStudentFromAdmissionApplication";
 
 export async function POST(_: Request, ctx: { params: Promise<{ id: string }> }) {
   try {

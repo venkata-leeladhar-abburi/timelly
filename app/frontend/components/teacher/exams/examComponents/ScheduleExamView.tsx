@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { X, Plus, BookOpen, CheckCircle2, Trash2, Save } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
 import TimellyLoader from "../../../common/TimellyLoader";
-import { normalizeExamTypes } from "@/lib/examTypes";
+import { normalizeExamTypes } from "@/lib/exams/examTypes";
 
 interface ClassItem {
     id: string;

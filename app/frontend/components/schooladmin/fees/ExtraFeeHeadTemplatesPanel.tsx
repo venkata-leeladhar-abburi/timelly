@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import PrimaryButton from "../../common/PrimaryButton";
-import { invalidateAssignCatalogCache } from "@/lib/assignFeeCatalogCache";
+import { invalidateAssignCatalogCache } from "@/lib/fees/assignFeeCatalogCache";
 
 const inputClass =
   "w-full min-h-[44px] rounded-xl border border-white/10 bg-[#0F172A]/50 px-4 py-2.5 text-sm text-gray-200 placeholder:text-white/35 focus:border-lime-400/60 focus:outline-none focus:ring-1 focus:ring-lime-400/30";

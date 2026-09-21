@@ -5,11 +5,11 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   fetchAppointTeacherData,
   invalidateTeachersPageCache,
-} from "@/lib/fetchTeachersPage";
+} from "@/lib/teacher/fetchTeachersPage";
 import {
   peekAppointTeacherData,
   peekAppointTeacherDataAny,
-} from "@/lib/teachersPageClientCache";
+} from "@/lib/teacher/teachersPageClientCache";
 import TimellyLoader from "../../common/TimellyLoader";
 
 const DEFAULT_AVATAR =

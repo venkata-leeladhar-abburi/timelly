@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
-} from "@/lib/schoolDashboardServerCache";
-import { loadFeeReportTransactions } from "@/lib/loadDayFeeCollectionTransactions";
-import { buildFeeHeadAmountsByPaymentId, dominantFeeHead, feeHeadLinesFromMap } from "@/lib/paymentFeeHeadLines";
+} from "@/lib/school/schoolDashboardServerCache";
+import { loadFeeReportTransactions } from "@/lib/fees/loadDayFeeCollectionTransactions";
+import { buildFeeHeadAmountsByPaymentId, dominantFeeHead, feeHeadLinesFromMap } from "@/lib/fees/paymentFeeHeadLines";
 
 /**
  * GET /api/fees/transactions

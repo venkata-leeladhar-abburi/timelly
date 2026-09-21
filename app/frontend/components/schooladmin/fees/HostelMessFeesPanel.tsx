@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 import PrimaryButton from "../../common/PrimaryButton";
 import type { Class, ExtraFee } from "./types";
-import { findInstallmentPair, isUnsplitLumpExtraFee } from "@/lib/extraFeeInstallments";
+import { findInstallmentPair, isUnsplitLumpExtraFee } from "@/lib/fees/extraFeeInstallments";
 import {
   countMessDuplicateExtraFeeIds,
   findMessFeeDuplicateIssues,
   type MessDuplicateIssue,
-} from "@/lib/findMessFeeDuplicateIssues";
+} from "@/lib/fees/findMessFeeDuplicateIssues";
 
 const inputClass =
   "w-full min-h-[42px] rounded-xl border border-white/10 bg-[#0B1220]/80 px-4 py-2.5 text-sm text-gray-100 placeholder:text-white/30 focus:border-sky-400/50 focus:outline-none focus:ring-2 focus:ring-sky-400/20";

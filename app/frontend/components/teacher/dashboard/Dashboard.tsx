@@ -9,7 +9,7 @@ import TimellyLoader from "../../common/TimellyLoader";
 import {
   loadTeacherDashboard,
   peekTeacherDashboard,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 export default function TeacherDashboard() {
   const router = useRouter();

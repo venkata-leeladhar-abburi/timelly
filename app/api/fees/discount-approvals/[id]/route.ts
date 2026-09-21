@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { invalidateStudentFeeReadCaches } from "@/lib/studentFeeReadCache";
-import { invalidateDiscountApprovalsListCache } from "@/lib/discountApprovalsListCache";
+import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { invalidateDiscountApprovalsListCache } from "@/lib/fees/discountApprovalsListCache";
 
 type RouteParams =
   | { params: { id: string } }

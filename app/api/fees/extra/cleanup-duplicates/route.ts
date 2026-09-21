@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { runWithDeferredCacheInvalidation } from "@/lib/db";
 import {
   cleanupDuplicateHostelMessExtraFees,
   repairIncompleteHostelMessInstallmentPairs,
-} from "@/lib/cleanupDuplicateHostelMessExtraFees";
+} from "@/lib/fees/cleanupDuplicateHostelMessExtraFees";
 import {
   countMessDuplicateExtraFeeIds,
   findMessFeeDuplicateIssues,
-} from "@/lib/findMessFeeDuplicateIssues";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
+} from "@/lib/fees/findMessFeeDuplicateIssues";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import {
   buildTuitionBulkCache,
   upsertStudentFeeFromStructure,
-} from "@/lib/studentTuitionFromStructure";
-import { backfillPaymentAllocationComponentNames } from "@/lib/backfillPaymentAllocationComponentNames";
-import { isMessCategoryExtraFeeName } from "@/lib/extraFeeResidencyScope";
+} from "@/lib/fees/studentTuitionFromStructure";
+import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
+import { isMessCategoryExtraFeeName } from "@/lib/fees/extraFeeResidencyScope";
 
 async function loadSchoolExtras(schoolId: string) {
   return prisma.extraFee.findMany({

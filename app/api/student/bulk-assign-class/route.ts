@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma, { runWithDeferredCacheInvalidation } from "@/lib/db";
-import { invalidateStudentListCaches } from "@/lib/invalidateStudentListCaches";
-import { purgeSchoolDashboardServerCacheMatching } from "@/lib/schoolDashboardServerCache";
-import { invalidateStudentFeeReadCaches } from "@/lib/studentFeeReadCache";
-import { requireSchoolId } from "@/lib/tenant";
+import { invalidateStudentListCaches } from "@/lib/students/invalidateStudentListCaches";
+import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
+import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { requireSchoolId } from "@/lib/auth/tenant";
 import {
   buildTuitionBulkCache,
   buildStudentFeeRecalcPayload,
-} from "@/lib/studentTuitionFromStructure";
+} from "@/lib/fees/studentTuitionFromStructure";
 
 const STAFF_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN", "TEACHER"]);
 const MAX_BULK_ASSIGN = 500;

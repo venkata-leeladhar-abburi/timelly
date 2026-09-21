@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { computeAdminStudentFeeBreakdown } from "@/lib/computeAdminStudentFeeBreakdown";
-import { isRedisEnabled } from "@/lib/redis";
+import { computeAdminStudentFeeBreakdown } from "@/lib/fees/computeAdminStudentFeeBreakdown";
+import { isRedisEnabled } from "@/lib/cache/redis";
 import {
   getBreakdownMemCached,
   setBreakdownMemCached,
-} from "@/lib/studentFeeReadCache";
-import { tenantCacheKey, swrGet, swrSet } from "@/lib/tenantCache";
+} from "@/lib/fees/studentFeeReadCache";
+import { tenantCacheKey, swrGet, swrSet } from "@/lib/cache/tenantCache";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;

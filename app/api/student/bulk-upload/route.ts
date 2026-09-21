@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import * as XLSX from "xlsx";
-import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/schoolEmail";
-import { upsertStudentFeeFromStructure } from "@/lib/studentTuitionFromStructure";
-import { canonicalizeResidencyType } from "@/lib/residencyDisplay";
+import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
+import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
+import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
 
 function toStr(value: unknown) {
   if (value === null || value === undefined) return "";

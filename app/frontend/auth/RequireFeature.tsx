@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import AuthLoadingFallback from "../components/common/AuthLoadingFallback";
-import { useAllowedFeatures } from "@/lib/usePermissions";
+import { useAllowedFeatures } from "@/lib/auth/usePermissions";
 import type { FeatureId } from "@/lib/features";
 
 interface RequireFeatureProps {

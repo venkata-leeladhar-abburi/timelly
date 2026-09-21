@@ -12,16 +12,16 @@ import {
   warmSchoolAdminStudentDetails,
 } from "./studentDetailsNav";
 import InlinePagination from "../schooladmincomponents/InlinePagination";
-import { isInactiveStudentStatus } from "@/lib/resolveStudentDisplayClass";
+import { isInactiveStudentStatus } from "@/lib/students/resolveStudentDisplayClass";
 import {
   appendDayReportSheet,
   drawFeeDayReportPdf,
   formatDdMmYyyyFromYmdInput,
   formatStudentClassForReport,
   type DayReportTx,
-} from "@/lib/feeDayReportExcel";
+} from "@/lib/fees/feeDayReportExcel";
 import { formatRupee, roundRupee } from "@/lib/formatRupee";
-import { todayYmdLocal } from "@/lib/schoolDashboardCollection";
+import { todayYmdLocal } from "@/lib/school/schoolDashboardCollection";
 
 const PAGE_SIZE = 20;
 

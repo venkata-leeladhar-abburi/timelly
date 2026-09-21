@@ -7,7 +7,7 @@ import TimetableGrid, { TimetablePayload } from "../../timetable/TimetableGrid";
 import {
   loadTeacherAttendanceClasses,
   peekTeacherAttendanceClasses,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 type ClassOption = {
   id: string;

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { invalidateParentPortalCaches } from "@/lib/invalidateParentPortalCaches";
+import { invalidateParentPortalCaches } from "@/lib/parent/invalidateParentPortalCaches";
 
 export async function POST(
   _req: Request,

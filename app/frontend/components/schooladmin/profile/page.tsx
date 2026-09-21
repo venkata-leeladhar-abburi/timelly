@@ -9,26 +9,26 @@ import { FeesBreakdown } from "./components/FeesBreakdown";
 import { ProfileSidebar } from "./components/ProfileSidebar";
 import { AttendanceTrends } from "./components/AttendanceTrends";
 import { Certificates } from "./components/Certificates";
-import type { StudentDetailsTabPayload } from "@/lib/buildStudentDetailsTabPayload";
-import type { AdminStudentFeeBreakdownResult } from "@/lib/computeAdminStudentFeeBreakdown";
+import type { StudentDetailsTabPayload } from "@/lib/students/buildStudentDetailsTabPayload";
+import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import {
   invalidateStudentDetailsBundleCache,
   loadStudentDetailsBundle,
   peekStudentDetailsBundle,
   refreshStudentFeesAfterMutation,
-} from "@/lib/loadStudentDetailsBundle";
-import { dueHeadRowsFromBreakdown, type DueHeadRow } from "@/lib/feeBreakdownPaymentRows";
-import { extraFeeIdFromAllocationKey, normalizeFeeAllocationKey } from "@/lib/feeAllocationKeys";
-import { isPreviousYearFeeHeadName } from "@/lib/feeYearClassification";
+} from "@/lib/students/loadStudentDetailsBundle";
+import { dueHeadRowsFromBreakdown, type DueHeadRow } from "@/lib/fees/feeBreakdownPaymentRows";
+import { extraFeeIdFromAllocationKey, normalizeFeeAllocationKey } from "@/lib/fees/feeAllocationKeys";
+import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
 import {
   fetchFeeBreakdownFast,
   getFeeBreakdownCached,
   invalidateFeeBreakdownCache,
   setFeeBreakdownCache,
-} from "@/lib/feeBreakdownClientCache";
-import { readStudentListCacheLegacy, clearStudentListCache, writeStudentListCacheLegacy } from "@/lib/studentListSessionCache";
-import { isInactiveStudentStatus } from "@/lib/resolveStudentDisplayClass";
-import { resolveStudentDisplayName } from "@/lib/resolveStudentDisplayName";
+} from "@/lib/fees/feeBreakdownClientCache";
+import { readStudentListCacheLegacy, clearStudentListCache, writeStudentListCacheLegacy } from "@/lib/students/studentListSessionCache";
+import { isInactiveStudentStatus } from "@/lib/students/resolveStudentDisplayClass";
+import { resolveStudentDisplayName } from "@/lib/students/resolveStudentDisplayName";
 import { StudentSearchAutocomplete } from "./components/StudentSearchAutocomplete";
 import { Calendar, BookOpen, Activity, Clock, FileSpreadsheet, X } from "lucide-react";
 import BulkExtraFeeByTimellyModal from "./components/BulkExtraFeeByTimellyModal";

@@ -1,36 +1,36 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { requireSchoolId } from "@/lib/tenant";
-import { withRequestTiming } from "@/lib/requestTiming";
-import { backfillPaymentAllocationComponentNames } from "@/lib/backfillPaymentAllocationComponentNames";
+import { requireSchoolId } from "@/lib/auth/tenant";
+import { withRequestTiming } from "@/lib/cache/requestTiming";
+import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
 import {
   buildFeeHeadAmountsByPaymentId,
   dominantFeeHead,
   feeHeadLinesFromMap,
-} from "@/lib/paymentFeeHeadLines";
+} from "@/lib/fees/paymentFeeHeadLines";
 import type { PrismaClient } from "@prisma/client";
-import { hashStudentPasswordFromDob } from "@/lib/studentDefaultPassword";
+import { hashStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
 import {
   parseStudentStatus,
   STUDENT_STATUS_ACTIVE,
   STUDENT_STATUS_INACTIVE,
-} from "@/lib/studentStatus";
-import { ensureStudentApplicationLink } from "@/lib/ensureStudentApplicationLink";
-import { upsertStudentFeeFromStructure } from "@/lib/studentTuitionFromStructure";
-import { invalidateStudentFeeReadCaches } from "@/lib/studentFeeReadCache";
-import { invalidateStudentListCaches } from "@/lib/invalidateStudentListCaches";
-import { canonicalizeResidencyType } from "@/lib/residencyDisplay";
+} from "@/lib/students/studentStatus";
+import { ensureStudentApplicationLink } from "@/lib/admission/ensureStudentApplicationLink";
+import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
+import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { invalidateStudentListCaches } from "@/lib/students/invalidateStudentListCaches";
+import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
 import { ageFromDob, formatDobYmd, parseDobToDate } from "@/lib/dobCalendar";
-import { syncStudentDisplayNameRecords } from "@/lib/syncStudentDisplayName";
-import { resolveStudentDisplayName } from "@/lib/resolveStudentDisplayName";
+import { syncStudentDisplayNameRecords } from "@/lib/students/syncStudentDisplayName";
+import { resolveStudentDisplayName } from "@/lib/students/resolveStudentDisplayName";
 import {
   loadStudentAdmissionApplicationPayments,
   loadStudentApplicationFeeSnapshot,
   mergeStudentProfilePayments,
   resolveStudentAdmissionApplicationFees,
-} from "@/lib/studentAdmissionApplicationPayments";
+} from "@/lib/admission/studentAdmissionApplicationPayments";
 
 type RouteParams =
   | { params: { id: string } }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { getOrCreateBackupSchedule, sendFeesBackupEmail } from "@/lib/sendFeesBackupEmail";
+import { getOrCreateBackupSchedule, sendFeesBackupEmail } from "@/lib/fees/sendFeesBackupEmail";
 
 /**
  * POST /api/superadmin/backup/email

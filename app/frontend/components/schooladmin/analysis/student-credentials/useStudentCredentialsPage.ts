@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import type { StudentCredentialRow } from "@/lib/computeStudentCredentials";
+import type { StudentCredentialRow } from "@/lib/students/computeStudentCredentials";
 import {
   fetchStudentCredentials,
   invalidateStudentCredentialsCache,
   peekStudentCredentials,
   type CredentialsFilterKey,
-} from "@/lib/studentCredentialsClientCache";
-import { downloadStudentCredentialsPdf } from "@/lib/studentCredentialsPdf";
+} from "@/lib/students/studentCredentialsClientCache";
+import { downloadStudentCredentialsPdf } from "@/lib/students/studentCredentialsPdf";
 import { CREDENTIALS_PAGE_SIZE } from "./constants";
 import { loadClassesCached, peekClassesCache } from "./loadClassesCached";
 import type { ClassItem, CredentialsFilterBody, ExportFormat } from "./types";

@@ -37,9 +37,9 @@ import {
   WEEK_DAYS,
 } from "./attendanceUtils";
 import ParentTimellyLoader from "../ParentTimellyLoader";
-import { fetchParentAttendance, peekParentPortalAny } from "@/lib/loadParentPortal";
-import { downloadParentPortalPdf } from "@/lib/downloadParentPortalPdf";
-import { currentAcademicYearLabel, resolveSchoolBrand, type SchoolBrand } from "@/lib/resolveSchoolBrand";
+import { fetchParentAttendance, peekParentPortalAny } from "@/lib/parent/loadParentPortal";
+import { downloadParentPortalPdf } from "@/lib/parent/downloadParentPortalPdf";
+import { currentAcademicYearLabel, resolveSchoolBrand, type SchoolBrand } from "@/lib/school/resolveSchoolBrand";
 import AttendanceReportTemplate, { type AttendanceReportData } from "../../pdf/AttendanceReportTemplate";
 import { useRef } from "react";
 

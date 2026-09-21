@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { getApplicationGateRow } from "@/lib/admissionsListQuery";
-import { studentApplicationDetailSelect } from "@/lib/studentApplicationSafeSelect";
+import { getApplicationGateRow } from "@/lib/admission/admissionsListQuery";
+import { studentApplicationDetailSelect } from "@/lib/admission/studentApplicationSafeSelect";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 
 function optionalString(value: unknown) {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { hashStudentPasswordFromDob } from "@/lib/studentDefaultPassword";
-import { invalidateTenant } from "@/lib/tenantCache";
+import { hashStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
+import { invalidateTenant } from "@/lib/cache/tenantCache";
 
 const MAX_RESET = 5000;
 

@@ -13,7 +13,7 @@ import {
   loadTeacherExamsList,
   peekTeacherExamsList,
   setTeacherExamsListCache,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 
 type ViewState =
     | { mode: "list" }

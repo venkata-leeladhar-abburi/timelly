@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveOfflinePaymentCollectorFromSession } from "@/lib/offlinePaymentCollector";
-import { isActiveStudent } from "@/lib/studentStatus";
+import { resolveOfflinePaymentCollectorFromSession } from "@/lib/fees/offlinePaymentCollector";
+import { isActiveStudent } from "@/lib/students/studentStatus";
 
 export async function POST(req: Request) {
     try {

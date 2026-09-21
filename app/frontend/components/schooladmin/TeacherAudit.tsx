@@ -13,7 +13,7 @@ import {
   peekTeacherAuditRecords,
   peekTeacherAuditTeachers,
   setTeacherAuditRecords,
-} from "@/lib/loadSchoolAdminFastTabs";
+} from "@/lib/school/loadSchoolAdminFastTabs";
 
 function getCurrentAcademicYear() {
   const now = new Date();

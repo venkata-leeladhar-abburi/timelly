@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { assertTeacherCanEnterMarks } from "@/lib/teacherMarksScope";
-import { parseMarkComponents, sumComponents } from "@/lib/markComponents";
+import { assertTeacherCanEnterMarks } from "@/lib/teacher/teacherMarksScope";
+import { parseMarkComponents, sumComponents } from "@/lib/exams/markComponents";
 import { randomUUID } from "crypto";
 
 function calculateGrade(marks: number, totalMarks: number): string {

@@ -16,13 +16,13 @@ import {
   loadTeacherMarksClasses,
   peekTeacherMarksClasses,
   type LiteClassOption,
-} from "@/lib/loadTeacherFastTabs";
+} from "@/lib/teacher/loadTeacherFastTabs";
 import MarksReportTemplate, {
   type MarksReportData,
 } from "@/app/frontend/components/pdf/MarksReportTemplate";
 import { generatePDF, waitForPdfMountReady } from "@/lib/pdfUtils";
-import { resolveSchoolLogoFetchUrl } from "@/lib/feeDayReportExcel";
-import { normalizeExamTypes } from "@/lib/examTypes";
+import { resolveSchoolLogoFetchUrl } from "@/lib/fees/feeDayReportExcel";
+import { normalizeExamTypes } from "@/lib/exams/examTypes";
 
 type ClassOption = { id: string; name: string; section: string | null };
 type StudentOption = { id: string; name: string; rollNo: string | null };

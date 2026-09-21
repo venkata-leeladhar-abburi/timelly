@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Users, Mail, Phone, MapPin, Pencil, X, CircleDollarSign } from "lucide-react";
 import SelectInput from "../../../common/SelectInput";
-import { formatStoredAddressForDisplay } from "@/lib/studentAddressFormat";
+import { formatStoredAddressForDisplay } from "@/lib/students/studentAddressFormat";
 import {
   canonicalizeResidencyType,
   formatResidencyTypeForDisplay,
-} from "@/lib/residencyDisplay";
+} from "@/lib/students/residencyDisplay";
 import {
   ageFromDob,
   formatDobDisplay,

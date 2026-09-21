@@ -8,7 +8,7 @@ import {
   clearSuperAdminBrowserSession,
   setSuperAdminLoginInProgress,
   clearSuperAdminLoginInProgress,
-} from "@/lib/superAdminBrowserSession";
+} from "@/lib/auth/superAdminBrowserSession";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 const LOGO_SRC = "/timelylogo.webp";
 

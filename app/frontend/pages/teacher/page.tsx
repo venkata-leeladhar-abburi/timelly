@@ -29,7 +29,7 @@ import TeacherAuditTab from "../../components/schooladmin/TeacherAudit";
 import Certificates from "../../components/schooladmin/Certificates";
 import SchoolAdminFeesTab from "../../components/schooladmin/Fees";
 import TimellyLoader from "../../components/common/TimellyLoader";
-import { warmTeacherFastTabs, warmTeacherTab } from "@/lib/loadTeacherFastTabs";
+import { warmTeacherFastTabs, warmTeacherTab } from "@/lib/teacher/loadTeacherFastTabs";
 
 const TEACHER_TAB_TITLES = {
   dashboard: "Dashboard",

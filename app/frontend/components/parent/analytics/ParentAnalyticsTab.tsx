@@ -9,7 +9,7 @@ import {
   peekParentAnalytics,
   peekParentPortalAny,
   type ParentAnalyticsPayload,
-} from "@/lib/loadParentPortal";
+} from "@/lib/parent/loadParentPortal";
 import {
   CheckCircle2,
   BookOpen,

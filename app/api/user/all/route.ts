@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { Role, type Prisma } from "@prisma/client";
-import { authOptions } from "../../../../lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
 import {
   getUserListCached,
   setUserListCached,
   userListCacheKey,
-} from "@/lib/userListServerCache";
+} from "@/lib/school/userListServerCache";
 
 export async function GET(req: Request) {
   try {

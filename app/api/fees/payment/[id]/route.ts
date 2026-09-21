@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { resolveFeesSchoolId } from "@/lib/resolveFeesSchoolId";
-import { canonicalizeGatewayForStorage } from "@/lib/feePaymentGateway";
-import { invalidateStudentFeeReadCaches } from "@/lib/studentFeeReadCache";
-import { deleteFastFeePayment } from "@/lib/deleteFastFeePayment";
+import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
+import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { deleteFastFeePayment } from "@/lib/fees/deleteFastFeePayment";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

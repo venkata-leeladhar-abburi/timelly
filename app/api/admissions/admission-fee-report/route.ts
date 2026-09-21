@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { admissionFeeTotalsByChannel } from "@/lib/admissionFeeCollectionChannel";
+import { authOptions } from "@/lib/auth/authOptions";
+import { admissionFeeTotalsByChannel } from "@/lib/fees/admissionFeeCollectionChannel";
 import prisma from "@/lib/db";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 
