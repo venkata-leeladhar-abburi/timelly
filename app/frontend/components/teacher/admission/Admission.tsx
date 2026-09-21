@@ -11,7 +11,6 @@ import InputField from "../../schooladmin/schooladmincomponents/InputField";
 import DataTable from "../../common/TableLayout";
 import SearchInput from "../../common/SearchInput";
 import AdmissionReceiptTemplate, { type AdmissionReceiptData } from "../../pdf/AdmissionReceiptTemplate";
-import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 import {
   invalidateAssignCatalogCache,
   peekAssignFeeCatalog,
@@ -26,261 +25,27 @@ import {
 import {
   formatClassOptionLabel,
   gradeSoughtFromClassName,
-  type ApplicationGrade,
 } from "@/lib/gradeFromClassName";
-
-type Gender = "MALE" | "FEMALE";
-type BoardingType = "SEMI_RESIDENTIAL" | "REGULAR_BOARDER";
-type Grade = ApplicationGrade;
-
-type AdmissionRow = {
-  id: string;
-  applicationNo: string;
-  admissionNo: string | null;
-  fedenaNo: string | null;
-  studentId?: string | null;
-  workflowStatus?: "PENDING" | "UPCOMING" | "APPROVED";
-  classId?: string | null;
-  class?: { id: string; name: string; section: string | null } | null;
-  gradeSought: Grade;
-  boardingType: BoardingType;
-  residencyType?: string | null;
-  totalFee?: number | null;
-  discountPercent?: number | null;
-  applicationFee?: number | null;
-  admissionFee?: number | null;
-  applicationFeePaid?: boolean;
-  applicationFeePaidAt?: string | null;
-  applicationFeePaymentMode?: string | null;
-  applicationFeePaymentMethod?: string | null;
-  admissionFeePaid?: boolean;
-  admissionFeePaidAt?: string | null;
-  admissionFeePaymentMode?: string | null;
-  admissionFeePaymentMethod?: string | null;
-  remarks?: string | null;
-  firstName: string;
-  middleName: string | null;
-  lastName: string;
-  gender: Gender;
-  dateOfBirth: string;
-  aadharNo: string;
-  parentName: string;
-  parentPhone: string;
-  parentEmail: string;
-  city: string;
-  state: string;
-  pinCode: string;
-  createdAt: string;
-};
-
-type FeeType = "APPLICATION" | "ADMISSION";
-type FeeAssignRow = {
-  id: string;
-  name: string;
-  amount: string;
-  residencyScope?: string;
-  splitIntoTwoInstallments?: boolean;
-};
-type FeeHeadOption = {
-  key: string;
-  name: string;
-  amount: number;
-  selected: boolean;
-  scopeLabel: string;
-  residencyScope: string;
-  splitIntoTwoInstallments: boolean;
-};
-
-function sanitizeMoneyInput(raw: string): string {
-  if (!raw) return "";
-  const cleaned = raw.replace(/[^\d.]/g, "");
-  const dot = cleaned.indexOf(".");
-  if (dot === -1) return cleaned;
-  const intPart = cleaned.slice(0, dot).replace(/\D/g, "");
-  const frac = cleaned.slice(dot + 1).replace(/\D/g, "").slice(0, 2);
-  return frac.length > 0 ? `${intPart}.${frac}` : `${intPart}.`;
-}
-
-type FormState = {
-  applicationNo: string;
-  fedenaNo: string;
-  penNumber: string;
-  apaarId: string;
-  admissionNo: string;
-  classId: string;
-  gradeSought: Grade;
-  boardingType: BoardingType;
-  residencyType: string;
-  applicationFee: string;
-  admissionFee: string;
-  studentName: string;
-  gender: Gender;
-  dateOfBirth: string; // yyyy-mm-dd
-  aadharNo: string;
-  firstLanguage: string;
-  nationality: string;
-  languagesAtHome: string;
-  caste: string;
-  religion: string;
-  presentAddress: string;
-  permanentAddress: string;
-  parentName: string;
-  parentOccupation: string;
-  officeAddress: string;
-  parentPhone: string;
-  parentEmail: string;
-  parentAadharNo: string;
-  parentWhatsapp: string;
-  bankAccountNo: string;
-  motherName: string;
-  motherPhone: string;
-  motherAadharNo: string;
-  motherEmail: string;
-  panNumber: string;
-  previousSchoolName: string;
-  previousSchoolAddress: string;
-  emergencyFatherNo: string;
-  emergencyMotherNo: string;
-  emergencyGuardianNo: string;
-};
-
-const GRADES: { label: string; value: Grade }[] = [
-  { label: "LKG", value: "LKG" },
-  { label: "UKG", value: "UKG" },
-  { label: "Grade 1", value: "GRADE_1" },
-  { label: "Grade 2", value: "GRADE_2" },
-  { label: "Grade 3", value: "GRADE_3" },
-  { label: "Grade 4", value: "GRADE_4" },
-  { label: "Grade 5", value: "GRADE_5" },
-  { label: "Grade 6", value: "GRADE_6" },
-  { label: "Grade 7", value: "GRADE_7" },
-  { label: "Grade 8", value: "GRADE_8" },
-  { label: "Grade 9", value: "GRADE_9" },
-  { label: "Grade 10", value: "GRADE_10" },
-  { label: "Grade 11", value: "GRADE_11" },
-];
-
-const BOARDING: { label: string; value: BoardingType }[] = [
-  { label: "Semi Residential", value: "SEMI_RESIDENTIAL" },
-  { label: "Regular Boarder", value: "REGULAR_BOARDER" },
-];
-
-const GENDERS: { label: string; value: Gender }[] = [
-  { label: "Male", value: "MALE" },
-  { label: "Female", value: "FEMALE" },
-];
-
-const defaultForm = (): FormState => ({
-  applicationNo: "",
-  fedenaNo: "",
-  penNumber: "",
-  apaarId: "",
-  admissionNo: "",
-  classId: "",
-  gradeSought: "GRADE_1",
-  boardingType: "SEMI_RESIDENTIAL",
-  residencyType: "Day Scholar",
-  applicationFee: "",
-  admissionFee: "",
-  studentName: "",
-  gender: "MALE",
-  dateOfBirth: "",
-  aadharNo: "",
-  firstLanguage: "",
-  nationality: "Indian",
-  languagesAtHome: "",
-  caste: "",
-  religion: "",
-  presentAddress: "",
-  permanentAddress: "",
-  parentName: "",
-  parentOccupation: "",
-  officeAddress: "",
-  parentPhone: "",
-  parentEmail: "",
-  parentAadharNo: "",
-  parentWhatsapp: "",
-  bankAccountNo: "",
-  motherName: "",
-  motherPhone: "",
-  motherAadharNo: "",
-  motherEmail: "",
-  panNumber: "",
-  previousSchoolName: "",
-  previousSchoolAddress: "",
-  emergencyFatherNo: "",
-  emergencyMotherNo: "",
-  emergencyGuardianNo: "",
-});
-
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { label: string; value: string }[];
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-medium text-white/70 mb-1.5">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl focus:outline-none focus:ring-1 focus:ring-lime-400/50 text-gray-400"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function SectionTitle({ title }: { title: string }) {
-  return <div className="text-sm font-semibold text-white/90">{title}</div>;
-}
-
-function formatInrCell(n: number | null | undefined) {
-  if (n == null || Number.isNaN(Number(n))) return "—";
-  return `₹ ${Number(n).toLocaleString("en-IN")}`;
-}
-
-function formatGradeLabel(g: string) {
-  return g.replace(/^GRADE_/i, "Grade ").replace(/_/g, " ");
-}
-
-function formatBoardingLabel(b: string) {
-  return b
-    .split("_")
-    .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
-    .join(" ");
-}
-
-function classLabel(r: AdmissionRow) {
-  if (r.class?.name) {
-    return r.class.section ? `${r.class.name} · ${r.class.section}` : r.class.name;
-  }
-  return "—";
-}
-
-function normalizeResidencyType(value: string | null | undefined): string {
-  const v = (value ?? "").trim().toLowerCase().replace(/\s+/g, "");
-  if (!v) return "Day Scholar";
-  if (v === "dayscholar" || v === "dayscholer") return "Day Scholar";
-  if (v === "hostel" || v === "hostler" || v === "hosteler" || v === "hosteller" || v === "hoster") return "Hosteller";
-  if (v === "rte") return "RTE";
-  return value?.trim() || "Day Scholar";
-}
-
-function displayResidencyType(value: string | null | undefined): string {
-  return formatResidencyTypeForDisplay(normalizeResidencyType(value));
-}
+import type {
+  AdmissionRow,
+  BoardingType,
+  FeeAssignRow,
+  FeeHeadOption,
+  FeeType,
+  FormState,
+  Gender,
+} from "./shared/types";
+import { BOARDING, GENDERS, GRADES, defaultForm } from "./shared/constants";
+import {
+  classLabel,
+  displayResidencyType,
+  formatBoardingLabel,
+  formatGradeLabel,
+  formatInrCell,
+  normalizeResidencyType,
+  sanitizeMoneyInput,
+} from "./shared/utils";
+import { Select, SectionTitle } from "./shared/PresentationalBits";
 
 export default function TeacherAdmissionTab() {
   const router = useRouter();
