@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Clock, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import type { ExamScheduleItem } from "@/hooks/useExamTerms";
+import { addExamSchedule } from "@/lib/api/examSchedule";
+import { fetchExamSubjects } from "@/lib/api/examSubjects";
 import Spinner from "@/app/frontend/components/common/Spinner";
 import {
   EXAM_ACCENT,
@@ -54,19 +56,14 @@ export default function ExamScheduleTab({ termId, schedules, onScheduleChange }:
 
     setSaving(true);
     try {
-      const res = await fetch(`/api/exams/terms/${termId}/schedule`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject: subject.trim(),
-          examDate,
-          startTime,
-          durationMin,
-        }),
+      const { ok, data } = await addExamSchedule(termId, {
+        subject: subject.trim(),
+        examDate,
+        startTime,
+        durationMin,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to add");
+      if (!ok) throw new Error(data.message || "Failed to add");
 
       setSubject("");
       setExamDate("");
@@ -85,12 +82,8 @@ export default function ExamScheduleTab({ termId, schedules, onScheduleChange }:
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/exam-subjects", {
-          cache: "no-store",
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (cancelled || !res.ok) return;
+        const { ok, data } = await fetchExamSubjects();
+        if (cancelled || !ok) return;
         const list = Array.isArray(data.subjects)
           ? data.subjects
               .map((name: string) => name?.trim())

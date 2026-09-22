@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { SyllabusItem } from "@/hooks/useExamTerms";
+import { addSyllabusSubject, addSyllabusUnit } from "@/lib/api/syllabus";
 import Spinner from "@/app/frontend/components/common/Spinner";
 import {
   EXAM_ACCENT,
@@ -43,13 +44,8 @@ export default function SyllabusTrackingTab({
     if (!name) return;
     setAddingNewSubject(true);
     try {
-      const res = await fetch(`/api/exams/terms/${termId}/syllabus`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject: name }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
+      const { ok, data } = await addSyllabusSubject(termId, name);
+      if (!ok) {
         throw new Error(data.message || "Failed to add subject");
       }
       setNewSubjectName("");
@@ -68,13 +64,8 @@ export default function SyllabusTrackingTab({
     const nextOrder = subjectItem?.units?.length ?? 0;
     setAddingUnitForSubject(subject);
     try {
-      const res = await fetch(`/api/exams/terms/${termId}/syllabus/units`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, unitName, order: nextOrder }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to add unit");
+      const { ok, data } = await addSyllabusUnit(termId, { subject, unitName, order: nextOrder });
+      if (!ok) throw new Error(data.message || "Failed to add unit");
       setNewUnitName("");
       setAddingSubject(null);
       onSyllabusChange();

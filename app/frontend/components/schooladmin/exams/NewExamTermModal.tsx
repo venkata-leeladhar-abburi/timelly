@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { EXAM_TERM_STATUS } from "@/lib/constants";
 import type { ClassItem } from "@/hooks/useClasses";
+import { createExamTerm, updateExamTerm } from "@/lib/api/examTerms";
 import Spinner from "@/app/frontend/components/common/Spinner";
 
 type ExamTermStatus = "UPCOMING" | "COMPLETED";
@@ -54,22 +55,17 @@ export default function NewExamTermModal({
 
     setSaving(true);
     try {
-      const endpoint = isEdit ? `/api/exams/terms/${termId}` : "/api/exams/terms";
-      const method = isEdit ? "PUT" : "POST";
+      const payload = {
+        name: name.trim(),
+        description: description.trim() || null,
+        classId,
+        status,
+      };
+      const { ok, data } = isEdit
+        ? await updateExamTerm(termId as string, payload)
+        : await createExamTerm(payload);
 
-      const res = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          description: description.trim() || null,
-          classId,
-          status,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to save term");
+      if (!ok) throw new Error(data.message || "Failed to save term");
 
       onSaved(data?.term?.id);
       onClose();
