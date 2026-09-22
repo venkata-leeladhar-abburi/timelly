@@ -8,6 +8,7 @@ import SearchInput from "../common/SearchInput";
 import TableLayout from "../common/TableLayout";
 import { Column } from "../../types/superadmin";
 import Spinner from "../common/Spinner";
+import { fetchSuperadminSchools } from "@/lib/api/superadminSchools";
 import { useDebounce } from "@/app/frontend/hooks/useDebounce";
 
 interface SchoolTurnover {
@@ -30,33 +31,29 @@ export default function Transactions() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/superadmin/schools")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load");
-        return res.json();
+    fetchSuperadminSchools(new URLSearchParams())
+      .then(({ ok, data }) => {
+        if (!ok) throw new Error("Failed to load");
+        return data;
       })
       .then((data) => {
         if (cancelled) return;
-        const list = (data.schools ?? []).map(
-          (
-            s: {
-              slNo: number;
-              id: string;
-              name: string;
-              turnover: number;
-              studentCount: number;
-            },
-            i: number
-          ) => ({
-            slNo: i + 1,
-            id: s.id,
-            name: s.name,
-            turnover: s.turnover ?? 0,
-            studentCount: s.studentCount ?? 0,
-          })
-        );
+        const rawSchools = (data.schools ?? []) as Array<{
+          slNo: number;
+          id: string;
+          name: string;
+          turnover: number;
+          studentCount: number;
+        }>;
+        const list = rawSchools.map((s, i) => ({
+          slNo: i + 1,
+          id: s.id,
+          name: s.name,
+          turnover: s.turnover ?? 0,
+          studentCount: s.studentCount ?? 0,
+        }));
         setSchools(list);
-        setTotalTransactionCount(data.totalTransactionCount ?? 0);
+        setTotalTransactionCount((data as { totalTransactionCount?: number }).totalTransactionCount ?? 0);
       })
       .catch((e) => {
         if (!cancelled) setError(e instanceof Error ? e.message : "Error");

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle } from "lucide-react";
 import PayButton from "@/app/frontend/components/common/PayButton";
+import { fetchMyFees } from "@/lib/api/parentFees";
 
 interface FeeData {
   fee: {
@@ -26,13 +27,12 @@ export default function ParentFeesTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/fees/mine");
-      const json = await res.json();
-      if (!res.ok) {
+      const { ok, data: json } = await fetchMyFees();
+      if (!ok) {
         setError(json.message || "Failed to load fee details");
         return;
       }
-      setData(json);
+      setData(json as FeeData);
     } catch (e) {
       setError("Something went wrong");
     } finally {

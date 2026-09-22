@@ -5,6 +5,10 @@ import { Receipt, ShieldCheck, Clock, CreditCard } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import PayButton from "../../common/PayButton";
+import {
+  fetchParentSubscriptionHistory,
+  fetchParentSubscriptionStatus,
+} from "@/lib/api/parentSubscription";
 
 type StatusResponse = {
   status: "ACTIVE" | "EXPIRED";
@@ -37,16 +41,14 @@ export default function ParentSubscriptionTab() {
       try {
         setLoading(true);
         setError(null);
-        const [statusRes, historyRes] = await Promise.all([
-          fetch("/api/parent/subscription/status", { credentials: "include" }),
-          fetch("/api/parent/subscription/history", { credentials: "include" }),
+        const [statusResult, historyResult] = await Promise.all([
+          fetchParentSubscriptionStatus(),
+          fetchParentSubscriptionHistory(),
         ]);
-        const statusData = await statusRes.json();
-        const historyData = await historyRes.json();
         if (!cancelled) {
-          if (statusRes.ok) setStatus(statusData as StatusResponse);
-          else setError(statusData.message || "Failed to load subscription status");
-          if (historyRes.ok) setHistory(historyData.payments ?? []);
+          if (statusResult.ok) setStatus(statusResult.data as StatusResponse);
+          else setError(statusResult.data.message || "Failed to load subscription status");
+          if (historyResult.ok) setHistory(historyResult.data.payments ?? []);
         }
       } catch {
         if (!cancelled) setError("Something went wrong while loading subscription data");
