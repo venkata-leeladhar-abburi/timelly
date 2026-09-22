@@ -3,15 +3,12 @@
 import { Clock, Mail, Send } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { formatScheduleTimeForDisplay } from "@/lib/backupScheduleUtils";
-
-type BackupSchedule = {
-  enabled: boolean;
-  scheduleTime: string;
-  recipient: string;
-  schoolId: string | null;
-  schoolName: string | null;
-  lastSentAt: string | null;
-};
+import {
+  fetchBackupSchedule,
+  saveBackupSchedule,
+  sendBackupEmailNow,
+  type BackupSchedule,
+} from "@/lib/api/backupSchedule";
 
 type SchoolOption = { id: string; name: string };
 
@@ -34,9 +31,8 @@ export default function BackupEmailPanel({ schools }: { schools: SchoolOption[] 
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/superadmin/backup-schedule", { cache: "no-store" });
-      const data = (await res.json()) as { schedule?: BackupSchedule; message?: string };
-      if (!res.ok) throw new Error(data.message || "Failed to load backup schedule");
+      const { ok, data } = await fetchBackupSchedule();
+      if (!ok) throw new Error(data.message || "Failed to load backup schedule");
       if (data.schedule) setSchedule(data.schedule);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load backup schedule");
@@ -54,13 +50,8 @@ export default function BackupEmailPanel({ schools }: { schools: SchoolOption[] 
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/superadmin/backup-schedule", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      const data = (await res.json()) as { schedule?: BackupSchedule; message?: string };
-      if (!res.ok) throw new Error(data.message || "Failed to save schedule");
+      const { ok, data } = await saveBackupSchedule(patch);
+      if (!ok) throw new Error(data.message || "Failed to save schedule");
       if (data.schedule) setSchedule(data.schedule);
       setMessage("Settings saved (this does not send an email). Use “Send backup now” to email the Excel.");
     } catch (e) {
@@ -75,19 +66,11 @@ export default function BackupEmailPanel({ schools }: { schools: SchoolOption[] 
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch("/api/superadmin/backup/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipient: schedule.recipient,
-          schoolId: schedule.schoolId,
-        }),
+      const { ok, data } = await sendBackupEmailNow({
+        recipient: schedule.recipient,
+        schoolId: schedule.schoolId,
       });
-      const data = (await res.json()) as {
-        message?: string;
-        schoolsSent?: string[];
-      };
-      if (!res.ok) throw new Error(data.message || "Failed to send backup email");
+      if (!ok) throw new Error(data.message || "Failed to send backup email");
       const names = data.schoolsSent?.join(", ") || "school(s)";
       setMessage(`Backup sent to ${schedule.recipient} (${names})`);
       await loadSchedule();

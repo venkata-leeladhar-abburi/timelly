@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchNotifications, markNotificationRead } from "@/lib/api/notifications";
 import { CommonSettingsProps } from "./portalSettingsTypes";
 import { SchoolAdminAccountCard } from "./shared";
 import { SchoolEmailDomainCard } from "./shared";
@@ -28,12 +29,8 @@ export default function SchoolAdminSettingsView({
     const loadNotifications = async () => {
       try {
         setLoadingNotifications(true);
-        const res = await fetch("/api/notifications?take=10", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const data = await res.json();
-        if (res.ok) {
+        const { ok, data } = await fetchNotifications(10);
+        if (ok) {
           setNotifications(data.notifications || []);
           setUnreadCount(data.unreadCount || 0);
         }
@@ -48,7 +45,7 @@ export default function SchoolAdminSettingsView({
 
   const markOneRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: "PATCH", credentials: "include" });
+      await markNotificationRead(id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );

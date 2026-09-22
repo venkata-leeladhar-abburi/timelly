@@ -2,24 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Building2, Mail, Phone, User, Lock } from "lucide-react";
+import { createChairman, fetchChairmenSchools, type ChairmanSchoolOption } from "@/lib/api/chairmen";
 import PageHeader from "../common/PageHeader";
 import SearchInput from "../common/SearchInput";
 import { PRIMARY_COLOR } from "../../constants/colors";
 
-type SchoolOption = {
-  id: string;
-  name: string;
-  location?: string;
-  users?: ChairmanUser[];
-};
-
-type ChairmanUser = {
-  id: string;
-  name: string | null;
-  email: string | null;
-  mobile: string | null;
-  createdAt: string;
-};
+type SchoolOption = ChairmanSchoolOption;
 
 type FormState = {
   schoolId: string;
@@ -49,9 +37,8 @@ export default function AddChairman() {
     setLoadingSchools(true);
     setError("");
     try {
-      const res = await fetch("/api/superadmin/chairmen", { credentials: "include", cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to load chairman schools");
+      const { ok, data } = await fetchChairmenSchools();
+      if (!ok) throw new Error(data.message || "Failed to load chairman schools");
       setSchools(Array.isArray(data.schools) ? data.schools : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load schools");
@@ -88,14 +75,8 @@ export default function AddChairman() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/superadmin/chairmen/create", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to create chairman");
+      const { ok, data } = await createChairman(form);
+      if (!ok) throw new Error(data.message || "Failed to create chairman");
       setSuccess(data.message || "Chairman account created.");
       setForm(emptyForm);
       await fetchSchools();

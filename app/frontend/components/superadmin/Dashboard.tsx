@@ -8,28 +8,12 @@ import { formatNumber as fmtNum } from "../../utils/format";
 import StatCard from "../common/statCard";
 import Spinner from "../common/Spinner";
 import { AVATAR_URL } from "../../constants/images";
+import {
+  fetchSuperadminDashboard,
+  type SuperadminDashboardData,
+} from "@/lib/api/superadminDashboard";
 
-export interface SuperadminDashboardData {
-  stats: { totalSchools: number; totalStudents: number; totalTeachers: number };
-  schools: Array<{
-    id: string;
-    name: string;
-    location: string;
-    photoUrl?: string | null;
-    studentCount: number;
-    teacherCount: number;
-    classCount: number;
-  }>;
-  feeTransactions: Array<{
-    id: string;
-    slNo: number;
-    amount: number;
-    schoolId: string;
-    schoolName: string;
-    studentName: string;
-    createdAt: string;
-  }>;
-}
+export type { SuperadminDashboardData };
 
 export default function Dashboard() {
   const [data, setData] = useState<SuperadminDashboardData | null>(null);
@@ -38,19 +22,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/superadmin/dashboard", {
-      credentials: "include",
-      cache: "no-store"
-    })
-      .then((res) => {
-        if (!res.ok) {
-          return res.json().then((errorData) => {
-            throw new Error(errorData.message || (res.status === 403 ? "Forbidden" : "Failed to load"));
-          });
+    fetchSuperadminDashboard()
+      .then(({ ok, status, data: payload }) => {
+        if (!ok) {
+          throw new Error(payload.message || (status === 403 ? "Forbidden" : "Failed to load"));
         }
-        return res.json();
-      })
-      .then((payload) => {
         if (!cancelled) setData(payload);
       })
       .catch((e) => {
