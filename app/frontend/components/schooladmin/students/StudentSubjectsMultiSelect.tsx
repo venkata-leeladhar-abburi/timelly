@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchExamSubjects } from "@/lib/api/examSubjects";
+import { fetchExamTermsByClass } from "@/lib/api/examTerms";
 
 type Props = {
   selected: string[];
@@ -36,28 +38,25 @@ export default function StudentSubjectsMultiSelect({
   const loadOptions = useCallback(async () => {
     setLoading(true);
     try {
-      const [subjectsRes, termsRes] = await Promise.all([
-        fetch("/api/exam-subjects", { credentials: "include", cache: "no-store" }).catch(() => null),
-        classId
-          ? fetch(`/api/exams/terms?classId=${encodeURIComponent(classId)}`, {
-              credentials: "include",
-              cache: "no-store",
-            }).catch(() => null)
-          : Promise.resolve(null),
+      const [subjectsResult, termsResult] = await Promise.all([
+        fetchExamSubjects().catch(() => null),
+        classId ? fetchExamTermsByClass(classId).catch(() => null) : Promise.resolve(null),
       ]);
 
       const names: string[] = [];
 
-      if (subjectsRes?.ok) {
-        const data = await subjectsRes.json().catch(() => ({}));
-        const subjects = Array.isArray(data.subjects) ? data.subjects : [];
+      if (subjectsResult?.ok) {
+        const subjects = Array.isArray(subjectsResult.data.subjects) ? subjectsResult.data.subjects : [];
         subjects.forEach((s: string) => {
           if (s?.trim()) names.push(s.trim());
         });
       }
 
-      if (termsRes?.ok) {
-        const data = await termsRes.json().catch(() => ({}));
+      if (termsResult?.ok) {
+        const data = termsResult.data as {
+          exams?: { subject?: string }[];
+          terms?: { schedules?: { subject?: string }[]; syllabus?: { subject?: string }[] }[];
+        };
         // Teacher shape: { exams: [{ subject }] }
         const exams = Array.isArray(data.exams) ? data.exams : [];
         exams.forEach((exam: { subject?: string }) => {

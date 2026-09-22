@@ -9,6 +9,12 @@ export function fetchExamTerms() {
   return apiGet<ExamTermsResponse>("/api/exams/terms");
 }
 
+export function fetchExamTermsByClass(classId: string) {
+  return apiGet<ExamTermsResponse>(`/api/exams/terms?classId=${encodeURIComponent(classId)}`, {
+    cache: "no-store",
+  });
+}
+
 export type ExamTermMutationResponse = {
   message?: string;
   term?: { id?: string };

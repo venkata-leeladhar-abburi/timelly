@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Download, CheckCircle, AlertCircle, Loader, X } from "lucide-react";
+import { bulkImportUsers } from "@/lib/api/user";
 
 interface ImportResult {
   successful: number;
@@ -93,21 +94,13 @@ Admin User,admin@school.com,SCHOOLADMIN,Principal,Password123`;
     setResult(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const { ok, data } = await bulkImportUsers(file);
 
-      const res = await fetch("/api/user/bulk-import", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(data.message || "Upload failed");
       }
 
-      setResult(data);
+      setResult({ successful: data.successful ?? 0, failed: data.failed ?? 0, errors: data.errors });
       setFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to upload file");

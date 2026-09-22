@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { searchStudents } from "@/lib/api/studentSearch";
 
 type StudentOption = {
   id: string;
@@ -143,15 +144,9 @@ export const StudentSearchAutocomplete = ({
     const timer = setTimeout(() => {
       void (async () => {
         try {
-          const params = new URLSearchParams({ take: "20", search: "1", q });
-          if (statusFilter === "active") params.set("status", "Active");
-          else if (statusFilter === "inactive") params.set("status", "Inactive");
-          const res = await fetch(`/api/student/list?${params.toString()}`, {
-            credentials: "include",
-            cache: "no-store",
-            signal: controller.signal,
-          });
-          const data = await res.json().catch(() => ({}));
+          const status =
+            statusFilter === "active" ? "Active" : statusFilter === "inactive" ? "Inactive" : undefined;
+          const { data } = await searchStudents({ take: "20", search: "1", q, status }, controller.signal);
           if (gen !== searchGenRef.current) return;
           const rows = Array.isArray(data?.students) ? data.students : [];
           setRemoteResults(filterByClass(rows.map(mapApiRow)));
