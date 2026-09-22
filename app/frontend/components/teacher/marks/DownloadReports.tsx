@@ -7,8 +7,8 @@ import {
   Loader2,
 } from "lucide-react";
 import MarksReportTemplate from "@/app/frontend/components/pdf/MarksReportTemplate";
-import { useTeacherDownloadReportsState } from "./shared/useTeacherDownloadReportsState";
-import { TeacherClassAndExamPicker } from "./shared/TeacherClassAndExamPicker";
+import { useTeacherDownloadReportsState } from "./shared";
+import { TeacherClassAndExamPicker } from "./shared";
 
 export default function TeacherDownloadReports() {
   const {

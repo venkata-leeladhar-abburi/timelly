@@ -6,8 +6,8 @@ import TimellyLoader from "../../common/TimellyLoader";
 import { SelectField } from "./MarksSelectField";
 import { Save, ClipboardList, PenLine, Download } from "lucide-react";
 import DataTable from "../../common/TableLayout";
-import type { StudentRow } from "./shared/types";
-import { useMarksEntryState } from "./shared/useMarksEntryState";
+import type { StudentRow } from "./shared";
+import { useMarksEntryState } from "./shared";
 
 const TeacherReportCard = lazy(() => import("./ReportCard"));
 const TeacherDownloadReports = lazy(() => import("./DownloadReports"));

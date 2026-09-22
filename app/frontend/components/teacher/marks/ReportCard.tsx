@@ -3,11 +3,11 @@
 import { SelectField } from "./MarksSelectField";
 import { Search, BookOpen, TrendingUp, Award } from "lucide-react";
 import MarksReportTemplate from "@/app/frontend/components/pdf/MarksReportTemplate";
-import { useReportCardState } from "./shared/useReportCardState";
-import { StatCard } from "./shared/ReportCardStatCard";
-import { ReportCardStudentList } from "./shared/ReportCardStudentList";
-import { ReportCardStudentHeader } from "./shared/ReportCardStudentHeader";
-import { ReportCardMarksTable } from "./shared/ReportCardMarksTable";
+import { useReportCardState } from "./shared";
+import { StatCard } from "./shared";
+import { ReportCardStudentList } from "./shared";
+import { ReportCardStudentHeader } from "./shared";
+import { ReportCardMarksTable } from "./shared";
 
 export default function TeacherReportCard({
   scope = "teacher",
