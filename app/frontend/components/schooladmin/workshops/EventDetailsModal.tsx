@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { CalendarDays, Clock, MapPin, Info, X } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
+import { fetchEventRegistrations, registerForEvent } from "@/lib/api/events";
 import { formatDate, formatTime, EventDetailsSidebar } from "./shared/event-details";
 
 interface EventDetailsModalProps {
@@ -58,9 +59,8 @@ export default function EventDetailsModal({
 
   useEffect(() => {
     if (open && showEnrolledStudents && event?.id) {
-      fetch(`/api/events/${event.id}/registrations`)
-        .then((res) => res.json())
-        .then((data) => {
+      fetchEventRegistrations(event.id)
+        .then(({ data }) => {
           if (data?.students) setEnrolledStudents(data.students);
           else setEnrolledStudents([]);
         })
@@ -91,14 +91,8 @@ export default function EventDetailsModal({
     setEnrollLoading(true);
     setEnrollError(null);
     try {
-      const res = await fetch("/api/events/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ eventId: event.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Enrollment failed");
+      const { ok, data } = await registerForEvent(event.id);
+      if (!ok) throw new Error(data?.message || "Enrollment failed");
       setEnrolled(true);
       onEnrollSuccess?.();
     } catch (err) {

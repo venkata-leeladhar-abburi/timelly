@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { normalizeExamTypes } from "@/lib/exams/examTypes";
 import { downloadClassReportCardsTwoUpPdf } from "@/lib/exams/classReportCardsTwoUpPdf";
+import { fetchClassListLite, fetchClassStudents } from "@/lib/api/classList";
+import { fetchExamTypes } from "@/lib/api/examTypes";
+import { fetchExamSubjects } from "@/lib/api/examSubjects";
+import { fetchMarksReportCard } from "@/lib/api/marks";
 
 type ClassOption = {
   id: string;
@@ -56,37 +60,28 @@ export default function DownloadClassPdf() {
     (async () => {
       setClassesLoading(true);
       try {
-        const [classRes, examRes, subRes] = await Promise.all([
-          fetch("/api/class/list?lite=1", { credentials: "include", cache: "no-store" }),
-          fetch("/api/exam-types", { credentials: "include", cache: "no-store" }),
-          fetch("/api/exam-subjects", { credentials: "include", cache: "no-store" }),
+        const [classResult, examResult, subResult] = await Promise.all([
+          fetchClassListLite(),
+          fetchExamTypes(),
+          fetchExamSubjects(),
         ]);
-        if (classRes.ok) {
-          const data = await classRes.json().catch(() => ({}));
-          const list = Array.isArray(data.classes)
-            ? data.classes
-            : Array.isArray(data)
-              ? data
-              : [];
-          const mapped: ClassOption[] = list.map(
-            (c: { id: string; name?: string; section?: string | null }) => ({
-              id: c.id,
-              name: c.name || "",
-              section: c.section ?? null,
-              label: c.section ? `${c.name} - ${c.section}` : c.name || c.id,
-            })
-          );
+        if (classResult.ok) {
+          const list = Array.isArray(classResult.data.classes) ? classResult.data.classes : [];
+          const mapped: ClassOption[] = list.map((c) => ({
+            id: c.id,
+            name: c.name || "",
+            section: c.section ?? null,
+            label: c.section ? `${c.name} - ${c.section}` : c.name || c.id,
+          }));
           setClasses(mapped);
           if (mapped.length > 0) setClassId(mapped[0].id);
         }
-        if (examRes.ok) {
-          const data = await examRes.json().catch(() => ({}));
-          const names = normalizeExamTypes(data.examTypes).map((t) => t.name);
+        if (examResult.ok) {
+          const names = normalizeExamTypes(examResult.data.examTypes).map((t) => t.name);
           if (names.length) setExamTypeOptions(["ALL", ...names]);
         }
-        if (subRes.ok) {
-          const data = await subRes.json().catch(() => ({}));
-          const names: string[] = Array.isArray(data.subjects) ? data.subjects : [];
+        if (subResult.ok) {
+          const names: string[] = Array.isArray(subResult.data.subjects) ? subResult.data.subjects : [];
           setSubjectOptions(names);
         }
       } finally {
@@ -97,14 +92,13 @@ export default function DownloadClassPdf() {
 
   const fetchReport = useCallback(
     async (studentId: string, clsId: string): Promise<ReportPayload | null> => {
-      const params = new URLSearchParams({ studentId, classId: clsId });
-      if (examType && examType !== "ALL") params.set("examType", examType);
-      const res = await fetch(`/api/marks/report-card?${params}`, {
-        credentials: "include",
-        cache: "no-store",
+      const { ok, data } = await fetchMarksReportCard({
+        studentId,
+        classId: clsId,
+        examType: examType && examType !== "ALL" ? examType : undefined,
       });
-      if (!res.ok) return null;
-      return (await res.json()) as ReportPayload;
+      if (!ok) return null;
+      return data;
     },
     [examType]
   );
@@ -118,11 +112,7 @@ export default function DownloadClassPdf() {
     setDownloading(true);
     setProgress("Loading students...");
     try {
-      const stuRes = await fetch(
-        `/api/class/students?classId=${encodeURIComponent(classId)}`,
-        { credentials: "include", cache: "no-store" }
-      );
-      const stuData = await stuRes.json().catch(() => ({}));
+      const { data: stuData } = await fetchClassStudents(classId);
       const students: Array<{
         id: string;
         rollNo?: string | null;

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Image as ImageIcon, Send, X, Loader2 } from "lucide-react";
+import { createNewsfeedPost } from "@/lib/api/newsfeed";
 import { uploadImage } from "../../../utils/upload";
 
 function getClipboardImageFile(clipboardData: DataTransfer | null): File | null {
@@ -73,19 +74,14 @@ export default function CreatePost({ onPublished }: CreatePostProps) {
     }
     setPosting(true);
     try {
-      const res = await fetch("/api/newsfeed/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          photo: photoUrls[0] || undefined,
-          photos: photoUrls,
-          mediaUrl: photoUrls[0] || undefined,
-        }),
+      const { ok, data } = await createNewsfeedPost({
+        title: title.trim(),
+        description: description.trim(),
+        photo: photoUrls[0] || undefined,
+        photos: photoUrls,
+        mediaUrl: photoUrls[0] || undefined,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create post");
+      if (!ok) throw new Error(data.message || "Failed to create post");
       setTitle("");
       setDescription("");
       setPhotoUrls([]);
