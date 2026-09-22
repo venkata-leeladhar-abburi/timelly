@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import type { PettyCashExpense, SchoolMeta } from "./pettyCashTypes";
+import { fetchMySchool } from "@/lib/api/school";
 
 export const toRows = (rows: PettyCashExpense[]) =>
   rows.map((row) => ({
@@ -49,8 +50,7 @@ export const downloadExcel = (filteredExpenses: PettyCashExpense[]) => {
 
 const getSchoolMeta = async (): Promise<SchoolMeta> => {
   try {
-    const res = await fetch("/api/school/mine", { credentials: "include", cache: "no-store" });
-    const data = await res.json();
+    const { data } = await fetchMySchool();
     return {
       name: data?.school?.name || "School",
       logoUrl: data?.school?.logoUrl || data?.school?.admins?.[0]?.photoUrl || null,

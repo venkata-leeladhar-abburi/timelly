@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { downloadCsv, downloadExcel, downloadPdf } from "./pettyCashExport";
 import { PAGE_SIZE, emptyForm, type FilterType, type FormState, type PettyCashExpense } from "./pettyCashTypes";
+import {
+  createPettyCashExpense,
+  deletePettyCashExpense,
+  fetchPettyCashExpenses,
+  updatePettyCashExpense,
+} from "@/lib/api/pettyCash";
 
 export function usePettyCashState() {
   const [expenses, setExpenses] = useState<PettyCashExpense[]>([]);
@@ -26,9 +32,8 @@ export function usePettyCashState() {
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/fees/petty-cash", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await fetchPettyCashExpenses();
+      if (!ok) {
         alert(data.message || "Failed to load petty cash records");
         return;
       }
@@ -141,23 +146,18 @@ export function usePettyCashState() {
 
     setSaving(true);
     try {
-      const res = await fetch(
-        editingId ? `/api/fees/petty-cash/${editingId}` : "/api/fees/petty-cash",
-        {
-          method: editingId ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            itemName: form.headOfAccount.trim(),
-            headOfAccount: form.headOfAccount.trim(),
-            paymentType: form.paymentType,
-            amount,
-            expenseDate: form.expenseDate,
-            description: form.description.trim(),
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) {
+      const payload = {
+        itemName: form.headOfAccount.trim(),
+        headOfAccount: form.headOfAccount.trim(),
+        paymentType: form.paymentType,
+        amount,
+        expenseDate: form.expenseDate,
+        description: form.description.trim(),
+      };
+      const { ok, data } = editingId
+        ? await updatePettyCashExpense(editingId, payload)
+        : await createPettyCashExpense(payload);
+      if (!ok) {
         alert(data.message || "Failed to save expense");
         return;
       }
@@ -186,9 +186,8 @@ export function usePettyCashState() {
   const onDelete = async (row: PettyCashExpense) => {
     if (!confirm(`Delete voucher #${row.voucherNo} (${row.itemName})?`)) return;
     try {
-      const res = await fetch(`/api/fees/petty-cash/${row.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await deletePettyCashExpense(row.id);
+      if (!ok) {
         alert(data.message || "Failed to delete expense");
         return;
       }

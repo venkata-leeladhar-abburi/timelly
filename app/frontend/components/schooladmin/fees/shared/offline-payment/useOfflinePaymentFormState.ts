@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ExtraFee, FeeStructure, Student } from "../../types";
+import {
+  fetchFeeBreakdown,
+  recordOfflinePayment,
+  type SelectedHead,
+} from "@/lib/api/offlinePayment";
 
-export type SelectedHead =
-  | { headType: "BASE_COMPONENT"; componentIndex: number; componentName: string }
-  | { headType: "EXTRA_FEE"; extraFeeId: string };
+export type { SelectedHead };
 
 export function useOfflinePaymentFormState({
   structures,
@@ -55,19 +58,14 @@ export function useOfflinePaymentFormState({
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/fees/offline-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          studentId,
-          amount: Number(amount),
-          paymentMode,
-          refNo: refNo || undefined,
-          selectedHeads,
-        }),
+      const { ok, data } = await recordOfflinePayment({
+        studentId,
+        amount: Number(amount),
+        paymentMode,
+        refNo: refNo || undefined,
+        selectedHeads,
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         alert(data.message || "Failed to record payment");
         return;
       }
@@ -158,10 +156,9 @@ export function useOfflinePaymentFormState({
       setBreakdownError(null);
 
       try {
-        const res = await fetch(`/api/fees/admin/breakdown?studentId=${encodeURIComponent(studentId)}`);
-        const data = await res.json();
+        const { ok, data } = await fetchFeeBreakdown(studentId);
 
-        if (!res.ok) {
+        if (!ok) {
           if (!cancelled) setBreakdownError(data.message || "Failed to load due breakdown");
           return;
         }

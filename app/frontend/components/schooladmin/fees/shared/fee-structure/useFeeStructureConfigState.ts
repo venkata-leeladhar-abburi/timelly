@@ -1,6 +1,11 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import type { Class, FeeStructure } from "../../types";
+import {
+  deleteFeeStructure,
+  saveFeeStructure,
+  uploadFeeStructureBulk,
+} from "@/lib/api/feeStructure";
 
 export function useFeeStructureConfigState({
   classes,
@@ -71,15 +76,8 @@ export function useFeeStructureConfigState({
     setBulkUploading(true);
     setBulkResult(null);
     try {
-      const fd = new FormData();
-      fd.append("file", bulkFile);
-      const res = await fetch("/api/fees/structure/bulk", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await uploadFeeStructureBulk(bulkFile);
+      if (!ok) {
         alert(data.message || "Upload failed");
         return;
       }
@@ -140,12 +138,8 @@ export function useFeeStructureConfigState({
         if (!shouldDelete) return;
         try {
           setSaving(true);
-          const res = await fetch(
-            `/api/fees/structure?classId=${encodeURIComponent(deleteClassId)}`,
-            { method: "DELETE" }
-          );
-          if (!res.ok) {
-            const d = await res.json();
+          const { ok, data: d } = await deleteFeeStructure(deleteClassId);
+          if (!ok) {
             alert(d.message || "Failed to delete structure");
             return;
           }
@@ -163,13 +157,8 @@ export function useFeeStructureConfigState({
     }
     try {
       setSaving(true);
-      const res = await fetch("/api/fees/structure", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ classId: structureClassId, components: normalizedComponents }),
-      });
-      if (!res.ok) {
-        const d = await res.json();
+      const { ok, data: d } = await saveFeeStructure(structureClassId, normalizedComponents);
+      if (!ok) {
         alert(d.message || "Failed to save");
         return;
       }
@@ -187,11 +176,8 @@ export function useFeeStructureConfigState({
     if (!deleteClassId || !confirm("Do you really want to delete this entire class fee structure? Student amounts will be recalculated. This action cannot be undone.")) return;
     try {
       setDeleting(true);
-      const res = await fetch(`/api/fees/structure?classId=${encodeURIComponent(deleteClassId)}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const d = await res.json();
+      const { ok, data: d } = await deleteFeeStructure(deleteClassId);
+      if (!ok) {
         alert(d.message || "Failed to delete");
         return;
       }

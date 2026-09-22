@@ -11,6 +11,11 @@ import {
   patchTargetId,
   resolveCatalogHead,
 } from "./hostelMessFeesUtils";
+import {
+  cleanupExtraFeeDuplicates,
+  createExtraFee,
+  patchExtraFee,
+} from "@/lib/api/hostelMessFees";
 
 export function useHostelMessFeesState({
   classes,
@@ -73,25 +78,16 @@ export function useHostelMessFeesState({
         combinedInstallmentTotal: amt,
         splitIntoTwoInstallments: true,
       };
-      const res = targetId
-        ? await fetch(`/api/fees/extra/${targetId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          })
-        : await fetch("/api/fees/extra", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: schoolResidencyHeadName,
-              amount: amt,
-              targetType: "SCHOOL",
-              residencyScope: "HOSTELLER",
-              splitIntoTwoInstallments: true,
-            }),
+      const { ok, data } = targetId
+        ? await patchExtraFee(targetId, body)
+        : await createExtraFee({
+            name: schoolResidencyHeadName,
+            amount: amt,
+            targetType: "SCHOOL",
+            residencyScope: "HOSTELLER",
+            splitIntoTwoInstallments: true,
           });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         alert(data.message || "Failed to save hostel fee");
         return;
       }
@@ -139,29 +135,19 @@ export function useHostelMessFeesState({
       splitIntoTwoInstallments: true,
     };
     if (targetId) {
-      const res = await fetch(`/api/fees/extra/${targetId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patchBody),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, message: data.message || "Failed to update fee" };
+      const { ok, data } = await patchExtraFee(targetId, patchBody);
+      if (!ok) return { ok: false, message: data.message || "Failed to update fee" };
       return { ok: true };
     }
-    const res = await fetch("/api/fees/extra", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: classHeadName,
-        amount: amt,
-        targetType: "CLASS",
-        targetClassId: classId,
-        residencyScope: "DAY_SCHOLAR",
-        splitIntoTwoInstallments: true,
-      }),
+    const { ok, data } = await createExtraFee({
+      name: classHeadName,
+      amount: amt,
+      targetType: "CLASS",
+      targetClassId: classId,
+      residencyScope: "DAY_SCHOLAR",
+      splitIntoTwoInstallments: true,
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, message: data.message || "Failed to save fee" };
+    if (!ok) return { ok: false, message: data.message || "Failed to save fee" };
     return { ok: true };
   };
 
@@ -189,12 +175,8 @@ export function useHostelMessFeesState({
     }
     setCleanupBusy(true);
     try {
-      const res = await fetch("/api/fees/extra/cleanup-duplicates", {
-        method: "POST",
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await cleanupExtraFeeDuplicates();
+      if (!ok) {
         alert(data.message || "Cleanup failed");
         return;
       }

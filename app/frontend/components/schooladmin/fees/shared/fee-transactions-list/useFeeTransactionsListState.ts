@@ -6,6 +6,7 @@ import {
   peekFeesTransactions,
   resolveFeesTransactionsCacheKey,
 } from "@/lib/fees/feesTransactionsCache";
+import { fetchClassDetail, fetchFeeCollectors } from "@/lib/api/feeTransactions";
 
 const PAGE_SIZE = 20;
 
@@ -50,9 +51,8 @@ export function useFeeTransactionsListState({
     }
     setSectionLoading(true);
     try {
-      const res = await fetch(`/api/class/${encodeURIComponent(classId)}`);
-      const data = await res.json();
-      if (res.ok && data.class) {
+      const { ok, data } = await fetchClassDetail(classId);
+      if (ok && data.class) {
         setSelectedSection("");
         setClassStudents(Array.isArray(data.class.students) ? data.class.students : []);
       } else {
@@ -69,9 +69,8 @@ export function useFeeTransactionsListState({
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch("/api/fees/collectors", { credentials: "include", signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => {
+    void fetchFeeCollectors(controller.signal)
+      .then(({ data }) => {
         const rows = Array.isArray(data?.collectors) ? data.collectors : [];
         setCollectorOptions([
           { label: "All staff", value: "" },
