@@ -6,6 +6,7 @@ export type SchoolMineResponse = {
     logoUrl?: string | null;
     address?: string | null;
     location?: string | null;
+    affiliationLine?: string | null;
     admins?: Array<{ photoUrl?: string | null }>;
   };
 };

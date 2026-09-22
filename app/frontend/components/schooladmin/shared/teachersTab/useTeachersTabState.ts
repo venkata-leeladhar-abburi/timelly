@@ -15,6 +15,11 @@ import {
 } from "@/lib/teacher/fetchTeachersPage";
 import { downloadTeacherAttendanceReportPdf } from "@/lib/teacher/teacherAttendanceReportPdf";
 import { ATTENDANCE_STATUSES, attendanceRowsToMap, toLocalDateStr, todayStr, type AttendanceStatus } from "./teachersTabHelpers";
+import {
+  fetchTeacherAttendanceForDate,
+  saveTeacherAttendance as saveTeacherAttendanceApi,
+} from "@/lib/api/teacherAttendance";
+import { fetchMySchool } from "@/lib/api/school";
 
 export function useTeachersTabState() {
   const { data: session } = useSession();
@@ -189,14 +194,8 @@ export function useTeachersTabState() {
     // Optimistic: keep UI responsive and warm client cache immediately.
     setTeacherAttendanceCache(schoolId, attendanceDate, attendances);
     try {
-      const res = await fetch("/api/teacher/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ date: attendanceDate, attendances }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to save");
+      const { ok, data } = await saveTeacherAttendanceApi(attendanceDate, attendances);
+      if (!ok) throw new Error(data.message || "Failed to save");
       // Soft refresh in background — don't block UI or wipe the list.
       void fetchTeacherAttendance(schoolId, attendanceDate, { revalidate: true })
         .then((rows) => setAttendanceMap(attendanceRowsToMap(rows)))
@@ -232,9 +231,7 @@ export function useTeachersTabState() {
       const periodEnd = dates[dates.length - 1];
 
       const allAttendances = await Promise.all(
-        dates.map((date) =>
-          fetch(`/api/teacher/attendance?date=${date}`, { credentials: "include" }).then((r) => r.json())
-        )
+        dates.map((date) => fetchTeacherAttendanceForDate(date).then(({ data }) => data))
       );
       const byDate: Record<string, Record<string, string>> = {};
       dates.forEach((date, i) => {
@@ -244,8 +241,7 @@ export function useTeachersTabState() {
         });
       });
 
-      const schoolRes = await fetch("/api/school/mine", { credentials: "include", cache: "no-store" });
-      const schoolPayload = await schoolRes.json().catch(() => ({}));
+      const { data: schoolPayload } = await fetchMySchool();
       const school = schoolPayload?.school as
         | {
             name?: string;

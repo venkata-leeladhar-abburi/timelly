@@ -8,6 +8,7 @@ import {
   type SchoolAdminClassRow,
 } from "@/lib/school/loadSchoolAdminFastTabs";
 import { generateClassesReportPdf } from "./classesReportPdf";
+import { deleteClass, updateClass } from "@/lib/api/classes";
 
 export function useClassesDataState() {
   const router = useRouter();
@@ -155,9 +156,8 @@ export function useClassesDataState() {
 
   const handleTempDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/class/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await deleteClass(id);
+      if (!ok) {
         throw new Error(data?.message || "Failed to delete class.");
       }
       setClassRows((prev) => {
@@ -179,17 +179,12 @@ export function useClassesDataState() {
   }) => {
     setSavingClassId(payload.id);
     try {
-      const res = await fetch(`/api/class/${payload.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: payload.name,
-          section: payload.section,
-          teacherId: payload.teacherId ?? "",
-        }),
+      const { ok, data } = await updateClass(payload.id, {
+        name: payload.name,
+        section: payload.section,
+        teacherId: payload.teacherId ?? "",
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(data?.message || "Failed to update class.");
       }
       const updated = data?.class;

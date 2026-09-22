@@ -6,6 +6,8 @@ export type SelectedHead =
 
 export type RecordOfflinePaymentResponse = {
   message?: string;
+  idempotent?: boolean;
+  [key: string]: unknown;
 };
 
 export type FeeBreakdownResponse = {
@@ -19,13 +21,18 @@ export type FeeBreakdownResponse = {
   }>;
 };
 
-export function recordOfflinePayment(payload: {
+export type RecordOfflinePaymentPayload = {
   studentId: string;
   amount: number;
   paymentMode: string;
   refNo?: string;
+  transactionId?: string;
+  paymentDate?: string;
   selectedHeads: SelectedHead[];
-}) {
+  explicitAllocations?: Array<{ key: string; amount: number; label: string }>;
+};
+
+export function recordOfflinePayment(payload: RecordOfflinePaymentPayload) {
   return apiPost<RecordOfflinePaymentResponse>("/api/fees/offline-payment", payload);
 }
 

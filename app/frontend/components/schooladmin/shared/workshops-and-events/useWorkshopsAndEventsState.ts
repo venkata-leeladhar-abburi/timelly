@@ -7,6 +7,7 @@ import {
   setEventsPageCache,
 } from "@/lib/school/loadSchoolAdminFastTabs";
 import type { EventItem } from "./workshopsAndEventsTypes";
+import { deleteEvent } from "@/lib/api/events";
 
 export function useWorkshopsAndEventsState() {
   const [activeAction, setActiveAction] = useState<"workshop" | "none">("none");
@@ -171,11 +172,8 @@ export function useWorkshopsAndEventsState() {
     setDeleteTarget(null);
     try {
       setDeleteLoading(true);
-      const res = await fetch(`/api/events/${deletingEventId}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await deleteEvent(deletingEventId);
+      if (!ok) {
         throw new Error(data?.message || "Failed to delete event");
       }
       void fetchEvents(true);

@@ -10,6 +10,7 @@ import {
 import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import type { FeePaymentSuccess } from "../types";
 import { buildConfirmedPaymentResult, dueToPayInputString, sanitizeMoneyInput } from "../studentDetailHelpers";
+import { recordOfflinePayment } from "@/lib/api/offlinePayment";
 
 export function useStudentFeesPaymentModalState({
   studentId,
@@ -208,27 +209,21 @@ export function useStudentFeesPaymentModalState({
     setSaving(true);
 
     try {
-      const res = await fetch("/api/fees/offline-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          studentId,
-          amount: total,
-          paymentMode: mode,
-          refNo: referenceNo.trim() || undefined,
-          transactionId: referenceNo.trim() || undefined,
-          paymentDate,
-          selectedHeads,
-          explicitAllocations: selectedRows.map((r) => ({
-            key: normalizeFeeAllocationKey(r.sourceKey || r.key),
-            amount: Number(r.payAmount),
-            label: r.label,
-          })),
-        }),
+      const { ok, data } = await recordOfflinePayment({
+        studentId,
+        amount: total,
+        paymentMode: mode,
+        refNo: referenceNo.trim() || undefined,
+        transactionId: referenceNo.trim() || undefined,
+        paymentDate,
+        selectedHeads,
+        explicitAllocations: selectedRows.map((r) => ({
+          key: normalizeFeeAllocationKey(r.sourceKey || r.key),
+          amount: Number(r.payAmount),
+          label: r.label,
+        })),
       });
-      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(typeof data.message === "string" ? data.message : "Payment failed");
       }
       if (data.idempotent === true) {

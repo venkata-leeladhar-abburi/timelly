@@ -4,6 +4,10 @@ import type {
   EnrollmentSectionRow,
   GenderViewMode,
 } from "./types";
+import {
+  fetchFeeSummaryForExport,
+  fetchFeeTransactionsForExport,
+} from "@/lib/api/analysis";
 
 export const makeSafeFileName = (base: string, ext: string) =>
   `${base.replace(/[^\w-]+/g, "_").toLowerCase()}.${ext}`;
@@ -171,13 +175,13 @@ export function buildAnalysisExports({
 
   const exportPaymentDetailsExcel = async () => {
     try {
-      const [txRes, summaryRes] = await Promise.all([
-        fetch("/api/fees/transactions?limit=200", { credentials: "include", cache: "no-store" }),
-        fetch("/api/fees/summary", { credentials: "include", cache: "no-store" }),
+      const [txResult, summaryResult] = await Promise.all([
+        fetchFeeTransactionsForExport(),
+        fetchFeeSummaryForExport(),
       ]);
-      const txData = await txRes.json().catch(() => ({}));
-      const summaryData = await summaryRes.json().catch(() => ({}));
-      if (!txRes.ok) {
+      const txData = txResult.data;
+      const summaryData = summaryResult.data;
+      if (!txResult.ok) {
         alert(txData?.message || "Failed to fetch payment transactions.");
         return;
       }

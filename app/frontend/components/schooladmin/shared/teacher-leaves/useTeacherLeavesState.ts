@@ -6,6 +6,7 @@ import {
   type LeaveStatus as Status,
   type SchoolAdminLeave as Leave,
 } from "@/lib/school/loadSchoolAdminFastTabs";
+import { approveTeacherLeave, rejectTeacherLeave } from "@/lib/api/teacherLeaves";
 
 export function useTeacherLeavesState() {
   const [pendingLeaves, setPendingLeaves] = useState<Leave[]>([]);
@@ -124,13 +125,9 @@ export function useTeacherLeavesState() {
     setActionId(id);
 
     try {
-      const res = await fetch(`/api/leaves/${id}/approve`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "FULL" }),
-      });
+      const { ok } = await approveTeacherLeave(id, "FULL");
 
-      if (res.ok) {
+      if (ok) {
         applyLeaveStatus(id, "APPROVED");
         void loadLeaves(true);
       } else {
@@ -147,16 +144,9 @@ export function useTeacherLeavesState() {
     setActionId(selectedLeaveId);
 
     try {
-      const res = await fetch(`/api/leaves/${selectedLeaveId}/approve`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "CONDITIONAL",
-          remarks: conditionalMessage,
-        }),
-      });
+      const { ok } = await approveTeacherLeave(selectedLeaveId, "CONDITIONAL", conditionalMessage);
 
-      if (res.ok) {
+      if (ok) {
         applyLeaveStatus(selectedLeaveId, "CONDITIONALLY_APPROVED", conditionalMessage);
         void loadLeaves(true);
       } else {
@@ -175,13 +165,9 @@ export function useTeacherLeavesState() {
     setActionId(id);
 
     try {
-      const res = await fetch(`/api/leaves/${id}/reject`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remarks: "Rejected by admin" }),
-      });
+      const { ok } = await rejectTeacherLeave(id, "Rejected by admin");
 
-      if (res.ok) {
+      if (ok) {
         applyLeaveStatus(id, "REJECTED", "Rejected by admin");
         void loadLeaves(true);
       } else {

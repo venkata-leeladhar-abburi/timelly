@@ -12,6 +12,13 @@ import {
   type EditableEntry,
   type TeacherOption,
 } from "./timetableTypes";
+import {
+  fetchAllTimetables,
+  fetchClassListLite,
+  fetchTeacherList,
+  fetchTimetableForClass,
+  saveTimetable,
+} from "@/lib/api/timetable";
 
 export function useTimetableState() {
   const cachedSetup = timetableSetupCache;
@@ -47,22 +54,20 @@ export function useTimetableState() {
     setLoading(true);
     setError(null);
     try {
-      const [classRes, teacherRes, timetableRes] = await Promise.all([
-        fetch("/api/class/list?lite=1", { credentials: "include" }),
-        fetch("/api/teacher/list", { credentials: "include" }),
-        fetch("/api/timetable?all=1", { credentials: "include" }),
+      const [classResult, teacherResult, timetableResult] = await Promise.all([
+        fetchClassListLite(),
+        fetchTeacherList(),
+        fetchAllTimetables(),
       ]);
-      const [classData, teacherData, timetableData] = await Promise.all([
-        classRes.json().catch(() => ({})),
-        teacherRes.json().catch(() => ({})),
-        timetableRes.json().catch(() => ({})),
-      ]);
-      if (!classRes.ok) throw new Error(classData.message || "Failed to load classes");
+      const classData = classResult.data;
+      const teacherData = teacherResult.data;
+      const timetableData = timetableResult.data;
+      if (!classResult.ok) throw new Error(classData.message || "Failed to load classes");
 
       const loadedClasses = Array.isArray(classData.classes) ? classData.classes : [];
       const loadedTeachers = Array.isArray(teacherData.teachers) ? teacherData.teachers : [];
       setTimetableSetupCache({ classes: loadedClasses, teachers: loadedTeachers });
-      if (timetableRes.ok && Array.isArray(timetableData.timetables)) {
+      if (timetableResult.ok && Array.isArray(timetableData.timetables)) {
         for (const timetable of timetableData.timetables as TimetablePayload[]) {
           if (timetable?.class?.id) {
             timetableByClassCache.set(timetable.class.id, timetable);
@@ -101,12 +106,8 @@ export function useTimetableState() {
     setError(null);
     setSuccess(null);
     try {
-      const res = await fetch(`/api/timetable?classId=${encodeURIComponent(classId)}`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to load timetable");
+      const { ok, data } = await fetchTimetableForClass(classId);
+      if (!ok) throw new Error(data.message || "Failed to load timetable");
       const timetable = data.timetable as TimetablePayload;
       timetableByClassCache.set(classId, timetable);
       applyTimetable(timetable);
@@ -202,25 +203,19 @@ export function useTimetableState() {
     setError(null);
     setSuccess(null);
     try {
-      const res = await fetch("/api/timetable", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          classId: selectedClassId,
-          title,
-          notes,
-          entries: validEntries.map(({ clientId: _clientId, teacher: _teacher, ...entry }, index) => ({
-            ...entry,
-            slotOrder: index,
-            subject: entry.slotType === "BREAK" ? null : entry.subject,
-            room: entry.room || classLabel(selectedClass),
-            teacherId: entry.teacherId || null,
-          })),
-        }),
+      const { ok, data } = await saveTimetable({
+        classId: selectedClassId,
+        title,
+        notes,
+        entries: validEntries.map(({ clientId: _clientId, teacher: _teacher, ...entry }, index) => ({
+          ...entry,
+          slotOrder: index,
+          subject: entry.slotType === "BREAK" ? null : entry.subject,
+          room: entry.room || classLabel(selectedClass),
+          teacherId: entry.teacherId || null,
+        })),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to save timetable");
+      if (!ok) throw new Error(data.message || "Failed to save timetable");
       setSuccess("Timetable saved successfully");
       timetableByClassCache.set(selectedClassId, data.timetable ?? null);
       applyTimetable(data.timetable ?? null);
