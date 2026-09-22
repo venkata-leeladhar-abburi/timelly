@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/app/frontend/hooks/useDebounce";
 import type { SchoolRow } from "../../Schools";
+import { deleteSchool, fetchSuperadminSchools } from "@/lib/api/superadminSchools";
 
 const PAGE_SIZE = 10;
 
@@ -28,12 +29,9 @@ export function useSchoolsState() {
         const params = new URLSearchParams();
         if (searchTerm.trim()) params.set("search", searchTerm.trim());
         if (opts?.cacheBust) params.set("_t", String(Date.now()));
-        const res = await fetch(`/api/superadmin/schools?${params.toString()}`, {
-          cache: "no-store",
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to load schools");
-        setSchools(data.schools ?? []);
+        const { ok, data } = await fetchSuperadminSchools(params, { cache: "no-store" });
+        if (!ok) throw new Error(data.message || "Failed to load schools");
+        setSchools((data.schools as SchoolRow[]) ?? []);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Error loading schools");
         if (!silent) setSchools([]);
@@ -95,14 +93,8 @@ export function useSchoolsState() {
     setDeleteBusy(true);
     setDeleteError(null);
     try {
-      const res = await fetch(`/api/superadmin/schools/${modalSchool.id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schoolName: confirmName }),
-        cache: "no-store",
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) throw new Error(data.message || "Delete failed");
+      const { ok, data } = await deleteSchool(modalSchool.id, confirmName);
+      if (!ok) throw new Error(data.message || "Delete failed");
       setModalSchool(null);
       setConfirmName("");
       setSchools((prev) => prev.filter((s) => s.id !== deletedId));

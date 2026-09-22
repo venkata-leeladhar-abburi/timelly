@@ -2,6 +2,7 @@ import { useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 import { SchoolFormState } from "../../../../interfaces/dashboard";
+import { createSchool } from "@/lib/api/superadminSchools";
 
 export type FormErrors = {
   schoolName?: string;
@@ -110,10 +111,8 @@ export function useAddSchoolState() {
     const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     try {
-      const res = await fetch("/api/superadmin/schools/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { ok, status, data } = await createSchool(
+        {
           schoolName: form.schoolName,
           email: form.email,
           password: form.password,
@@ -127,22 +126,14 @@ export function useAddSchoolState() {
           parentSubscriptionTrialDays: form.parentSubscriptionTrialDays
             ? parseInt(form.parentSubscriptionTrialDays, 10)
             : undefined,
-        }),
-        signal: controller.signal,
-      });
+        },
+        controller.signal
+      );
 
       clearTimeout(timeoutId);
 
-      let data: { message?: string };
-      try {
-        data = await res.json();
-      } catch {
-        setError(res.ok ? "Invalid response from server" : `Request failed (${res.status})`);
-        return;
-      }
-
-      if (!res.ok) {
-        setError(data?.message || "Failed to create school");
+      if (!ok) {
+        setError(data?.message || `Failed to create school (${status})`);
         return;
       }
       setShowSuccess(true);

@@ -2,6 +2,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useDebounce } from "@/app/frontend/hooks/useDebounce";
 import type { BillingMode, SubscriptionRow } from "../../Subscriptions";
+import { fetchSuperadminSchools, updateSchoolSubscription } from "@/lib/api/superadminSchools";
 
 export function useSubscriptionsState() {
   const router = useRouter();
@@ -19,14 +20,11 @@ export function useSubscriptionsState() {
     try {
       const params = new URLSearchParams();
       if (searchTerm.trim()) params.set("search", searchTerm.trim());
-      const res = await fetch(`/api/superadmin/schools?${params.toString()}`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await fetchSuperadminSchools(params);
+      if (!ok) {
         throw new Error(data.message || "Failed to load schools");
       }
-      const list = (data.schools ?? []).map((s: any) => ({
+      const list = ((data.schools as any[]) ?? []).map((s: any) => ({
         id: s.id,
         name: s.name,
         location: s.location,
@@ -63,17 +61,11 @@ export function useSubscriptionsState() {
     setSavingId(id);
     setError(null);
     try {
-      const res = await fetch(`/api/superadmin/schools/${id}/subscription`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(patch),
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await updateSchoolSubscription(id, patch);
+      if (!ok) {
         throw new Error(data.message || "Failed to update subscription");
       }
-      const u = data.school;
+      const u = data.school as any;
       setRows((prev) =>
         prev.map((r) =>
           r.id === id
