@@ -20,239 +20,15 @@ import {
   writeStudentListCache,
   type StudentListCacheScope,
 } from "@/lib/students/studentListSessionCache";
-
-type Props = {
-  classes?: ClassItem[];
-  reload?: () => void;
-};
-
-type ClassesListResponse = {
-  classes: ClassItem[];
-};
-
-type StudentsListResponse = {
-  students: StudentRow[];
-};
-
-type UploadFailedRow = {
-  row?: number;
-  error?: string;
-};
-
-type UploadResult = {
-  createdCount?: number;
-  failedCount?: number;
-  failed?: UploadFailedRow[];
-};
-
-type StatusFilter = "active" | "inactive" | "all";
-
-const formatStudentMessage = (message: string) => {
-  const normalized = message.toLowerCase();
-  if (normalized.includes("student name and timelly id already exist")) {
-    return "Student with same name and Timelly ID already exists.";
-  }
-  if (normalized.includes("timelly id already exists")) {
-    return "Timelly ID already exists.";
-  }
-  if (normalized.includes("aadhaar number already exists in another school")) {
-    return "Aadhaar number already exists in another school.";
-  }
-  if (normalized.includes("upload failed at row")) {
-    return message;
-  }
-  return message || "Something went wrong. Please try again.";
-};
-
-let classesCache: ClassItem[] | null = null;
-let classesPromise: Promise<ClassItem[] | null> | null = null;
-
-const preloadClasses = () => {
-  if (classesCache) return Promise.resolve(classesCache);
-  if (classesPromise) return classesPromise;
-
-  classesPromise = fetch("/api/class/list?lite=1", { cache: "no-store", credentials: "include" })
-    .then(async (res) => {
-      if (!res.ok) return null;
-      const data: ClassesListResponse = await res.json();
-      classesCache = data.classes || [];
-      return classesCache;
-    })
-    .catch(() => null)
-    .finally(() => {
-      classesPromise = null;
-    });
-
-  return classesPromise;
-};
-
-void preloadClasses();
-
-const DEFAULT_FORM: StudentFormState = {
-  name: "",
-  rollNo: "",
-  penNumber: "",
-  apaarId: "",
-  gender: "",
-  residencyType: "Day Scholar",
-  dob: "",
-  classId: "",
-  section: "",
-  status: "Active",
-  fatherName: "",
-  motherName: "",
-  occupation: "",
-  officeAddress: "",
-  phoneNo: "",
-  email: "",
-  address: "",
-  aadhaarNo: "",
-  parentAadharNo: "",
-  parentWhatsapp: "",
-  bankAccountNo: "",
-  totalFee: "",
-  discountPercent: "",
-  applicationFee: "",
-  admissionFee: "",
-  previousSchool: "",
-  houseNo: "",
-  street: "",
-  city: "",
-  town: "",
-  state: "",
-  pinCode: "",
-  nationality: "Indian",
-  languagesAtHome: "",
-  caste: "",
-  religion: "",
-  emergencyFatherNo: "",
-  emergencyMotherNo: "",
-  emergencyGuardianNo: "",
-  subjects: [],
-};
-
-const EMPTY_CLASSES: ClassItem[] = [];
-
-const digitsOnly = (value: string) => value.replace(/\D/g, "");
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const validateForm = (
-  form: StudentFormState,
-  options: {
-    requireAadhaar: boolean;
-    requirePhone: boolean;
-    requireClass?: boolean;
-    requireGender?: boolean;
-    strictOptionalFormats?: boolean;
-  }
-): StudentFormErrors => {
-  const newErrors: StudentFormErrors = {};
-
-  if (!form.name.trim() || form.name.length < 2) {
-    newErrors.name = "Student name must be at least 2 characters";
-  }
-
-  if (!form.fatherName.trim() || form.fatherName.length < 2) {
-    newErrors.fatherName = "Parent name must be at least 2 characters";
-  }
-
-  if (options.requireGender && !form.gender.trim()) {
-    newErrors.gender = "Please select gender";
-  }
-
-  if (options.requireAadhaar) {
-    const a12 = digitsOnly(form.aadhaarNo);
-    if (a12.length !== 12) {
-      newErrors.aadhaarNo = "Aadhaar number must be exactly 12 digits";
-    }
-  }
-
-  if (options.requirePhone) {
-    const p10 = digitsOnly(form.phoneNo);
-    if (p10.length !== 10) {
-      newErrors.phoneNo = "Contact number must be exactly 10 digits";
-    }
-  }
-
-  if (!form.dob || !form.dob.trim()) {
-    newErrors.dob = "Please enter a valid date of birth";
-  } else {
-    const ymd = form.dob.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!ymd) {
-      newErrors.dob = "Please enter a valid date of birth";
-    } else {
-      const y = Number(ymd[1]);
-      const m = Number(ymd[2]);
-      const d = Number(ymd[3]);
-      const today = new Date();
-      const ty = today.getFullYear();
-      const tm = today.getMonth() + 1;
-      const td = today.getDate();
-      if (y > ty || (y === ty && m > tm) || (y === ty && m === tm && d >= td)) {
-        newErrors.dob = "Date of birth must be in the past";
-      }
-    }
-  }
-
-  if (options.requireClass && !form.classId.trim()) {
-    newErrors.classId = "Please select a class";
-  }
-
-  if (form.address.trim() && form.address.trim().length < 5) {
-    newErrors.address = "Address must be at least 5 characters when provided";
-  }
-
-  const roll = form.rollNo.trim();
-  if (roll.length > 40) {
-    newErrors.rollNo = "Student ID must be at most 40 characters";
-  }
-
-  if (options.strictOptionalFormats) {
-    const email = form.email.trim();
-    if (email && !EMAIL_REGEX.test(email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    const pa = digitsOnly(form.parentAadharNo);
-    if (form.parentAadharNo.trim() && pa.length !== 12) {
-      newErrors.parentAadharNo = "Parent Aadhaar must be exactly 12 digits";
-    }
-
-    const pw = digitsOnly(form.parentWhatsapp);
-    if (form.parentWhatsapp.trim() && pw.length !== 10) {
-      newErrors.parentWhatsapp = "WhatsApp number must be exactly 10 digits";
-    }
-
-    const pin = digitsOnly(form.pinCode);
-    if (form.pinCode.trim() && pin.length !== 6) {
-      newErrors.pinCode = "PIN code must be exactly 6 digits";
-    }
-
-    const bank = form.bankAccountNo.replace(/\s/g, "");
-    if (bank && !/^\d{9,18}$/.test(bank)) {
-      newErrors.bankAccountNo = "Bank account number must be 9–18 digits";
-    }
-
-    const checkEmergency = (raw: string, key: keyof StudentFormState) => {
-      if (!raw.trim()) return;
-      const d = digitsOnly(raw);
-      if (d.length !== 10) {
-        newErrors[key] = "Must be exactly 10 digits";
-      }
-    };
-    checkEmergency(form.emergencyFatherNo, "emergencyFatherNo");
-    checkEmergency(form.emergencyMotherNo, "emergencyMotherNo");
-    checkEmergency(form.emergencyGuardianNo, "emergencyGuardianNo");
-  }
-
-  return newErrors;
-};
+import type { Props } from "./shared/hookTypes";
+import { formatStudentMessage, validateForm } from "./shared/validation";
+import { DEFAULT_FORM, EMPTY_CLASSES } from "./shared/defaults";
+import { getClassesCache, preloadClasses } from "./shared/classesPreload";
 
 export default function useStudentPage({ classes, reload }: Props) {
   const stableClasses = classes ?? EMPTY_CLASSES;
   const [availableClasses, setAvailableClasses] = useState<ClassItem[]>(
-    stableClasses.length ? stableClasses : classesCache ?? []
+    stableClasses.length ? stableClasses : getClassesCache() ?? []
   );
   const [classesLoading, setClassesLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
@@ -303,8 +79,9 @@ export default function useStudentPage({ classes, reload }: Props) {
   useEffect(() => {
     if (stableClasses.length) return;
 
-    if (classesCache?.length) {
-      setAvailableClasses(classesCache);
+    const cached = getClassesCache();
+    if (cached?.length) {
+      setAvailableClasses(cached);
       return;
     }
 
