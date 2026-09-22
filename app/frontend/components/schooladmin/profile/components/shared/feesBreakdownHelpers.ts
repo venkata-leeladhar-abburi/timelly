@@ -1,5 +1,21 @@
 import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 
+export type HeadCard = {
+  key: string;
+  sourceKey?: string;
+  label: string;
+  amount: number;
+  gross?: number;
+  paid: number;
+  due: number;
+  extraFeeId?: string;
+  canDeleteExtra?: boolean;
+  extraFeeFullAmount?: number;
+  extraFeeNameForEdit?: string;
+  splitIntoTwoInstallments?: boolean;
+  headType?: string;
+};
+
 export function baseComponentIndexFromHead(head: {
   key: string;
   sourceKey?: string;
