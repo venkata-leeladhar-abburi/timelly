@@ -1,5 +1,5 @@
 import { Pencil } from "lucide-react";
-import type { SubscriptionRow } from "../Subscriptions";
+import type { SubscriptionRow } from "../../Subscriptions";
 import { ModeBadge, StatusPill } from "./subscriptionsColumns";
 
 export function SubscriptionMobileCard({

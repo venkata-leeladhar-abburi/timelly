@@ -6,10 +6,10 @@ import PageHeader from "../common/PageHeader";
 import SearchInput from "../common/SearchInput";
 import TableLayout from "../common/TableLayout";
 import Spinner from "../common/Spinner";
-import { useSubscriptionsState } from "./subscriptions-shared/useSubscriptionsState";
-import { buildSubscriptionsColumns } from "./subscriptions-shared/subscriptionsColumns";
-import { SubscriptionMobileCard } from "./subscriptions-shared/SubscriptionMobileCard";
-import { EditSubscriptionModal } from "./subscriptions-shared/EditSubscriptionModal";
+import { useSubscriptionsState } from "./shared/subscriptions/useSubscriptionsState";
+import { buildSubscriptionsColumns } from "./shared/subscriptions/subscriptionsColumns";
+import { SubscriptionMobileCard } from "./shared/subscriptions/SubscriptionMobileCard";
+import { EditSubscriptionModal } from "./shared/subscriptions/EditSubscriptionModal";
 
 export type BillingMode = "PARENT_SUBSCRIPTION" | "SCHOOL_PAID";
 

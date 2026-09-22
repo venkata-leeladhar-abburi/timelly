@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { CalendarDays, Clock, MapPin, Info, X } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
-import { formatDate, formatTime } from "./event-details-shared/eventDetailsHelpers";
-import { EventDetailsSidebar } from "./event-details-shared/EventDetailsSidebar";
+import { formatDate, formatTime } from "./shared/event-details/eventDetailsHelpers";
+import { EventDetailsSidebar } from "./shared/event-details/EventDetailsSidebar";
 
 interface EventDetailsModalProps {
   open: boolean;

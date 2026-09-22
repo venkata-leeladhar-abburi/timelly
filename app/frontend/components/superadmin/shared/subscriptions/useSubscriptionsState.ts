@@ -1,7 +1,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useDebounce } from "@/app/frontend/hooks/useDebounce";
-import type { BillingMode, SubscriptionRow } from "../Subscriptions";
+import type { BillingMode, SubscriptionRow } from "../../Subscriptions";
 
 export function useSubscriptionsState() {
   const router = useRouter();

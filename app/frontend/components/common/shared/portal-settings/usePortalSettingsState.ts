@@ -1,15 +1,15 @@
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { uploadImage } from "../../../utils/upload";
-import { useToastContext } from "../../../context/ToastContext";
+import { uploadImage } from "../../../../utils/upload";
+import { useToastContext } from "../../../../context/ToastContext";
 import type {
   FormState,
   NotificationState,
   PasswordState,
   PortalVariant,
   PreferencesState,
-} from "../../settings/portalSettingsTypes";
+} from "../../../settings/portalSettingsTypes";
 import {
   loadSettingsUser,
   peekSettingsUser,

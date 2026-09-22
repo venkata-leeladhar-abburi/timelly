@@ -1,4 +1,4 @@
-import type { SubscriptionRow } from "../Subscriptions";
+import type { SubscriptionRow } from "../../Subscriptions";
 
 export function EditSubscriptionModal({
   editing,

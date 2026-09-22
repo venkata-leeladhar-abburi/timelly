@@ -1,7 +1,7 @@
 import { Users, GraduationCap, Building2, TrendingUp, Download, Trash2 } from "lucide-react";
-import { formatAmount as fmtAmount } from "../../../utils/format";
-import { AVATAR_URL } from "../../../constants/images";
-import type { SchoolRow } from "../Schools";
+import { formatAmount as fmtAmount } from "../../../../utils/format";
+import { AVATAR_URL } from "../../../../constants/images";
+import type { SchoolRow } from "../../Schools";
 
 function SchoolAvatar({ school }: { school: SchoolRow }) {
   const fallback = AVATAR_URL;

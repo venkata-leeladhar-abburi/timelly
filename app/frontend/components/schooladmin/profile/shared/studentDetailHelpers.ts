@@ -3,14 +3,14 @@ export {
   patchDetailShell,
   buildPlaceholderDetail,
   buildPlaceholderById,
-} from "./studentDetail-shared/studentOptionHelpers";
+} from "./studentDetail/studentOptionHelpers";
 
 export {
   normalizeBreakdownHeadKey,
   patchBreakdownAfterDelete,
   patchBreakdownAfterPayment,
   patchBreakdownAfterDeletePayment,
-} from "./studentDetail-shared/feeBreakdownPatchHelpers";
+} from "./studentDetail/feeBreakdownPatchHelpers";
 
 export {
   buildConfirmedPaymentResult,
@@ -18,7 +18,7 @@ export {
   isSuccessPaymentStatus,
   computeUpdatedFeeAfterDelete,
   patchDetailAfterDelete,
-} from "./studentDetail-shared/feePaymentResultHelpers";
+} from "./studentDetail/feePaymentResultHelpers";
 
 export function dueToPayInputString(due: number): string {
   if (!Number.isFinite(due) || due <= 0) return "";

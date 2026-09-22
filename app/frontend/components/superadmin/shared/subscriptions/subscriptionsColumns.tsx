@@ -1,6 +1,6 @@
 import { Pencil, ToggleLeft, ToggleRight } from "lucide-react";
-import { Column } from "../../../types/superadmin";
-import type { BillingMode, SubscriptionRow } from "../Subscriptions";
+import { Column } from "../../../../types/superadmin";
+import type { BillingMode, SubscriptionRow } from "../../Subscriptions";
 
 export function ModeBadge({ mode }: { mode: BillingMode }) {
   return (

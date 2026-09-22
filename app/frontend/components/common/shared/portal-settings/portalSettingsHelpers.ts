@@ -4,7 +4,7 @@ import type {
   PasswordState,
   PortalVariant,
   PreferencesState,
-} from "../../settings/portalSettingsTypes";
+} from "../../../settings/portalSettingsTypes";
 
 export type UserMe = {
   id: string;

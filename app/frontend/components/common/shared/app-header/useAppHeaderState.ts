@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AVATAR_URL } from "../../../constants/images";
-import type { HeaderProfile } from "../AppHeader";
+import { AVATAR_URL } from "../../../../constants/images";
+import type { HeaderProfile } from "../../AppHeader";
 
 export function useAppHeaderState({
   profile,

@@ -1,5 +1,5 @@
 import { Award, CheckCircle, Download, Loader2, UserPlus } from "lucide-react";
-import PayButton from "../../../common/PayButton";
+import PayButton from "../../../../common/PayButton";
 
 type EnrolledStudent = {
   id: string;

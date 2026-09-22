@@ -10,9 +10,9 @@ import {
   Landmark,
   Globe,
 } from "lucide-react";
-import SearchInput from "../../common/SearchInput";
-import FormSection from "../../common/FormSection";
-import { SchoolFormState } from "../../../interfaces/dashboard";
+import SearchInput from "../../../common/SearchInput";
+import FormSection from "../../../common/FormSection";
+import { SchoolFormState } from "../../../../interfaces/dashboard";
 import type { FormErrors } from "./useAddSchoolState";
 
 export function AddSchoolFormFields({

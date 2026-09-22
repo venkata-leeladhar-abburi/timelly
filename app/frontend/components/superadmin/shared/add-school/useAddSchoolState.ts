@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type React from "react";
 import { useRouter } from "next/navigation";
-import { SchoolFormState } from "../../../interfaces/dashboard";
+import { SchoolFormState } from "../../../../interfaces/dashboard";
 
 export type FormErrors = {
   schoolName?: string;

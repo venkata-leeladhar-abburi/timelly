@@ -1,4 +1,4 @@
-import type { SchoolRow } from "../Schools";
+import type { SchoolRow } from "../../Schools";
 
 export function DeleteSchoolModal({
   modalSchool,

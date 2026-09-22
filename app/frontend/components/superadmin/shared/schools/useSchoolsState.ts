@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDebounce } from "@/app/frontend/hooks/useDebounce";
-import type { SchoolRow } from "../Schools";
+import type { SchoolRow } from "../../Schools";
 
 const PAGE_SIZE = 10;
 

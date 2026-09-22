@@ -1,6 +1,6 @@
 import type React from "react";
 import { Search } from "lucide-react";
-import SearchInput from "../SearchInput";
+import SearchInput from "../../SearchInput";
 
 export function AppHeaderMobileSearch({
   searchQuery,

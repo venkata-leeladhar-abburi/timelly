@@ -1,8 +1,8 @@
 import { Download, Trash2 } from "lucide-react";
-import { formatAmount as fmtAmount } from "../../../utils/format";
-import { Column } from "../../../types/superadmin";
-import { AVATAR_URL } from "../../../constants/images";
-import type { SchoolRow } from "../Schools";
+import { formatAmount as fmtAmount } from "../../../../utils/format";
+import { Column } from "../../../../types/superadmin";
+import { AVATAR_URL } from "../../../../constants/images";
+import type { SchoolRow } from "../../Schools";
 
 export function buildSchoolsColumns({
   deleteBusy,
