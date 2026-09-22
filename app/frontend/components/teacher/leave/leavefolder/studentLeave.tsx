@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
 import TimellyLoader from "../../../common/TimellyLoader";
+import { approveStudentLeave, rejectStudentLeave } from "@/lib/api/studentLeaves";
 import {
   loadTeacherStudentLeaves,
   peekTeacherStudentLeaves,
@@ -119,9 +120,8 @@ export default function StudentLeave() {
   const handleApprove = async (id: string) => {
     setActionId(id);
     try {
-      const res = await fetch(`/api/student-leaves/${id}/approve`, { method: "PATCH" });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
+      const { ok, data } = await approveStudentLeave(id);
+      if (ok) {
         if (data?.leave) {
           applyLeaveUpdate(data.leave as StudentLeaveItem);
         }
@@ -135,13 +135,8 @@ export default function StudentLeave() {
   const handleReject = async (id: string) => {
     setActionId(id);
     try {
-      const res = await fetch(`/api/student-leaves/${id}/reject`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
+      const { ok, data } = await rejectStudentLeave(id);
+      if (ok) {
         if (data?.leave) {
           applyLeaveUpdate(data.leave as StudentLeaveItem);
         }

@@ -8,6 +8,7 @@ import {
   loadTeacherAttendanceClasses,
   peekTeacherAttendanceClasses,
 } from "@/lib/teacher/loadTeacherFastTabs";
+import { fetchTimetableForClass } from "@/lib/api/timetable";
 
 type ClassOption = {
   id: string;
@@ -66,12 +67,8 @@ export default function TeacherTimetableTab() {
     setLoadingTimetable(true);
     setError(null);
     try {
-      const res = await fetch(`/api/timetable?classId=${encodeURIComponent(classId)}`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to load timetable");
+      const { ok, data } = await fetchTimetableForClass(classId);
+      if (!ok) throw new Error(data.message || "Failed to load timetable");
       setTimetable(data.timetable ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load timetable");

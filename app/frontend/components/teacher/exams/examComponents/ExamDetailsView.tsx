@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ChevronLeft, Calendar, Clock, CheckCircle2, Pencil, LayoutGrid } from "lucide-react";
+import { fetchExamScheduleDetail } from "@/lib/api/examSchedules";
 import PageHeader from "../../../common/PageHeader";
 import TimellyLoader from "../../../common/TimellyLoader";
 
@@ -13,9 +14,8 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
     async function getDetails() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/exams/schedules/${examId}`, { credentials: "include" });
-        const data = await res.json();
-        if (res.ok && data.exam) setExam(data.exam);
+        const { ok, data } = await fetchExamScheduleDetail(examId);
+        if (ok && data.exam) setExam(data.exam);
         else setExam(null);
       } catch {
         setExam(null);

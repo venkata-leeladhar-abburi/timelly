@@ -47,6 +47,23 @@ export type UpdateUserResponse = {
   };
 };
 
+export type UpdateMyProfileResponse = {
+  message?: string;
+} & Record<string, unknown>;
+
+export function updateMyProfile(payload: {
+  name: string;
+  mobile: string;
+  address: string;
+  qualification: string;
+  experience: string;
+  photoUrl: string | null;
+  teacherId: string;
+  subject: string;
+}) {
+  return apiPut<UpdateMyProfileResponse>("/api/user/me", payload);
+}
+
 export function updateUser(
   id: string,
   payload: {

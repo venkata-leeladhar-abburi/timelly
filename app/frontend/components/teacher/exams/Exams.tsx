@@ -8,6 +8,7 @@ import ScheduleExamView from "./examComponents/ScheduleExamView";
 import ExamDetailsView from "./examComponents/ExamDetailsView";
 import TimellyLoader from "../../common/TimellyLoader";
 import DeleteConfirmation from "../../common/DeleteConfirmation";
+import { deleteExamSchedule } from "@/lib/api/examSchedules";
 import {
   invalidateTeacherExamsList,
   loadTeacherExamsList,
@@ -183,12 +184,8 @@ export default function TeacherExamsTab() {
                     setTeacherExamsListCache(next);
                     setExamToDelete(null);
                     try {
-                        const res = await fetch(`/api/exams/schedules/${examToDelete.id}`, {
-                            method: "DELETE",
-                            credentials: "include",
-                        });
-                        if (!res.ok) {
-                            const data = await res.json().catch(() => ({}));
+                        const { ok, data } = await deleteExamSchedule(examToDelete.id);
+                        if (!ok) {
                             setExams(prev);
                             setTeacherExamsListCache(prev);
                             throw new Error(data.message || "Failed to delete exam");

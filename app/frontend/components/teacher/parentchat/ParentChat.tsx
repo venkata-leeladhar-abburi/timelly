@@ -7,6 +7,7 @@ import SearchInput from "../../common/SearchInput";
 import TimellyLoader from "../../common/TimellyLoader";
 import ChatWindow from "./ChatWindow";
 import { Chat, Status } from "./ChatList";
+import { approveAppointment, endAppointment, rejectAppointment } from "@/lib/api/communication";
 import {
   loadTeacherChats,
   peekTeacherChats,
@@ -115,11 +116,8 @@ export default function TeacherParentChatTab() {
     patchStatus(id, status);
     const action = status === "approved" ? "approve" : "reject";
     try {
-      const res = await fetch(`/api/communication/appointments/${id}/${action}`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      const { ok, data } = status === "approved" ? await approveAppointment(id) : await rejectAppointment(id);
+      if (!ok) {
         applyAppointments(prev);
         setError(data?.message ?? `Failed to ${action}`);
         return;
@@ -137,11 +135,8 @@ export default function TeacherParentChatTab() {
     const prev = appointments;
     patchStatus(id, "ended");
     try {
-      const res = await fetch(`/api/communication/appointments/${id}/end`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      const { ok, data } = await endAppointment(id);
+      if (!ok) {
         applyAppointments(prev);
         setError(data?.message ?? "Failed to end chat");
         return;

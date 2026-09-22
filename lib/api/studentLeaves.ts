@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiGet, apiPost, validateApiResponse } from "./http";
+import { apiGet, apiPatch, apiPost, validateApiResponse } from "./http";
 
 const LeaveRecordSchema = z.object({
   id: z.string(),
@@ -55,4 +55,17 @@ export function applyStudentLeave(payload: {
   reason: string;
 }) {
   return apiPost<ApplyLeaveResponse>("/api/student-leaves/apply", payload);
+}
+
+export type LeaveActionResponse = {
+  message?: string;
+  leave?: unknown;
+};
+
+export function approveStudentLeave(id: string) {
+  return apiPatch<LeaveActionResponse>(`/api/student-leaves/${id}/approve`);
+}
+
+export function rejectStudentLeave(id: string) {
+  return apiPatch<LeaveActionResponse>(`/api/student-leaves/${id}/reject`, {});
 }

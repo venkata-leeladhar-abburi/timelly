@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, User } from "lucide-react";
+import { fetchHomeworkSubmissions } from "@/lib/api/homework";
 import AttachmentPreview from "../../common/AttachmentPreview";
 import TimellyLoader from "../../common/TimellyLoader";
 
@@ -32,14 +33,13 @@ export default function HomeworkSubmissionsView({ homeworkId, onBack }: Homework
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/homework/${homeworkId}/submissions`, { credentials: "include" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await fetchHomeworkSubmissions(homeworkId);
+      if (!ok) {
         setError(data.message || "Failed to load submissions");
         setSubmissions([]);
         return;
       }
-      
+
       setHomeworkTitle(data.homework?.title ?? "Submissions");
       setSubmissions(data.submissions ?? []);
     } catch {

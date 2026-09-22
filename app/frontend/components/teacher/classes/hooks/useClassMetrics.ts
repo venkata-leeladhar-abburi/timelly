@@ -1,19 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { fetchClassAttendanceView } from "@/lib/api/attendanceView";
+import { fetchClassMarksView } from "@/lib/api/marks";
 import type { StudentRow } from "./useTeacherClasses";
-
-type AttendanceRecord = {
-  studentId: string;
-  status: string;
-};
-
-type MarkRecord = {
-  studentId: string;
-  marks: number;
-  totalMarks: number;
-  grade?: string | null;
-};
 
 export type StudentMetrics = {
   attendancePct: number | null;
@@ -65,21 +55,18 @@ export function useClassMetrics(classId: string | null, students: StudentRow[]) 
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const [attendanceRes, marksRes] = await Promise.all([
-          fetch(`/api/attendance/view?classId=${classId}`),
-          fetch(`/api/marks/view?classId=${classId}`),
+        const [attendanceResult, marksResult] = await Promise.all([
+          fetchClassAttendanceView(classId),
+          fetchClassMarksView(classId),
         ]);
-
-        const attendanceData = attendanceRes.ok ? await attendanceRes.json() : null;
-        const marksData = marksRes.ok ? await marksRes.json() : null;
 
         if (!isMounted) return;
 
-        const attendance = Array.isArray(attendanceData?.attendances)
-          ? (attendanceData.attendances as AttendanceRecord[])
+        const attendance = attendanceResult.ok && Array.isArray(attendanceResult.data.attendances)
+          ? attendanceResult.data.attendances
           : [];
-        const marks = Array.isArray(marksData?.marks)
-          ? (marksData.marks as MarkRecord[])
+        const marks = marksResult.ok && Array.isArray(marksResult.data.marks)
+          ? marksResult.data.marks
           : [];
 
         const attendanceMap: Record<string, { total: number; present: number }> =

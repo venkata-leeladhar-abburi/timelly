@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { fetchClassList } from "@/lib/api/classList";
 import { fetchAllStudents } from "@/lib/students/fetchAllStudents";
 import {
   loadTeacherClasses,
@@ -98,14 +99,13 @@ export function useTeacherClasses() {
 
   const reload = useCallback(async () => {
     try {
-      const [classRes, studentRows] = await Promise.all([
-        fetch("/api/class/list", { credentials: "include", cache: "no-store" }),
+      const [classResult, studentRows] = await Promise.all([
+        fetchClassList(),
         fetchAllStudents<StudentRow>(undefined, { take: 100, maxPages: 50 }),
       ]);
-      if (!classRes.ok) throw new Error("Failed to load classes.");
-      const classData = await classRes.json();
+      if (!classResult.ok) throw new Error("Failed to load classes.");
       const payload: TeacherClassesPayload = {
-        classes: Array.isArray(classData?.classes) ? classData.classes : [],
+        classes: Array.isArray(classResult.data.classes) ? (classResult.data.classes as TeacherClass[]) : [],
         students: studentRows,
       };
       setTeacherClassesCache(payload);

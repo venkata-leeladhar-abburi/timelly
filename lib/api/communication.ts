@@ -28,3 +28,36 @@ export function createAppointment(payload: { teacherId: string; note?: string })
 export function approveAppointment(id: string) {
   return apiPost<AppointmentActionResponse>(`/api/communication/appointments/${id}/approve`);
 }
+
+export function rejectAppointment(id: string) {
+  return apiPost<AppointmentActionResponse>(`/api/communication/appointments/${id}/reject`);
+}
+
+export function endAppointment(id: string) {
+  return apiPost<AppointmentActionResponse>(`/api/communication/appointments/${id}/end`);
+}
+
+export type CommunicationMessage = {
+  id: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+};
+
+export type MessagesResponse = {
+  message?: string;
+  messages?: CommunicationMessage[];
+};
+
+export function fetchMessages(appointmentId: string) {
+  return apiGet<MessagesResponse>(
+    `/api/communication/messages?appointmentId=${encodeURIComponent(appointmentId)}`
+  );
+}
+
+export function sendMessage(appointmentId: string, content: string) {
+  return apiPost<CommunicationMessage & { message?: string }>("/api/communication/messages", {
+    appointmentId,
+    content,
+  });
+}

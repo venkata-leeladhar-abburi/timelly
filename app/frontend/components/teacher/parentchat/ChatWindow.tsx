@@ -13,6 +13,7 @@ import {
   PhoneOff,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { fetchMessages as fetchMessagesApi, sendMessage } from "@/lib/api/communication";
 import { Chat } from "./ChatList";
 import TimellyLoader from "../../common/TimellyLoader";
 
@@ -50,13 +51,8 @@ export default function ChatWindow({
     if (chat.status !== "approved" && chat.status !== "ended") return;
     setLoadingMessages(true);
     try {
-      const res = await fetch(
-        `/api/communication/messages?appointmentId=${encodeURIComponent(
-          chat.id
-        )}`
-      );
-      if (!res.ok) return;
-      const data = await res.json();
+      const { ok, data } = await fetchMessagesApi(chat.id);
+      if (!ok) return;
       setMessages(Array.isArray(data.messages) ? data.messages : []);
     } catch {
       setMessages([]);
@@ -74,18 +70,12 @@ export default function ChatWindow({
     if (!text || sending || !canChat) return;
     setSending(true);
     try {
-      const res = await fetch("/api/communication/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appointmentId: chat.id, content: text }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+      const { ok, data } = await sendMessage(chat.id, text);
+      if (!ok) {
         console.error(data?.message ?? "Failed to send");
         return;
       }
-      const msg = await res.json();
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => [...prev, data]);
       setMessageInput("");
     } catch (e) {
       console.error("Send error:", e);

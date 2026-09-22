@@ -3,6 +3,7 @@
 import { useMemo, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import { createHomework, updateHomework } from "@/lib/api/homework";
 import useHomeworkPage from "./useHomeworkPage";
 import HomeworkForm from "./HomeworkForm";
 import HomeworkStats from "./HomeworkStats";
@@ -68,28 +69,17 @@ export default function TeacherHomeworkTab() {
     assignedDate: string;
     file?: string | null;
   }) => {
-    const url = editingHomework
-      ? `/api/homework/${editingHomework.id}`
-      : "/api/homework/create";
-    const method = editingHomework ? "PUT" : "POST";
-    const body: Record<string, unknown> = { ...payload };
-    if (payload.file === undefined) delete body.file;
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      throw new Error(d.message || "Failed to save");
+    const { ok, data } = editingHomework
+      ? await updateHomework(editingHomework.id, payload)
+      : await createHomework(payload);
+    if (!ok) {
+      throw new Error((data.message as string) || "Failed to save");
     }
-    const data = await res.json();
     const homework = data.homework ?? data;
     if (!homework || !homework.id) {
       throw new Error("Invalid response from server");
     }
-    handleSubmitSuccess(homework);
+    handleSubmitSuccess(homework as Parameters<typeof handleSubmitSuccess>[0]);
   };
 
   const activeCount = useMemo(() => {

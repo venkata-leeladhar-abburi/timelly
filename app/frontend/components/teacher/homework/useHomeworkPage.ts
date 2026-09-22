@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { deleteHomework } from "@/lib/api/homework";
 import type { HomeworkItem, ClassOption, HomeworkFilter } from "./types";
 import {
   invalidateTeacherHomework,
@@ -98,16 +99,11 @@ export default function useHomeworkPage() {
     syncCache(next);
     if (expandedId === id) setExpandedId(null);
     try {
-      const res = await fetch(`/api/homework/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await deleteHomework(id);
+      if (!ok) {
         setHomeworks(prev);
         syncCache(prev);
-        alert((d as { message?: string }).message || "Delete failed");
+        alert(data.message || "Delete failed");
         return;
       }
       invalidateTeacherHomework();

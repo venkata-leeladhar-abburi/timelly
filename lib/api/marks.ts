@@ -23,6 +23,21 @@ export type MarksReportCardResponse = {
   };
 };
 
+export type MarksViewRecord = {
+  studentId: string;
+  marks: number;
+  totalMarks: number;
+  grade?: string | null;
+};
+
+export type MarksViewResponse = {
+  marks?: MarksViewRecord[];
+};
+
+export function fetchClassMarksView(classId: string) {
+  return apiGet<MarksViewResponse>(`/api/marks/view?classId=${classId}`);
+}
+
 export function fetchMarksReportCard(params: {
   studentId: string;
   classId: string;

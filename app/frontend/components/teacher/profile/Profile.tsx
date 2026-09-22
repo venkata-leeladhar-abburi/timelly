@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import SuccessPopups from "../../common/SuccessPopUps";
 import TimellyLoader from "../../common/TimellyLoader";
 import { EMPTY_CLASSES, EMPTY_QUICK_STATS, EMPTY_TEACHER_PROFILE } from "./data";
+import { updateMyProfile } from "@/lib/api/user";
 import {
   ClassHandlingItem,
   QuickStats,
@@ -96,22 +97,17 @@ export default function TeacherProfileTab() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/user/me", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: draftData.name,
-          mobile: draftData.phone,
-          address: draftData.address,
-          qualification: draftData.qualification,
-          experience: draftData.experience,
-          photoUrl: draftData.avatarUrl,
-          teacherId: draftData.teacherId,
-          subject: draftData.subject,
-        }),
+      const { ok } = await updateMyProfile({
+        name: draftData.name,
+        mobile: draftData.phone,
+        address: draftData.address,
+        qualification: draftData.qualification,
+        experience: draftData.experience,
+        photoUrl: draftData.avatarUrl,
+        teacherId: draftData.teacherId,
+        subject: draftData.subject,
       });
-      if (!res.ok) return;
+      if (!ok) return;
 
       const optimistic: TeacherProfilePagePayload = {
         userId,
