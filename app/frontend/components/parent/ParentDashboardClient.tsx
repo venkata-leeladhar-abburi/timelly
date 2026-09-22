@@ -8,6 +8,7 @@ import RequiredRoles from "../../auth/RequiredRoles";
 import ParentFeesTab from "./ParentFeesTab";
 import ParentSubscriptionTab from "./subscription/ParentSubscriptionTab";
 import type { SidebarItem } from "../../types/sidebar";
+import { fetchParentSubscriptionStatus } from "@/lib/api/parentSubscription";
 
 const PARENT_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
@@ -60,9 +61,8 @@ export default function ParentDashboardClient() {
     (async () => {
       try {
         setLoadingSub(true);
-        const res = await fetch("/api/parent/subscription/status", { credentials: "include" });
-        const data = await res.json();
-        if (!cancelled && res.ok) {
+        const { ok, data } = await fetchParentSubscriptionStatus();
+        if (!cancelled && ok) {
           setSubStatus(data as SubscriptionStatusResponse);
         }
       } catch {

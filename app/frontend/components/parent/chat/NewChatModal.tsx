@@ -4,6 +4,8 @@ import { X } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import SelectInput from "../../common/SelectInput";
 import ParentTimellyLoader from "../ParentTimellyLoader";
+import { fetchTeacherList } from "@/lib/api/timetable";
+import { createAppointment } from "@/lib/api/communication";
 
 type Teacher = {
   id: string;
@@ -30,14 +32,13 @@ export default function NewChatModal({ onClose, onSuccess }: Props) {
     setLoadingTeachers(true);
     setTeacherError(null);
     try {
-      const res = await fetch("/api/teacher/list", { credentials: "include" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await fetchTeacherList();
+      if (!ok) {
         setTeacherError(data.message || "Failed to load teachers");
         setTeachers([]);
         return;
       }
-      const list = Array.isArray(data.teachers) ? data.teachers : [];
+      const list = Array.isArray(data.teachers) ? (data.teachers as Teacher[]) : [];
       setTeachers(list);
       if (list.length > 0 && !selectedTeacherId) {
         setSelectedTeacherId(list[0].id);
@@ -63,14 +64,8 @@ export default function NewChatModal({ onClose, onSuccess }: Props) {
     setSubmitError(null);
     try {
       const note = [topic, message].filter(Boolean).join("\n\n");
-      const res = await fetch("/api/communication/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ teacherId: selectedTeacherId, note: note || undefined }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await createAppointment({ teacherId: selectedTeacherId, note: note || undefined });
+      if (!ok) {
         setSubmitError(data.message || "Request failed");
         return;
       }

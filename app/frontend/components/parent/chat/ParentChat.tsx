@@ -7,6 +7,7 @@ import ChatWindow from "../../teacher/parentchat/ChatWindow";
 import { Chat, Status } from "../../teacher/parentchat/ChatList";
 import NewChatModal from "./NewChatModal";
 import ParentTimellyLoader from "../ParentTimellyLoader";
+import { approveAppointment, fetchAppointments as fetchAppointmentsApi } from "@/lib/api/communication";
 
 const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200";
 
@@ -52,14 +53,13 @@ export default function TeacherParentChatTab() {
   const fetchAppointments = useCallback(async () => {
     if (chats.length === 0) setLoading(true);
     try {
-      const res = await fetch("/api/communication/appointments", { credentials: "include" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await fetchAppointmentsApi();
+      if (!ok) {
         setChats([]);
         return;
       }
       const list = Array.isArray(data.appointments) ? data.appointments : [];
-      setChats(list.map(mapAppointmentToChat));
+      setChats((list as Parameters<typeof mapAppointmentToChat>[0][]).map(mapAppointmentToChat));
     } catch {
       setChats([]);
     } finally {
@@ -81,11 +81,8 @@ export default function TeacherParentChatTab() {
 
   const approveChat = async (id: string) => {
     try {
-      const res = await fetch(`/api/communication/appointments/${id}/approve`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (res.ok) {
+      const { ok } = await approveAppointment(id);
+      if (ok) {
         setChats((prev) =>
           prev.map((c) => (c.id === id ? { ...c, status: "approved" as const } : c))
         );

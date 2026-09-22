@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { X, Loader2 } from "lucide-react";
+import {
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/lib/api/notifications";
 
 /** How often to refetch the full list while the panel is open */
 const PANEL_POLL_MS = 5000;
@@ -74,13 +79,8 @@ export default function NotificationPanel({ onClose, parentPortal, onSnapshot }:
       fetchAbortRef.current = controller;
       if (!silent) setLoading(true);
       try {
-        const res = await fetch("/api/notifications?take=100", {
-          credentials: "include",
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const data = await res.json();
-        if (res.ok) {
+        const { ok, data } = await fetchNotifications(100, controller.signal);
+        if (ok) {
           const list = data.notifications || [];
           const unread = typeof data.unreadCount === "number" ? data.unreadCount : 0;
           setNotifications(list);
@@ -120,7 +120,7 @@ export default function NotificationPanel({ onClose, parentPortal, onSnapshot }:
 
   const markAllRead = async () => {
     try {
-      await fetch("/api/notifications/mark-all-read", { method: "PATCH", credentials: "include" });
+      await markAllNotificationsRead();
       await loadNotifications({ silent: true });
     } catch (error) {
       console.error("Failed to mark all as read:", error);
@@ -129,7 +129,7 @@ export default function NotificationPanel({ onClose, parentPortal, onSnapshot }:
 
   const markOneRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: "PATCH", credentials: "include" });
+      await markNotificationRead(id);
       await loadNotifications({ silent: true });
     } catch (error) {
       console.error("Failed to mark as read:", error);
