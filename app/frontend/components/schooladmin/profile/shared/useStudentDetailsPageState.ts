@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
-import { loadStudentDetailsBundle, peekStudentDetailsBundle } from "@/lib/students/loadStudentDetailsBundle";
-import { getFeeBreakdownCached, fetchFeeBreakdownFast } from "@/lib/fees/feeBreakdownClientCache";
-import { clearStudentListCache, writeStudentListCacheLegacy } from "@/lib/students/studentListSessionCache";
-import { invalidateStudentDetailsBundleCache } from "@/lib/students/loadStudentDetailsBundle";
 import { isInactiveStudentStatus } from "@/lib/students/resolveStudentDisplayClass";
 import type { StudentDetail, StudentOption } from "./types";
-import { buildPlaceholderById, buildPlaceholderDetail, normalizeStudentOption, patchDetailShell } from "./studentDetailHelpers";
 import { useStudentFeeMutations } from "./useStudentFeeMutations";
 import { useStudentListBootstrap } from "./useStudentListBootstrap";
+import { useStudentDetailBundleLoading } from "./useStudentDetailBundleLoading";
+import { useStudentSidebarPatch } from "./useStudentSidebarPatch";
 
 export function useStudentDetailsPageState() {
   const router = useRouter();
@@ -28,7 +25,9 @@ export function useStudentDetailsPageState() {
   const [listLoading, setListLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
   const selectedIdRef = useRef(selectedId);
-  selectedIdRef.current = selectedId;
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterClass, setFilterClass] = useState("");
   const [filterSection, setFilterSection] = useState("");
@@ -86,27 +85,6 @@ export function useStudentDetailsPageState() {
     [syncStudentIdInUrl]
   );
 
-  const warmFeeBreakdown = useCallback(() => {
-    if (!selectedId) return;
-    const shellPaid = Number(detail?.fee?.amountPaid) || 0;
-    const cached = getFeeBreakdownCached(selectedId);
-    if (cached && cached.amountPaid + 0.02 >= shellPaid) {
-      setFeeBreakdown(cached);
-      setFeeBreakdownPending(false);
-      return;
-    }
-    if (feeBreakdown && feeBreakdown.amountPaid + 0.02 >= shellPaid) return;
-    void fetchFeeBreakdownFast(selectedId, {
-      force: Boolean(cached && shellPaid > cached.amountPaid + 0.02),
-      minAmountPaid: shellPaid,
-    }).then((breakdown) => {
-      if (breakdown) {
-        setFeeBreakdown(breakdown);
-        setFeeBreakdownPending(false);
-      }
-    });
-  }, [selectedId, feeBreakdown, detail?.fee?.amountPaid]);
-
   useLayoutEffect(() => {
     if (!detail || focusFromUrl !== "fees") return;
     document.getElementById("student-profile-fees-section")?.scrollIntoView({
@@ -126,100 +104,20 @@ export function useStudentDetailsPageState() {
     deletedPaymentIdsRef,
   });
 
-  useEffect(() => {
-    if (reloadKey === 0) return;
-    const id = selectedIdRef.current;
-    if (id) invalidateStudentDetailsBundleCache(id);
-  }, [reloadKey]);
-
-  useEffect(() => {
-    if (!selectedId) {
-      setDetail(null);
-      setFeeBreakdown(null);
-      setTransactionsReady(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const cachedBreakdown = getFeeBreakdownCached(selectedId);
-    const cachedBundle = reloadKey === 0 ? peekStudentDetailsBundle(selectedId) : null;
-    if (cachedBundle?.student) {
-      applyDetailsBundle(cachedBundle);
-    } else {
-      setTransactionsReady(false);
-      setDetail((prev) => {
-        if (prev?.student.id === selectedId) return prev;
-        const fromList = students.find((s) => s.id === selectedId);
-        return fromList
-          ? buildPlaceholderDetail(normalizeStudentOption(fromList))
-          : buildPlaceholderById(selectedId);
-      });
-    }
-    if (cachedBreakdown) {
-      setFeeBreakdown(cachedBreakdown);
-      setFeeBreakdownPending(false);
-    } else {
-      setFeeBreakdownPending(true);
-    }
-
-    loadStudentDetailsBundle(selectedId, {
-      force: reloadKey > 0,
-      onShellLoaded: (partial) => {
-        if (cancelled) return;
-        const { feeBreakdown: bd, ...rest } = partial;
-        if (rest?.student) {
-          setDetail((prev) => patchDetailShell(prev, rest as StudentDetail));
-          setStudents((prev) => {
-            const row = normalizeStudentOption({
-              id: rest.student.id,
-              name: rest.student.name,
-              admissionNumber: rest.student.admissionNumber,
-              fatherName: rest.student.fatherName,
-              classDisplay: rest.student.class?.displayName,
-              classId: rest.student.class?.id,
-              section: rest.student.class?.section,
-              status: rest.student.status,
-            });
-            if (prev.some((s) => s.id === rest.student.id)) {
-              return prev.map((s) => (s.id === rest.student.id ? { ...s, ...row } : s));
-            }
-            return [row, ...prev];
-          });
-        }
-        if (bd) {
-          setFeeBreakdown(bd);
-          setFeeBreakdownPending(false);
-        }
-      },
-      onBreakdownLoaded: (bd) => {
-        if (cancelled) return;
-        setFeeBreakdown(bd);
-        setFeeBreakdownPending(false);
-      },
-      onExtrasLoaded: (full) => {
-        if (cancelled) return;
-        applyDetailsBundle(full);
-      },
-    })
-      .then((bundle) => {
-        if (cancelled) return;
-        applyDetailsBundle(bundle);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error("Student details error:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setFeeBreakdownPending(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // `students` read for placeholder only — must not restart fetch when list hydrates
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
-  }, [selectedId, reloadKey, applyDetailsBundle]);
+  const { warmFeeBreakdown } = useStudentDetailBundleLoading({
+    selectedId,
+    selectedIdRef,
+    students,
+    setStudents,
+    detail,
+    setDetail,
+    feeBreakdown,
+    setFeeBreakdown,
+    setFeeBreakdownPending,
+    setTransactionsReady,
+    reloadKey,
+    applyDetailsBundle,
+  });
 
   const filtered = students.filter((s) => {
     if (filterStatus === "active" && isInactiveStudentStatus(s.status)) return false;
@@ -305,78 +203,12 @@ export function useStudentDetailsPageState() {
   const sections = Array.from(new Set(classes.map((c) => c.section).filter(Boolean))) as string[];
   const sectionOptions = [{ label: "All Sections", value: "" }, ...sections.map((s) => ({ label: s, value: s }))];
 
-  const handleSidebarSaved = useCallback(
-    (patch?: {
-      fatherName?: string;
-      fatherPhone?: string;
-      motherName?: string;
-      motherPhone?: string;
-      name?: string;
-      email?: string;
-      phone?: string;
-      address?: string;
-      rollNo?: string;
-      classId?: string | null;
-      classDisplayName?: string;
-      gender?: string;
-      residencyType?: string;
-      dob?: string;
-      age?: string;
-    }) => {
-      if (patch) {
-        const sid = selectedIdRef.current;
-        if (!sid) return;
-        invalidateStudentDetailsBundleCache(sid);
-        clearStudentListCache();
-        if (patch.name !== undefined) {
-          setStudents((prev) => {
-            const next = prev.map((s) => (s.id === sid ? { ...s, name: patch.name! } : s));
-            writeStudentListCacheLegacy(next);
-            return next;
-          });
-        }
-        setDetail((current) => {
-          if (!current) return current;
-          const nextStudent = { ...current.student };
-          if (patch.fatherName !== undefined) nextStudent.fatherName = patch.fatherName;
-          if (patch.fatherPhone !== undefined) {
-            nextStudent.fatherPhone = patch.fatherPhone;
-            nextStudent.phone = patch.fatherPhone;
-          }
-          if (patch.motherName !== undefined) nextStudent.motherName = patch.motherName;
-          if (patch.motherPhone !== undefined) nextStudent.motherPhone = patch.motherPhone;
-          if (patch.name !== undefined) nextStudent.name = patch.name;
-          if (patch.email !== undefined) nextStudent.email = patch.email;
-          if (patch.phone !== undefined) nextStudent.phone = patch.phone;
-          if (patch.address !== undefined) nextStudent.address = patch.address;
-          if (patch.rollNo !== undefined) nextStudent.rollNo = patch.rollNo;
-          if (patch.gender !== undefined) nextStudent.gender = patch.gender;
-          if (patch.residencyType !== undefined) nextStudent.residencyType = patch.residencyType;
-          if (patch.dob !== undefined) nextStudent.dob = patch.dob;
-          if (patch.age !== undefined) {
-            const n = Number(patch.age);
-            nextStudent.age = Number.isFinite(n) ? n : nextStudent.age;
-          }
-          if (patch.classId !== undefined) {
-            if (patch.classId && patch.classDisplayName) {
-              const dash = patch.classDisplayName.indexOf(" - ");
-              nextStudent.class = {
-                id: patch.classId,
-                name: dash > 0 ? patch.classDisplayName.slice(0, dash) : patch.classDisplayName,
-                section: dash > 0 ? patch.classDisplayName.slice(dash + 3) : null,
-                displayName: patch.classDisplayName.replace(" - ", "-"),
-              };
-            } else {
-              nextStudent.class = null;
-            }
-          }
-          return { ...current, student: nextStudent };
-        });
-      }
-      setReloadKey((k) => k + 1);
-    },
-    []
-  );
+  const { handleSidebarSaved } = useStudentSidebarPatch({
+    selectedIdRef,
+    setStudents,
+    setDetail,
+    setReloadKey,
+  });
 
   return {
     students,
