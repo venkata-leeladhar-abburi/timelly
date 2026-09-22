@@ -1,4 +1,5 @@
 import type { ClassItem } from "./types";
+import { fetchClassList } from "@/lib/api/classList";
 
 let classesModuleCache: ClassItem[] | null = null;
 let classesInflight: Promise<ClassItem[]> | null = null;
@@ -11,10 +12,9 @@ export async function loadClassesCached(): Promise<ClassItem[]> {
   if (classesModuleCache?.length) return classesModuleCache;
   if (classesInflight) return classesInflight;
 
-  classesInflight = fetch("/api/class/list", { credentials: "include", cache: "no-store" })
-    .then((res) => res.json())
-    .then((data: { classes?: ClassItem[] }) => {
-      classesModuleCache = Array.isArray(data.classes) ? data.classes : [];
+  classesInflight = fetchClassList()
+    .then(({ data }) => {
+      classesModuleCache = Array.isArray(data.classes) ? (data.classes as ClassItem[]) : [];
       return classesModuleCache;
     })
     .finally(() => {

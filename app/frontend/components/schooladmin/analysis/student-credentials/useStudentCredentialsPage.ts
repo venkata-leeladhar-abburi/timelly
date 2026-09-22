@@ -14,6 +14,8 @@ import { downloadStudentCredentialsPdf } from "@/lib/students/studentCredentials
 import { CREDENTIALS_PAGE_SIZE } from "./constants";
 import { loadClassesCached, peekClassesCache } from "./loadClassesCached";
 import type { ClassItem, CredentialsFilterBody, ExportFormat } from "./types";
+import { fetchMySchool } from "@/lib/api/school";
+import { resetStudentCredentials } from "@/lib/api/studentCredentials";
 
 function buildExportParams(
   selectedClassId: string,
@@ -254,11 +256,7 @@ export function useStudentCredentialsPage() {
           toast.error("No verified credentials to export. Reset passwords first.");
           return;
         }
-        const schoolRes = await fetch("/api/school/mine", {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const schoolPayload = await schoolRes.json().catch(() => ({}));
+        const { data: schoolPayload } = await fetchMySchool();
         await downloadStudentCredentialsPdf({
           rows: filteredRows,
           selectedClass,
@@ -320,14 +318,10 @@ export function useStudentCredentialsPage() {
 
     setResetting(true);
     try {
-      const res = await fetch("/api/student/credentials/reset", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildFilterBody(selectedClassId, selectedClass, selectedSection)),
-      });
-      const data = (await res.json()) as { message?: string };
-      if (!res.ok) {
+      const { ok, data } = await resetStudentCredentials(
+        buildFilterBody(selectedClassId, selectedClass, selectedSection)
+      );
+      if (!ok) {
         toast.error(data.message || "Reset failed");
         return;
       }

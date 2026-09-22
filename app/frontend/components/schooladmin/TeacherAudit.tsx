@@ -6,6 +6,7 @@ import TeacherAuditHeader from "./teacheraudit/TeacherAuditHeader";
 import TeacherAuditCard from "./teacheraudit/TeacherAuditCard";
 
 import TimellyLoader from "../common/TimellyLoader";
+import { createTeacherAuditRecord } from "@/lib/api/teacherAudit";
 import {
   invalidateTeacherAuditTeachers,
   loadTeacherAuditRecords,
@@ -142,14 +143,8 @@ export default function TeacherAuditTab() {
         ...(description.trim() && { description: description.trim() }),
       };
 
-      const res = await fetch(`/api/teacher-audit/${teacherId}/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to save");
+      const { ok, data } = await createTeacherAuditRecord(teacherId, payload);
+      if (!ok) throw new Error(data.message || "Failed to save");
 
       if (data.record) {
         const nextRecords = [data.record as AuditRecord, ...(recordsByTeacher[teacherId] ?? [])];

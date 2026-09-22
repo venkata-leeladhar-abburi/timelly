@@ -17,6 +17,7 @@ import StatusBadge from "./schooladmincomponents/StatusBadge";
 import UsersMobileList from "./schooladmincomponents/UsersMobileList";
 import InlinePagination from "./schooladmincomponents/InlinePagination";
 import { IUser } from "@/app/frontend/constants/addUserTable";
+import { deleteUser } from "@/lib/api/user";
 import {
   fetchUserListPage,
   invalidateAddUserPageCache,
@@ -147,13 +148,9 @@ export default function AddUser() {
     setTotalCount((n) => Math.max(0, n - 1));
 
     try {
-      const res = await fetch(`/api/user/${deletedId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      const { ok, data } = await deleteUser(deletedId);
 
-      if (!res.ok) {
-        const data = await res.json();
+      if (!ok) {
         throw new Error(data.message || "Failed to delete user");
       }
 
