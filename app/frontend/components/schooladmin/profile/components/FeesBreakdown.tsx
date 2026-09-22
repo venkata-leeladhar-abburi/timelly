@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Zap, Settings, PlusCircle, X, Tag, AlertCircle } from "lucide-react";
+import { Download, Zap, Settings, PlusCircle, AlertCircle } from "lucide-react";
 import { generatePDF } from "@/lib/pdfUtils";
 import { ModifyFeeModal, type FeeHeadOption, type FeeModifyResult } from "./ModifyFeeModal";
 import { AddExtraFeeModal } from "./AddExtraFeeModal";
@@ -24,6 +24,8 @@ import { FeeReceiptPrintLayout } from "./shared/FeeReceiptPrintLayout";
 import { FeeSummaryCards } from "./shared/FeeSummaryCards";
 import { FeeHeadCardsGrid } from "./shared/FeeHeadCardsGrid";
 import { FeePaymentProgressSection } from "./shared/FeePaymentProgressSection";
+import { EditBaseFeeHeadDialog } from "./shared/EditBaseFeeHeadDialog";
+import { RecordHeadPaymentDialog } from "./shared/RecordHeadPaymentDialog";
 
 export const FeesBreakdown = ({
   studentId,
@@ -858,72 +860,14 @@ export const FeesBreakdown = ({
         />
       )}
 
-      {editBaseHead && (
-        <div className="fixed inset-0 z-[125] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-[#0F172A] shadow-2xl">
-            <div className="p-6">
-              <h2 className="mb-2 text-2xl font-bold text-white">Edit class fee head</h2>
-              <p className="mb-6 text-sm text-gray-400">
-                This updates the class fee structure. Every student in this class gets recalculated totals from the
-                updated heads (plus extras and discounts).
-              </p>
-              <form onSubmit={handleSaveEditBaseHead} className="space-y-5">
-                {editBaseError ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <p>{editBaseError}</p>
-                  </div>
-                ) : null}
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-300">Fee name</label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Tag className="h-5 w-5 text-gray-500" />
-                    </div>
-                    <input
-                      type="text"
-                      value={editBaseHead.name}
-                      onChange={(e) =>
-                        setEditBaseHead((prev) => (prev ? { ...prev, name: e.target.value } : null))
-                      }
-                      className="w-full rounded-xl border border-white/10 bg-black/30 py-3 pl-10 pr-4 text-white outline-none focus:ring-2 focus:ring-blue-500/40"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-300">Amount (₹)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={editBaseHead.amount}
-                    onChange={(e) =>
-                      setEditBaseHead((prev) => (prev ? { ...prev, amount: e.target.value } : null))
-                    }
-                    className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-blue-500/40"
-                  />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => !baseStructureMutating && setEditBaseHead(null)}
-                    className="flex-1 rounded-xl border border-white/15 py-3 text-sm font-semibold text-white/80 hover:bg-white/5"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={baseStructureMutating}
-                    className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
-                  >
-                    {baseStructureMutating ? "Saving…" : "Save"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditBaseFeeHeadDialog
+        editBaseHead={editBaseHead}
+        onEditBaseHeadChange={setEditBaseHead}
+        editBaseError={editBaseError}
+        baseStructureMutating={baseStructureMutating}
+        onSubmit={handleSaveEditBaseHead}
+        onCancel={() => setEditBaseHead(null)}
+      />
 
       {editExtra && (
         <EditExtraFeeModal
@@ -939,120 +883,15 @@ export const FeesBreakdown = ({
         />
       )}
 
-      {payingHead ? (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B1220] p-5 shadow-xl">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h4 className="text-lg font-semibold text-white">Record Payment</h4>
-                <p className="text-xs text-white/60 mt-1">
-                  {payingHead.label} • Due: ₹{payingHead.due.toLocaleString("en-IN")}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => !paymentSaving && setPayingHead(null)}
-                className="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-sm">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/60">Amount (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={paymentForm.amount}
-                  onChange={(e) =>
-                    setPaymentForm((prev) => ({
-                      ...prev,
-                      amount: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter amount"
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-white"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/60">Payment mode</label>
-                <select
-                  value={paymentForm.mode}
-                  onChange={(e) =>
-                    setPaymentForm((prev) => ({
-                      ...prev,
-                      mode: e.target.value as "CASH" | "ONLINE" | "CHEQUE" | "DD" | "OTHERS",
-                    }))
-                  }
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-white"
-                >
-                  <option value="CASH">Cash</option>
-                  <option value="ONLINE">Online</option>
-                  <option value="CHEQUE">Cheque</option>
-                  <option value="DD">DD (Demand Draft)</option>
-                  <option value="OTHERS">Others</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/60">Payment date</label>
-                <input
-                  type="date"
-                  value={paymentForm.paymentDate}
-                  onChange={(e) =>
-                    setPaymentForm((prev) => ({
-                      ...prev,
-                      paymentDate: e.target.value,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-white"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-white/60">UTR / Reference number</label>
-                <input
-                  value={paymentForm.referenceNo}
-                  onChange={(e) =>
-                    setPaymentForm((prev) => ({
-                      ...prev,
-                      referenceNo: e.target.value,
-                    }))
-                  }
-                  placeholder="Optional for cash, required for non-cash"
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-white"
-                />
-              </div>
-            </div>
-
-            {paymentError ? (
-              <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                {paymentError}
-              </div>
-            ) : null}
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => !paymentSaving && setPayingHead(null)}
-                disabled={paymentSaving}
-                className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={submitHeadPayment}
-                disabled={paymentSaving}
-                className="rounded-xl bg-blue-500/90 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50"
-              >
-                {paymentSaving ? "Recording..." : "Record Payment"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <RecordHeadPaymentDialog
+        payingHead={payingHead}
+        paymentForm={paymentForm}
+        onPaymentFormChange={setPaymentForm}
+        paymentError={paymentError}
+        paymentSaving={paymentSaving}
+        onCancel={() => setPayingHead(null)}
+        onSubmit={submitHeadPayment}
+      />
     </div>
   );
 };
