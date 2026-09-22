@@ -5,6 +5,7 @@ import SelectInput from "../../common/SelectInput";
 import PrimaryButton from "../../common/PrimaryButton";
 import SecondaryButton from "../../common/SecondaryButton";
 import type { Class, Student } from "./types";
+import { createExtraFee } from "@/lib/api/hostelMessFees";
 
 const inputClass =
   "w-full min-h-[44px] rounded-xl border border-white/10 bg-[#0F172A]/50 px-4 py-2.5 text-sm text-gray-200 placeholder:text-white/35 focus:border-lime-400/60 focus:outline-none focus:ring-1 focus:ring-lime-400/30";
@@ -50,13 +51,8 @@ export default function AddExtraFeeForm({ classes, students, onSuccess }: AddExt
       }
       if (targetType === "STUDENT") body.targetStudentId = studentId || undefined;
 
-      const res = await fetch("/api/fees/extra", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await createExtraFee(body);
+      if (!ok) {
         alert(data.message || "Failed to add extra fee");
         return;
       }

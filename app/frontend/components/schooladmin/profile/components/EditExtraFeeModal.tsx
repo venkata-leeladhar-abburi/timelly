@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DollarSign, Tag, AlertCircle } from "lucide-react";
+import { patchExtraFee } from "@/lib/api/hostelMessFees";
 
 type Props = {
   extraFeeId: string;
@@ -52,23 +53,18 @@ export const EditExtraFeeModal = ({
 
     try {
       setLoading(true);
-      const res = await fetch(`/api/fees/extra/${encodeURIComponent(extraFeeId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          amount: feeAmount,
-          // Always send combined total when editing a two-installment head so amount
-          // corrections apply even if the checkbox was toggled off by mistake.
-          ...(splitIntoTwoInstallments || initialSplitIntoTwoInstallments
-            ? { combinedInstallmentTotal: feeAmount }
-            : {}),
-          splitIntoTwoInstallments,
-        }),
+      const { ok, data: body } = await patchExtraFee(encodeURIComponent(extraFeeId), {
+        name: name.trim(),
+        amount: feeAmount,
+        // Always send combined total when editing a two-installment head so amount
+        // corrections apply even if the checkbox was toggled off by mistake.
+        ...(splitIntoTwoInstallments || initialSplitIntoTwoInstallments
+          ? { combinedInstallmentTotal: feeAmount }
+          : {}),
+        splitIntoTwoInstallments,
       });
 
-      if (!res.ok) {
-        const body = await res.json();
+      if (!ok) {
         throw new Error(body.message || "Failed to update extra fee");
       }
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CreditCard, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { createPaymentOrder } from "@/lib/api/payment";
 
 interface PayButtonProps {
   amount: number;
@@ -38,27 +39,20 @@ export default function PayButton({
     try {
       const normalizedAmount = Number(amount.toFixed(2));
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: normalizedAmount,
-          ...(returnPath && { return_path: returnPath }),
-          ...(eventRegistrationId && { event_registration_id: eventRegistrationId }),
-          ...(feeSelection && feeSelection.length > 0 ? { fee_selection: feeSelection } : {}),
-        }),
+      const { ok, data: order } = await createPaymentOrder(endpoint, {
+        amount: normalizedAmount,
+        ...(returnPath && { return_path: returnPath }),
+        ...(eventRegistrationId && { event_registration_id: eventRegistrationId }),
+        ...(feeSelection && feeSelection.length > 0 ? { fee_selection: feeSelection } : {}),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const msg = errorData.details || errorData.error || errorData.message || "Unknown error";
-        const status = errorData.statusFromGateway ? ` (Gateway ${errorData.statusFromGateway})` : "";
+      if (!ok) {
+        const msg = order.details || order.error || order.message || "Unknown error";
+        const status = order.statusFromGateway ? ` (Gateway ${order.statusFromGateway})` : "";
         alert(`Failed to create order: ${msg}${status}`);
         setLoading(false);
         return;
       }
-
-      const order = await res.json();
 
       if (order.gateway === "HYPERPG" && order.payment_url) {
         // HyperPG return_url has no query params; store order_id|amount in cookie for verification on return

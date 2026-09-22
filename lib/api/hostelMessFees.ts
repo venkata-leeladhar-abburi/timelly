@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiPatch, apiPost, validateApiResponse } from "./http";
+import { apiDelete, apiPatch, apiPost, validateApiResponse } from "./http";
 
 export const ExtraFeeSaveResponseSchema = z.object({
   message: z.string().optional(),
@@ -27,6 +27,22 @@ export async function createExtraFee(body: Record<string, unknown>) {
   return {
     ...result,
     data: validateApiResponse(ExtraFeeSaveResponseSchema, result.data, "createExtraFee"),
+  };
+}
+
+export async function batchAssignExtraFees(payload: { studentId: string; fees: unknown[] }) {
+  const result = await apiPost<ExtraFeeSaveResponse>("/api/fees/extra/batch-assign", payload);
+  return {
+    ...result,
+    data: validateApiResponse(ExtraFeeSaveResponseSchema, result.data, "batchAssignExtraFees"),
+  };
+}
+
+export async function deleteExtraFee(id: string) {
+  const result = await apiDelete<ExtraFeeSaveResponse>(`/api/fees/extra/${id}`);
+  return {
+    ...result,
+    data: validateApiResponse(ExtraFeeSaveResponseSchema, result.data, "deleteExtraFee"),
   };
 }
 

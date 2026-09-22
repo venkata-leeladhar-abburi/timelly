@@ -3,6 +3,10 @@
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
 import { FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
+import {
+  cleanupBulkExtraFeeDuplicates,
+  importBulkExtraFeeByTimelly,
+} from "@/lib/api/bulkExtraFeeByTimelly";
 
 type Props = {
   open: boolean;
@@ -171,14 +175,8 @@ export default function BulkExtraFeeByTimellyModal({ open, onClose, onApplied }:
         return;
       }
 
-      const res = await fetch("/api/fees/extra/bulk-by-timelly", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ rows }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await importBulkExtraFeeByTimelly(rows);
+      if (!ok) {
         setLocalError(data.message || "Import failed");
         return;
       }
@@ -187,7 +185,7 @@ export default function BulkExtraFeeByTimellyModal({ open, onClose, onApplied }:
         failed: data.failed ?? 0,
         errors: Array.isArray(data.errors) ? data.errors : [],
       });
-      if (data.created > 0) {
+      if ((data.created ?? 0) > 0) {
         onApplied();
       }
     } catch (e) {
@@ -203,14 +201,8 @@ export default function BulkExtraFeeByTimellyModal({ open, onClose, onApplied }:
     setResult(null);
     setCleaning(true);
     try {
-      const res = await fetch("/api/fees/extra/bulk-by-timelly", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ cleanupDuplicates: true }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await cleanupBulkExtraFeeDuplicates();
+      if (!ok) {
         setLocalError(data.message || "Cleanup failed");
         return;
       }

@@ -7,6 +7,7 @@ import { loadAssignFeeCatalog } from "@/lib/fees/loadAssignFeeCatalog";
 import { invalidateFeeBreakdownCache } from "@/lib/fees/feeBreakdownClientCache";
 import { invalidateAssignCatalogCache } from "@/lib/fees/assignFeeCatalogCache";
 import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
+import { batchAssignExtraFees } from "@/lib/api/hostelMessFees";
 
 type FeeAssignRow = {
   id: string;
@@ -158,14 +159,8 @@ export function AssignFeeHeadsCatalogModal({
     setAssigningFees(true);
     setAssignFeeError(null);
     try {
-      const res = await fetch("/api/fees/extra/batch-assign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ studentId, fees: cleaned }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.message || "Failed to assign fees");
+      const { ok, data } = await batchAssignExtraFees({ studentId, fees: cleaned });
+      if (!ok) throw new Error(data?.message || "Failed to assign fees");
       invalidateAssignCatalogCache(studentId);
       invalidateFeeBreakdownCache(studentId);
       onSuccess();

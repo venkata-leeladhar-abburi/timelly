@@ -5,6 +5,7 @@ import { CalendarDays, FileSpreadsheet, FileText } from "lucide-react";
 import { defaultDateRange, type GroupMode, type ReportPayload } from "./shared";
 import { exportAdmissionFeeReportExcel } from "./shared";
 import { exportAdmissionFeeReportPdf } from "./shared";
+import { fetchAdmissionFeeReport } from "@/lib/api/admissionFeeReport";
 
 export default function AdmissionFeeDayReport() {
   const [{ from, to }, setRange] = useState(defaultDateRange);
@@ -17,13 +18,8 @@ export default function AdmissionFeeDayReport() {
     setLoading(true);
     setError(null);
     try {
-      const qs = new URLSearchParams({ from, to });
-      const res = await fetch(`/api/admissions/admission-fee-report?${qs.toString()}`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof body.message === "string" ? body.message : "Failed to load report");
+      const { ok, data: body } = await fetchAdmissionFeeReport(from, to);
+      if (!ok) throw new Error(typeof body.message === "string" ? body.message : "Failed to load report");
       setData(body as ReportPayload);
     } catch (e) {
       setData(null);

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DollarSign, Tag, AlertCircle, ListTree, FileText } from "lucide-react";
+import { modifyStudentFee } from "@/lib/api/studentFee";
 
 export type FeeHeadOption = { key: string; label: string };
 export type FeeModifyResult = {
@@ -142,31 +143,25 @@ export const ModifyFeeModal = ({
 
     try {
       setLoading(true);
-      const res = await fetch(`/api/fees/student/${studentId}`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          totalFee: feeAmount,
-          discountPercent: calculatedDiscountPercent,
-          discountFixedAmount: hasDiscount ? discountAmt : null,
-          ...(hasDiscount
-            ? {
-                discountFeeHeadKey: discountHeadKey.trim(),
-                discountFeeHeadLabel: selectedLabel,
-                discountRemarks: remarks.trim(),
-              }
-            : {
-                discountFeeHeadKey: null,
-                discountFeeHeadLabel: null,
-                discountRemarks: null,
-              }
-          ),
-        }),
+      const { ok, data: body } = await modifyStudentFee(studentId, {
+        totalFee: feeAmount,
+        discountPercent: calculatedDiscountPercent,
+        discountFixedAmount: hasDiscount ? discountAmt : null,
+        ...(hasDiscount
+          ? {
+              discountFeeHeadKey: discountHeadKey.trim(),
+              discountFeeHeadLabel: selectedLabel,
+              discountRemarks: remarks.trim(),
+            }
+          : {
+              discountFeeHeadKey: null,
+              discountFeeHeadLabel: null,
+              discountRemarks: null,
+            }
+        ),
       });
 
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(body.message || "Failed to update fee");
       }
 

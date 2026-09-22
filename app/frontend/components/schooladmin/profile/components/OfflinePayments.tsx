@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard, Plus, Check } from "lucide-react";
+import { fetchFeeBreakdown, recordOfflinePayment } from "@/lib/api/offlinePayment";
 
 type Props = {
     studentId: string;
@@ -47,18 +48,14 @@ export const OfflinePayments = ({ studentId, studentName, remainingFee, onPaymen
         setBreakdownLoading(true);
         setBreakdownError(null);
         try {
-          const res = await fetch(`/api/fees/admin/breakdown?studentId=${encodeURIComponent(studentId)}`, {
-            credentials: "include",
-            cache: "no-store",
-          });
-          const data = await res.json();
-          if (!res.ok) {
+          const { ok, data } = await fetchFeeBreakdown(studentId);
+          if (!ok) {
             if (!cancelled) setBreakdownError(data?.message || "Failed to load fee heads");
             return;
           }
           if (!cancelled && Array.isArray(data.dueHeads)) {
             setCurrentRemainingFee(Number(data.remainingFee) || 0);
-            const opts: Array<{ key: string; label: string; dueBefore: number; head: SelectedHead }> =
+            const opts: Array<{ key: string; label: string; dueBefore: number; head: SelectedHead } | null> =
               data.dueHeads.map((h: any) => {
                 const key: string = h.key;
                 const label: string = h.label;
@@ -146,21 +143,15 @@ export const OfflinePayments = ({ studentId, studentName, remainingFee, onPaymen
                 ? "Cash"
                 : "Cash";
 
-            const response = await fetch("/api/fees/offline-payment", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    studentId,
-                    amount,
-                    paymentMode,
-                    refNo: formData.referenceNumber || undefined,
-                    selectedHeads,
-                }),
+            const { ok, data } = await recordOfflinePayment({
+                studentId,
+                amount,
+                paymentMode,
+                refNo: formData.referenceNumber || undefined,
+                selectedHeads,
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data?.message || "Failed to record payment");
+            if (!ok) throw new Error(data?.message || "Failed to record payment");
 
             setMessageTone("success");
             setMessage("Offline payment recorded successfully!");

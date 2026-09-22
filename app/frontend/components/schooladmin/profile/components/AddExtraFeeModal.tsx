@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DollarSign, Tag, AlertCircle } from "lucide-react";
+import { createExtraFee } from "@/lib/api/hostelMessFees";
 
 type Props = {
   studentId: string;
@@ -32,20 +33,15 @@ export const AddExtraFeeModal = ({ studentId, onClose, onSuccess }: Props) => {
 
     try {
       setLoading(true);
-      const res = await fetch("/api/fees/extra", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          amount: feeAmount,
-          targetType: "STUDENT",
-          targetStudentId: studentId,
-          splitIntoTwoInstallments,
-        }),
+      const { ok, data: body } = await createExtraFee({
+        name: name.trim(),
+        amount: feeAmount,
+        targetType: "STUDENT",
+        targetStudentId: studentId,
+        splitIntoTwoInstallments,
       });
 
-      if (!res.ok) {
-        const body = await res.json();
+      if (!ok) {
         throw new Error(body.message || "Failed to add extra fee");
       }
 

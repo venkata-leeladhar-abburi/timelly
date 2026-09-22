@@ -6,6 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { ExtraFee } from "./types";
 import { schoolAdminStudentDetailsFeesUrl } from "./studentDetailsNav";
 import InlinePagination from "../schooladmincomponents/InlinePagination";
+import { deleteExtraFee, patchExtraFee } from "@/lib/api/hostelMessFees";
 
 const PAGE_SIZE = 15;
 
@@ -68,20 +69,15 @@ export default function ExtraFeesList({
     if (!editingId || !editName.trim() || !editAmount || Number(editAmount) <= 0)
       return;
     try {
-      const res = await fetch(`/api/fees/extra/${editingId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editName.trim(),
-          amount: Number(editAmount),
-          ...(editSplitIntoTwoInstallments
-            ? { combinedInstallmentTotal: Number(editAmount) }
-            : {}),
-          splitIntoTwoInstallments: editSplitIntoTwoInstallments,
-        }),
+      const { ok, data } = await patchExtraFee(editingId, {
+        name: editName.trim(),
+        amount: Number(editAmount),
+        ...(editSplitIntoTwoInstallments
+          ? { combinedInstallmentTotal: Number(editAmount) }
+          : {}),
+        splitIntoTwoInstallments: editSplitIntoTwoInstallments,
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         alert(data.message || "Failed to update");
         return;
       }
@@ -97,11 +93,8 @@ export default function ExtraFeesList({
     if (!confirm(`Do you really want to delete "${ef.name}"? Student amounts will be recalculated. This action cannot be undone.`))
       return;
     try {
-      const res = await fetch(`/api/fees/extra/${ef.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (!res.ok) {
+      const { ok, data } = await deleteExtraFee(ef.id);
+      if (!ok) {
         alert(data.message || "Failed to delete");
         return;
       }

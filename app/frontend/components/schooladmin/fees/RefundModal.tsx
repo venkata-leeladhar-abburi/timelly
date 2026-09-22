@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { refundPayment } from "@/lib/api/refund";
 
 export interface TransactionItem {
   id: string;
@@ -49,17 +50,12 @@ export default function RefundModal({ transaction, onClose, onSuccess }: RefundM
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/payment/refund", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentId: transaction.id,
-          amount: amountNum,
-          reason: reason.trim() || undefined,
-        }),
+      const { ok, data } = await refundPayment({
+        paymentId: transaction.id,
+        amount: amountNum,
+        reason: reason.trim() || undefined,
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         alert(data.message || "Failed to process refund");
         return;
       }

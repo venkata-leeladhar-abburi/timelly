@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import PrimaryButton from "../../common/PrimaryButton";
 import { invalidateAssignCatalogCache } from "@/lib/fees/assignFeeCatalogCache";
+import {
+  createExtraFeeHeadTemplate,
+  deleteExtraFeeHeadTemplate,
+  fetchExtraFeeHeadTemplates,
+  updateExtraFeeHeadTemplate,
+} from "@/lib/api/extraFeeHeadTemplates";
 
 const inputClass =
   "w-full min-h-[44px] rounded-xl border border-white/10 bg-[#0F172A]/50 px-4 py-2.5 text-sm text-gray-200 placeholder:text-white/35 focus:border-lime-400/60 focus:outline-none focus:ring-1 focus:ring-lime-400/30";
@@ -38,9 +44,8 @@ export default function ExtraFeeHeadTemplatesPanel({ onSuccess }: { onSuccess?: 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/fees/extra-head-templates", { credentials: "include", cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof data.message === "string" ? data.message : "Failed to load heads");
+      const { ok, data } = await fetchExtraFeeHeadTemplates();
+      if (!ok) throw new Error(typeof data.message === "string" ? data.message : "Failed to load heads");
       const list = Array.isArray(data.templates) ? data.templates : [];
       setTemplates(
         list
@@ -73,14 +78,12 @@ export default function ExtraFeeHeadTemplatesPanel({ onSuccess }: { onSuccess?: 
     }
     setAdding(true);
     try {
-      const res = await fetch("/api/fees/extra-head-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name, amount: amt, splitIntoTwoInstallments: newSplitIntoTwoInstallments }),
+      const { ok, data } = await createExtraFeeHeadTemplate({
+        name,
+        amount: amt,
+        splitIntoTwoInstallments: newSplitIntoTwoInstallments,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!ok) {
         alert(data.message || "Could not save head");
         return;
       }
@@ -119,14 +122,12 @@ export default function ExtraFeeHeadTemplatesPanel({ onSuccess }: { onSuccess?: 
     }
     setRowSavingId(editingId);
     try {
-      const res = await fetch(`/api/fees/extra-head-templates/${encodeURIComponent(editingId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name, amount: amt, splitIntoTwoInstallments: editSplitIntoTwoInstallments }),
+      const { ok, data } = await updateExtraFeeHeadTemplate(editingId, {
+        name,
+        amount: amt,
+        splitIntoTwoInstallments: editSplitIntoTwoInstallments,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!ok) {
         alert(data.message || "Could not update head");
         return;
       }
@@ -149,12 +150,8 @@ export default function ExtraFeeHeadTemplatesPanel({ onSuccess }: { onSuccess?: 
     }
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/fees/extra-head-templates/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await deleteExtraFeeHeadTemplate(id);
+      if (!ok) {
         alert(data.message || "Could not delete");
         return;
       }
