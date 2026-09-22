@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -11,12 +10,11 @@ import {
 } from "lucide-react";
 import PrimaryButton from "../../common/PrimaryButton";
 import type { Class, ExtraFee } from "./types";
-import { findInstallmentPair, isUnsplitLumpExtraFee } from "@/lib/fees/extraFeeInstallments";
-import {
-  countMessDuplicateExtraFeeIds,
-  findMessFeeDuplicateIssues,
-  type MessDuplicateIssue,
-} from "@/lib/fees/findMessFeeDuplicateIssues";
+import type { MessDuplicateIssue } from "@/lib/fees/findMessFeeDuplicateIssues";
+import { classLabel, existingMessAmountForClass, patchTargetId, scopeLabel } from "./hostel-mess-shared/hostelMessFeesUtils";
+import { useHostelMessFeesState } from "./hostel-mess-shared/useHostelMessFeesState";
+import { SingleClassMessEditor } from "./hostel-mess-shared/SingleClassMessEditor";
+import { StatPill } from "./hostel-mess-shared/StatPill";
 
 const inputClass =
   "w-full min-h-[42px] rounded-xl border border-white/10 bg-[#0B1220]/80 px-4 py-2.5 text-sm text-gray-100 placeholder:text-white/30 focus:border-sky-400/50 focus:outline-none focus:ring-2 focus:ring-sky-400/20";
@@ -26,76 +24,6 @@ const inputCompact =
 
 const labelClass = "block text-[11px] font-semibold uppercase tracking-wide text-white/45 mb-1.5";
 
-function scopeLabel(scope: string | null | undefined): string {
-  const s = (scope ?? "ALL").toUpperCase();
-  if (s === "HOSTELLER") return "Hostel only";
-  if (s === "DAY_SCHOLAR") return "Day scholars only";
-  return "All students";
-}
-
-function normName(name: string) {
-  return name.trim().toLowerCase();
-}
-
-function classLabel(c: Class) {
-  return `${c.name}${c.section ? ` ${c.section}` : ""}`;
-}
-
-type CatalogHead = {
-  pair: { first: ExtraFee; second: ExtraFee } | null;
-  lump: ExtraFee | null;
-  single: ExtraFee | null;
-};
-
-function resolveCatalogHead(
-  fees: ExtraFee[],
-  baseName: string,
-  match: (e: ExtraFee) => boolean
-): CatalogHead {
-  const pair = findInstallmentPair(fees, baseName, match);
-  if (pair) return { pair, lump: null, single: null };
-  const lump =
-    fees.find(
-      (e) =>
-        match(e) &&
-        isUnsplitLumpExtraFee({
-          name: e.name,
-          splitIntoTwoInstallments: Boolean(e.splitIntoTwoInstallments),
-        })
-    ) ?? null;
-  if (lump) return { pair: null, lump, single: null };
-  const single =
-    fees.find((e) => match(e) && normName(e.name) === normName(baseName)) ?? null;
-  return { pair: null, lump: null, single };
-}
-
-function combinedAmount(head: CatalogHead): number {
-  if (head.pair) return (Number(head.pair.first.amount) || 0) + (Number(head.pair.second.amount) || 0);
-  if (head.lump) return Number(head.lump.amount) || 0;
-  if (head.single) return Number(head.single.amount) || 0;
-  return 0;
-}
-
-function patchTargetId(head: CatalogHead): string | null {
-  if (head.pair) return head.pair.first.id;
-  if (head.lump) return head.lump.id;
-  if (head.single) return head.single.id;
-  return null;
-}
-
-function existingMessAmountForClass(
-  extraFees: ExtraFee[],
-  classHeadName: string,
-  classId: string
-): number {
-  const head = resolveCatalogHead(
-    extraFees,
-    classHeadName,
-    (e) => e.targetType === "CLASS" && e.targetClassId === classId
-  );
-  return combinedAmount(head);
-}
-
 interface HostelMessFeesPanelProps {
   classes: Class[];
   extraFees: ExtraFee[];
@@ -104,317 +32,42 @@ interface HostelMessFeesPanelProps {
   onSuccess: () => void;
 }
 
-export default function HostelMessFeesPanel({
-  classes,
-  extraFees,
-  schoolResidencyHeadName,
-  classHeadName,
-  onSuccess,
-}: HostelMessFeesPanelProps) {
-  const sortedClasses = useMemo(
-    () =>
-      [...classes].sort((a, b) =>
-        classLabel(a).localeCompare(classLabel(b), undefined, { numeric: true })
-      ),
-    [classes]
-  );
-
-  const duplicateIssues = useMemo(
-    () =>
-      findMessFeeDuplicateIssues(
-        extraFees.map((e) => ({ ...e, residencyScope: e.residencyScope ?? null })),
-        sortedClasses
-      ),
-    [extraFees, sortedClasses]
-  );
-  const duplicateRowCount = useMemo(
-    () => countMessDuplicateExtraFeeIds(duplicateIssues),
-    [duplicateIssues]
-  );
-
-  const schoolHead = useMemo(
-    () =>
-      resolveCatalogHead(extraFees, schoolResidencyHeadName, (e) => e.targetType === "SCHOOL"),
-    [extraFees, schoolResidencyHeadName]
-  );
-
-  const [schoolAmount, setSchoolAmount] = useState("");
-  const [schoolSaving, setSchoolSaving] = useState(false);
-
-  useEffect(() => {
-    const total = combinedAmount(schoolHead);
-    setSchoolAmount(total > 0 ? String(total) : "");
-  }, [schoolHead]);
-
-  const saveSchoolHead = async () => {
-    const amt = Number(schoolAmount);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      alert("Enter a valid amount (₹)");
-      return;
-    }
-    setSchoolSaving(true);
-    try {
-      const targetId = patchTargetId(schoolHead);
-      const body = {
-        combinedInstallmentTotal: amt,
-        splitIntoTwoInstallments: true,
-      };
-      const res = targetId
-        ? await fetch(`/api/fees/extra/${targetId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          })
-        : await fetch("/api/fees/extra", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: schoolResidencyHeadName,
-              amount: amt,
-              targetType: "SCHOOL",
-              residencyScope: "HOSTELLER",
-              splitIntoTwoInstallments: true,
-            }),
-          });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Failed to save hostel fee");
-        return;
-      }
-      onSuccess();
-    } finally {
-      setSchoolSaving(false);
-    }
-  };
-
-  const buildAmountsFromDb = useCallback(() => {
-    const next: Record<string, string> = {};
-    for (const c of sortedClasses) {
-      const total = existingMessAmountForClass(extraFees, classHeadName, c.id);
-      next[c.id] = total > 0 ? String(total) : "";
-    }
-    return next;
-  }, [sortedClasses, extraFees, classHeadName]);
-
-  const [classAmounts, setClassAmounts] = useState<Record<string, string>>({});
-  const [fillAllValue, setFillAllValue] = useState("");
-  const [classSearch, setClassSearch] = useState("");
-  const [tableSaving, setTableSaving] = useState(false);
-  const [tableProgress, setTableProgress] = useState<string | null>(null);
-  const [cleanupBusy, setCleanupBusy] = useState(false);
-  const [showDuplicateList, setShowDuplicateList] = useState(false);
-  /** closed = hidden; "all" = full table; otherwise class id */
-  const [classView, setClassView] = useState<"closed" | "all" | string>("closed");
-
-  useEffect(() => {
-    setClassAmounts(buildAmountsFromDb());
-  }, [buildAmountsFromDb]);
-
-  const applyClassHeadForClass = async (
-    classId: string,
-    amt: number
-  ): Promise<{ ok: true } | { ok: false; message: string }> => {
-    const head = resolveCatalogHead(
-      extraFees,
-      classHeadName,
-      (e) => e.targetType === "CLASS" && e.targetClassId === classId
-    );
-    const targetId = patchTargetId(head);
-    const patchBody = {
-      combinedInstallmentTotal: amt,
-      splitIntoTwoInstallments: true,
-    };
-    if (targetId) {
-      const res = await fetch(`/api/fees/extra/${targetId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patchBody),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, message: data.message || "Failed to update fee" };
-      return { ok: true };
-    }
-    const res = await fetch("/api/fees/extra", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: classHeadName,
-        amount: amt,
-        targetType: "CLASS",
-        targetClassId: classId,
-        residencyScope: "DAY_SCHOLAR",
-        splitIntoTwoInstallments: true,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, message: data.message || "Failed to save fee" };
-    return { ok: true };
-  };
-
-  const applyFillAllToTable = () => {
-    const amt = Number(fillAllValue);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      alert("Enter a valid amount to fill all rows");
-      return;
-    }
-    const v = String(amt);
-    setClassAmounts((prev) => {
-      const next = { ...prev };
-      for (const c of sortedClasses) next[c.id] = v;
-      return next;
-    });
-  };
-
-  const runDuplicateCleanup = async () => {
-    if (
-      !confirm(
-        "Remove duplicate mess fees from the database and recalculate all student fee totals? This cannot be undone."
-      )
-    ) {
-      return;
-    }
-    setCleanupBusy(true);
-    try {
-      const res = await fetch("/api/fees/extra/cleanup-duplicates", {
-        method: "POST",
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        alert(data.message || "Cleanup failed");
-        return;
-      }
-      const removed = Number(data.removedDuplicateRows ?? 0);
-      const remaining = Number(data.remainingDuplicateCount ?? 0);
-      alert(
-        removed > 0
-          ? `Removed ${removed} duplicate row(s). Recalculated ${data.studentsRecalculated ?? 0} students.${
-              remaining > 0 ? ` ${remaining} issue(s) may still need review.` : ""
-            }`
-          : data.message || "No duplicates found. Student totals were refreshed."
-      );
-      onSuccess();
-    } finally {
-      setCleanupBusy(false);
-    }
-  };
-
-  const saveAllClassAmounts = async () => {
-    const toSave = sortedClasses
-      .map((c) => {
-        const raw = classAmounts[c.id]?.trim() ?? "";
-        const amt = raw === "" ? NaN : Number(raw);
-        const existing = existingMessAmountForClass(extraFees, classHeadName, c.id);
-        return { c, amt, existing };
-      })
-      .filter(
-        (row) =>
-          Number.isFinite(row.amt) && row.amt > 0 && Math.abs(row.amt - row.existing) > 0.02
-      );
-
-    if (toSave.length === 0) {
-      alert("Change at least one class amount, then save.");
-      return;
-    }
-    if (
-      !confirm(
-        `Save ${classHeadName} for ${toSave.length} class(es)? Each total is split into two 50% installments (day scholars).`
-      )
-    ) {
-      return;
-    }
-
-    setTableSaving(true);
-    let ok = 0;
-    const failures: string[] = [];
-    try {
-      for (let i = 0; i < toSave.length; i++) {
-        const { c, amt } = toSave[i]!;
-        setTableProgress(`${i + 1} / ${toSave.length}: ${classLabel(c)}`);
-        const result = await applyClassHeadForClass(c.id, amt);
-        if (result.ok) ok += 1;
-        else failures.push(`${classLabel(c)}: ${result.message}`);
-      }
-      if (failures.length === 0) {
-        alert(`Mess fee saved for ${ok} class(es).`);
-        onSuccess();
-      } else {
-        alert(`Saved ${ok}, failed ${failures.length}.\n\n${failures.slice(0, 6).join("\n")}`);
-        if (ok > 0) onSuccess();
-      }
-    } finally {
-      setTableSaving(false);
-      setTableProgress(null);
-    }
-  };
-
-  const filteredClasses = useMemo(() => {
-    const q = classSearch.trim().toLowerCase();
-    if (!q) return sortedClasses;
-    return sortedClasses.filter((c) => classLabel(c).toLowerCase().includes(q));
-  }, [sortedClasses, classSearch]);
-
-  const configuredCount = sortedClasses.filter((c) => {
-    const amt = Number(classAmounts[c.id]);
-    return Number.isFinite(amt) && amt > 0;
-  }).length;
-
-  const pendingChangeCount = sortedClasses.filter((c) => {
-    const raw = classAmounts[c.id]?.trim() ?? "";
-    const amt = raw === "" ? NaN : Number(raw);
-    const existing = existingMessAmountForClass(extraFees, classHeadName, c.id);
-    return Number.isFinite(amt) && amt > 0 && Math.abs(amt - existing) > 0.02;
-  }).length;
-
-  const classesWithDuplicate = useMemo(() => {
-    const ids = new Set<string>();
-    for (const issue of duplicateIssues) {
-      if (issue.classId) ids.add(issue.classId);
-    }
-    return ids;
-  }, [duplicateIssues]);
-
-  const schoolScopeMismatch =
-    schoolHead.lump &&
-    schoolHead.lump.residencyScope?.toUpperCase() !== "HOSTELLER" &&
-    !schoolHead.pair;
-
-  const selectedClass =
-    classView !== "closed" && classView !== "all"
-      ? sortedClasses.find((c) => c.id === classView) ?? null
-      : null;
-
-  const saveSingleClass = async () => {
-    if (!selectedClass) return;
-    const raw = classAmounts[selectedClass.id]?.trim() ?? "";
-    const amt = raw === "" ? NaN : Number(raw);
-    const existing = existingMessAmountForClass(extraFees, classHeadName, selectedClass.id);
-    if (!Number.isFinite(amt) || amt <= 0) {
-      alert("Enter a valid amount (₹)");
-      return;
-    }
-    if (Math.abs(amt - existing) <= 0.02) {
-      alert("Amount matches what is already saved.");
-      return;
-    }
-    setTableSaving(true);
-    setTableProgress(classLabel(selectedClass));
-    try {
-      const result = await applyClassHeadForClass(selectedClass.id, amt);
-      if (result.ok) {
-        alert(`Mess fee saved for ${classLabel(selectedClass)}.`);
-        onSuccess();
-      } else {
-        alert(result.message);
-      }
-    } finally {
-      setTableSaving(false);
-      setTableProgress(null);
-    }
-  };
-
-  const classViewSelectValue =
-    classView === "closed" ? "" : classView === "all" ? "all" : classView;
+export default function HostelMessFeesPanel(props: HostelMessFeesPanelProps) {
+  const { classes, extraFees, schoolResidencyHeadName, classHeadName, onSuccess } = props;
+  const {
+    sortedClasses,
+    duplicateIssues,
+    duplicateRowCount,
+    schoolHead,
+    schoolAmount,
+    setSchoolAmount,
+    schoolSaving,
+    saveSchoolHead,
+    classAmounts,
+    setClassAmounts,
+    fillAllValue,
+    setFillAllValue,
+    classSearch,
+    setClassSearch,
+    tableSaving,
+    tableProgress,
+    cleanupBusy,
+    showDuplicateList,
+    setShowDuplicateList,
+    classView,
+    setClassView,
+    applyFillAllToTable,
+    runDuplicateCleanup,
+    saveAllClassAmounts,
+    filteredClasses,
+    configuredCount,
+    pendingChangeCount,
+    classesWithDuplicate,
+    schoolScopeMismatch,
+    selectedClass,
+    saveSingleClass,
+    classViewSelectValue,
+  } = useHostelMessFeesState({ classes, extraFees, schoolResidencyHeadName, classHeadName, onSuccess });
 
   return (
     <section className="space-y-6">
@@ -755,118 +408,5 @@ export default function HostelMessFeesPanel({
         )}
       </div>
     </section>
-  );
-}
-
-function SingleClassMessEditor({
-  classRef,
-  extraFees,
-  classHeadName,
-  draft,
-  hasDuplicate,
-  tableSaving,
-  onDraftChange,
-  onSave,
-}: {
-  classRef: Class;
-  extraFees: ExtraFee[];
-  classHeadName: string;
-  draft: string;
-  hasDuplicate: boolean;
-  tableSaving: boolean;
-  onDraftChange: (value: string) => void;
-  onSave: () => void;
-}) {
-  const saved = existingMessAmountForClass(extraFees, classHeadName, classRef.id);
-  const draftNum = Number(draft);
-  const changed =
-    draft.trim() !== "" &&
-    Number.isFinite(draftNum) &&
-    draftNum > 0 &&
-    Math.abs(draftNum - saved) > 0.02;
-
-  let status = "Not set";
-  let statusClass = "text-white/40 bg-white/5 border-white/10";
-  if (hasDuplicate) {
-    status = "Duplicate";
-    statusClass = "text-amber-200 bg-amber-500/15 border-amber-500/30";
-  } else if (changed) {
-    status = "Changed";
-    statusClass = "text-sky-200 bg-sky-500/15 border-sky-500/30";
-  } else if (saved > 0) {
-    status = "Saved";
-    statusClass = "text-lime-200 bg-lime-500/10 border-lime-500/25";
-  }
-
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h5 className="text-base font-semibold text-white">{classLabel(classRef)}</h5>
-          <p className="mt-0.5 text-xs text-white/45">Day scholars · 2 installments</p>
-        </div>
-        <span
-          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${statusClass}`}
-        >
-          {status}
-        </span>
-      </div>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass}>In database (₹)</label>
-          <p className="min-h-[42px] rounded-lg border border-white/10 bg-[#0B1220]/40 px-3 py-2.5 text-right text-sm tabular-nums text-white/70">
-            {saved > 0 ? saved.toLocaleString("en-IN") : "—"}
-          </p>
-        </div>
-        <div>
-          <label className={labelClass} htmlFor={`mess-amt-${classRef.id}`}>
-            New total (₹)
-          </label>
-          <input
-            id={`mess-amt-${classRef.id}`}
-            type="number"
-            value={draft}
-            onChange={(e) => onDraftChange(e.target.value)}
-            className={inputClass}
-            placeholder="Enter amount"
-            disabled={tableSaving}
-          />
-        </div>
-      </div>
-      <div className="mt-5 flex justify-end">
-        <PrimaryButton
-          title={tableSaving ? "Saving…" : changed ? "Save this class" : "Save class mess fee"}
-          loading={tableSaving}
-          onClick={onSave}
-        />
-      </div>
-    </div>
-  );
-}
-
-function StatPill({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "sky" | "lime" | "amber" | "ok";
-}) {
-  const toneClass =
-    tone === "sky"
-      ? "border-sky-500/30 bg-sky-500/10 text-sky-100"
-      : tone === "lime"
-        ? "border-lime-500/30 bg-lime-500/10 text-lime-100"
-        : tone === "amber"
-          ? "border-amber-500/35 bg-amber-500/10 text-amber-100"
-          : tone === "ok"
-            ? "border-lime-500/25 bg-lime-500/5 text-lime-100/90"
-            : "border-white/10 bg-white/5 text-white/80";
-  return (
-    <div className={`rounded-xl border px-3 py-2 text-center min-w-[4.5rem] ${toneClass}`}>
-      <div className="text-[10px] font-semibold uppercase tracking-wide opacity-70">{label}</div>
-      <div className="text-base font-bold tabular-nums">{value}</div>
-    </div>
   );
 }
