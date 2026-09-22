@@ -51,6 +51,21 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
     },
   },
+  {
+    // Keep UI files decomposed into components/modules of ~400 lines or
+    // less. Warn (not error) so an occasional justified exception — a
+    // single cohesive drawing routine, a large but flat options table —
+    // doesn't block a build; CI treats repeated/large overruns as a signal
+    // to split the file, not a hard wall.
+    files: ["app/frontend/**/*.{ts,tsx}"],
+    ignores: ["**/*.{test,spec}.{ts,tsx}"],
+    rules: {
+      "max-lines": [
+        "warn",
+        { max: 400, skipBlankLines: true, skipComments: true },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
