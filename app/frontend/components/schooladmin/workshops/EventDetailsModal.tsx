@@ -1,21 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  CalendarDays,
-  Clock,
-  MapPin,
-  Users,
-  Info,
-  X,
-  Loader2,
-  CheckCircle,
-  UserPlus,
-  Award,
-  Download,
-} from "lucide-react";
+import { CalendarDays, Clock, MapPin, Info, X } from "lucide-react";
 import { AVATAR_URL } from "../../../constants/images";
-import PayButton from "../../common/PayButton";
+import { formatDate, formatTime } from "./event-details-shared/eventDetailsHelpers";
+import { EventDetailsSidebar } from "./event-details-shared/EventDetailsSidebar";
 
 interface EventDetailsModalProps {
   open: boolean;
@@ -49,27 +38,6 @@ interface EventDetailsModalProps {
   showEnrollAction?: boolean;
   showEnrolledStudents?: boolean;
   onEnrollSuccess?: () => void;
-}
-
-function formatDate(dateString?: string | null) {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(dateString?: string | null) {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 export default function EventDetailsModal({
@@ -228,171 +196,26 @@ export default function EventDetailsModal({
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
-                    <div className="text-xs uppercase tracking-wide text-white/50">
-                      Instructor
-                    </div>
-                  <div className="mt-3 flex items-center gap-3">
-                      <img
-                        src={instructorImage}
-                        alt={event?.teacher?.name || "Instructor"}
-                        className="h-12 w-12 rounded-full border border-white/10 object-cover"
-                      />
-                      <div>
-                        <div className="text-sm font-semibold text-white">
-                          {event?.teacher?.name || "Not assigned"}
-                        </div>
-                        <div className="text-xs text-lime-300">
-                          {event?.teacher?.email || "Instructor"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {showEnrolledStudents && enrolledStudents.length > 0 && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
-                      <div className="text-xs uppercase tracking-wide text-white/50 mb-3">
-                        Enrolled Students ({enrolledStudents.length})
-                      </div>
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {enrolledStudents.map((s) => {
-                          const paid = s.paymentStatus === "PAID" || s.paymentStatus === "SUCCESS";
-                          return (
-                            <div
-                              key={s.registrationId}
-                              className="flex justify-between items-center py-2 border-b border-white/5 last:border-0"
-                            >
-                              <div>
-                                <p className="text-sm font-medium text-white">
-                                  {s.name || "—"}
-                                </p>
-                                <p className="text-xs text-gray-400">
-                                  {s.class || s.email || "—"}
-                                </p>
-                              </div>
-                              <span
-                                className={`text-xs px-2 py-1 rounded ${
-                                  paid
-                                    ? "bg-emerald-500/20 text-emerald-400"
-                                    : "bg-amber-500/20 text-amber-400"
-                                }`}
-                              >
-                                {paid ? "Paid" : "Pending"}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
-                    <div className="text-xs uppercase tracking-wide text-white/50">
-                      Event Stats
-                    </div>
-                    <div className="mt-3 space-y-3 text-sm text-white/70">
-                      <div className="flex items-center justify-between">
-                        <span>Total Seats</span>
-                        <span className="text-white">
-                          {maxSeats != null ? maxSeats : "Unlimited"}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span>Enrolled</span>
-                        <span className="text-lime-300">{enrolledCount}</span>
-                      </div>
-                      {maxSeats != null && maxSeats > 0 && (
-                        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-lime-400 transition-all"
-                            style={{
-                              width: `${Math.min(100, (enrolledCount / maxSeats) * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between pt-1">
-                        <span>Fee</span>
-                        <span className="text-white">
-                          {eventAmount > 0 ? `₹${eventAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "Free"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {showEnrollAction && event?.workshopCertificate && (
-                    <div className="rounded-2xl border border-lime-400/20 bg-lime-400/5 px-4 py-3 sm:px-5 sm:py-4">
-                      <div className="flex items-center gap-2 text-lime-400 font-semibold mb-2">
-                        <Award size={18} />
-                        Your Certificate
-                      </div>
-                      <p className="text-sm text-white/70 mb-3">{event.workshopCertificate.title}</p>
-                      {event.workshopCertificate.certificateUrl ? (
-                        <a
-                          href={event.workshopCertificate.certificateUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-xl bg-lime-400 px-4 py-2.5 text-sm font-semibold text-black hover:bg-lime-300 transition"
-                        >
-                          <Download size={16} />
-                          Download Certificate
-                        </a>
-                      ) : (
-                        <span className="text-sm text-white/50">Certificate is being prepared</span>
-                      )}
-                    </div>
-                  )}
-
-                  {showEnrollAction && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 sm:px-5 sm:py-4">
-                      {enrollError && (
-                        <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
-                          {enrollError}
-                        </div>
-                      )}
-                      {isRegistered ? (
-                        needsPayment ? (
-                          <div className="space-y-3">
-                            <p className="text-sm text-white/70">Complete payment to confirm enrollment</p>
-                            <PayButton
-                              amount={eventAmount}
-                              returnPath="/frontend/pages/parent?tab=workshops"
-                              eventRegistrationId={registration?.id}
-                              onSuccess={onEnrollSuccess}
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-lime-400">
-                            <CheckCircle size={18} />
-                            <span className="text-sm font-medium">You are enrolled</span>
-                          </div>
-                        )
-                      ) : isFull ? (
-                        <div className="text-sm text-white/60">Workshop is full</div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleEnroll}
-                          disabled={enrollLoading}
-                          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-lime-400 px-4 py-3 text-sm font-semibold text-black hover:bg-lime-300 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {enrollLoading ? (
-                            <>
-                              <Loader2 size={18} className="animate-spin" />
-                              Enrolling...
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus size={18} />
-                              Enroll in Workshop
-                            </>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <EventDetailsSidebar
+                  instructorImage={instructorImage}
+                  teacherName={event?.teacher?.name}
+                  teacherEmail={event?.teacher?.email}
+                  showEnrolledStudents={showEnrolledStudents}
+                  enrolledStudents={enrolledStudents}
+                  maxSeats={maxSeats}
+                  enrolledCount={enrolledCount}
+                  eventAmount={eventAmount}
+                  showEnrollAction={showEnrollAction}
+                  workshopCertificate={event?.workshopCertificate}
+                  enrollError={enrollError}
+                  isRegistered={isRegistered}
+                  needsPayment={needsPayment}
+                  registrationId={registration?.id}
+                  onEnrollSuccess={onEnrollSuccess}
+                  isFull={isFull}
+                  enrollLoading={enrollLoading}
+                  onEnroll={handleEnroll}
+                />
               </div>
             </>
           )}
