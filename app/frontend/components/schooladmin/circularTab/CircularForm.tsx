@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { uploadImage } from "../../../utils/upload";
 import {
     X,
     Clock,
@@ -13,53 +11,8 @@ import {
     GraduationCap,
 } from "lucide-react";
 import { useClasses } from "@/hooks/useClasses";
-
-/* -------------------- constants -------------------- */
-
-export const PUBLISH_STATUS = {
-    DRAFT: "DRAFT",
-    PUBLISHED: "PUBLISHED",
-} as const;
-
-type PublishStatus =
-    typeof PUBLISH_STATUS[keyof typeof PUBLISH_STATUS];
-
-const IMPORTANCE_LEVELS = [
-    { label: "High", activeClass: "bg-red-500 text-white" },
-    { label: "Medium", activeClass: "bg-orange-400 text-black" },
-    { label: "Low", activeClass: "bg-blue-500 text-white" },
-] as const;
-
-
-const CIRCULAR_RECIPIENTS = [
-    { value: "all", label: "All" },
-    { value: "students", label: "Students" },
-    { value: "teachers", label: "Teachers" },
-    { value: "parents", label: "Parents" },
-    { value: "staff", label: "Staff" }
-];
-
-const CIRCULAR_PRIMARY = "#7dd3fc";
-const CIRCULAR_DRAFT_YELLOW = "#facc15";
-const CIRCULAR_SELECTED_RECIPIENT = "#bae6fd";
-const CIRCULAR_IMPORTANCE_HIGH = "#f87171";
-const CIRCULAR_IMPORTANCE_MEDIUM = "#facc15";
-const CIRCULAR_IMPORTANCE_LOW = "#4ade80";
-
-/* -------------------- types -------------------- */
-
-type CircularFormState = {
-    referenceNumber: string;
-    date: string;
-    subject: string;
-    content: string;
-    importanceLevel: "Low" | "Medium" | "High";
-    recipients: string[];
-    issuedBy: string;
-    classId: string;
-    publishStatus: PublishStatus;
-    attachments: string[];
-};
+import { useCircularFormState } from "./shared/useCircularFormState";
+import { CIRCULAR_RECIPIENTS, IMPORTANCE_LEVELS, PUBLISH_STATUS } from "./shared/circularFormConstants";
 
 type Props = {
     onClose: () => void;
@@ -69,111 +22,21 @@ type Props = {
 /* -------------------- component -------------------- */
 
 export default function CircularForm({ onClose, onSuccess }: Props) {
-    const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [attachmentUploading, setAttachmentUploading] = useState(false);
-    const [selected, setSelected] = useState<"High" | "Medium" | "Low">("Medium");
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const { classes } = useClasses();
-
-    const [form, setForm] = useState<CircularFormState>({
-        referenceNumber: "",
-        date: new Date().toISOString().slice(0, 10),
-        subject: "",
-        issuedBy: "",
-        content: "",
-        importanceLevel: "Medium",
-        recipients: [],
-        classId: "",
-        publishStatus: PUBLISH_STATUS.PUBLISHED,
-        attachments: [],
-    });
-
-    // const toggleRecipient = (value: string) => {
-    //     setForm((prev) => ({
-    //         ...prev,
-    //         recipients: prev.recipients.includes(value)
-    //             ? prev.recipients.filter((r) => r !== value)
-    //             : [...prev.recipients, value],
-    //     }));
-    // };
-
-    const handleAttachFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files?.length) return;
-        setAttachmentUploading(true);
-        setError(null);
-        try {
-            for (const file of Array.from(files)) {
-                const url = await uploadImage(file, "circulars");
-                setForm((prev) => ({ ...prev, attachments: [...prev.attachments, url] }));
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to upload attachment");
-        } finally {
-            setAttachmentUploading(false);
-            e.target.value = "";
-        }
-    };
-
-    const removeAttachment = (index: number) => {
-        setForm((prev) => ({
-            ...prev,
-            attachments: prev.attachments.filter((_, i) => i !== index),
-        }));
-    };
-
-    const toggleRecipient = (value: string) => {
-        setForm((prev) => {
-            // If "All" is clicked
-            if (value === "all") {
-                return {
-                    ...prev,
-                    recipients: prev.recipients.includes("all") ? [] : ["all"],
-                };
-            }
-
-            // If some other recipient is clicked
-            let updatedRecipients = prev.recipients.filter((r) => r !== "all");
-
-            if (updatedRecipients.includes(value)) {
-                updatedRecipients = updatedRecipients.filter((r) => r !== value);
-            } else {
-                updatedRecipients.push(value);
-            }
-
-            return {
-                ...prev,
-                recipients: updatedRecipients,
-            };
-        });
-    };
-
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSubmitting(true);
-        setError(null);
-
-        try {
-            const res = await fetch("/api/circular/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Failed to create circular");
-
-            onSuccess();
-            onClose();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to create circular");
-            console.error(err);
-        } finally {
-            setSubmitting(false);
-        }
-    };
+    const {
+        submitting,
+        error,
+        attachmentUploading,
+        selected,
+        setSelected,
+        fileInputRef,
+        form,
+        setForm,
+        handleAttachFile,
+        removeAttachment,
+        toggleRecipient,
+        handleSubmit,
+    } = useCircularFormState({ onClose, onSuccess });
 
     return (
         <div className="bg-[#0F172A] border border-lime-400/30 rounded-2xl p-6 shadow-2xl relative overflow-hidden animate-fadeIn">
