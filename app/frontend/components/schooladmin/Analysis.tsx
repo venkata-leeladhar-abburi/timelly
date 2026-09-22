@@ -22,18 +22,19 @@ import {
 } from "@/lib/school/schoolAnalysisClientCache";
 export type { AnalysisSection };
 
-import type {
-  AnalysisDashboardProps,
-  AnalysisResponse,
-  GenderViewMode,
-} from "./shared/analysis/types";
-import { sectionHasTables, sectionNeedsTables } from "./shared/analysis/sectionHelpers";
-import { buildAnalysisViewModel } from "./shared/analysis/buildAnalysisViewModel";
-import { AnalysisFilterHeader } from "./shared/analysis/AnalysisFilterHeader";
-import { AnalysisOverviewSection } from "./shared/analysis/AnalysisOverviewSection";
-import { GenderEnrollmentSection } from "./shared/analysis/GenderEnrollmentSection";
-import { AdmissionComparisonSection } from "./shared/analysis/AdmissionComparisonSection";
-import { FeeCollectionSection } from "./shared/analysis/FeeCollectionSection";
+import {
+  type AnalysisDashboardProps,
+  type AnalysisResponse,
+  type GenderViewMode,
+  sectionHasTables,
+  sectionNeedsTables,
+  buildAnalysisViewModel,
+  AnalysisFilterHeader,
+  AnalysisOverviewSection,
+  GenderEnrollmentSection,
+  AdmissionComparisonSection,
+  FeeCollectionSection,
+} from "./shared/analysis";
 
 /* ---------------- Component ---------------- */
 

@@ -66,6 +66,52 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // Feature folders under a `shared/<feature>/` directory expose their
+    // public API through an `index.ts` barrel (the main component(s) plus
+    // their prop types). Consumers outside the folder must import that
+    // barrel, not reach into an internal file directly — that keeps the
+    // folder an actual module with a contract instead of a bag of files
+    // anything can dig into. Files inside `shared/**` are exempt so
+    // siblings within (or across) a feature folder can still import each
+    // other freely.
+    files: ["app/frontend/components/**/*.{ts,tsx}"],
+    ignores: ["**/shared/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/shared/app-header/*",
+                "**/shared/portal-settings/*",
+                "**/shared/fee-structure/*",
+                "**/shared/fee-transactions-list/*",
+                "**/shared/hostel-mess/*",
+                "**/shared/offline-payment/*",
+                "**/shared/petty-cash/*",
+                "**/shared/student-fees-payment/*",
+                "**/shared/studentDetail/*",
+                "**/shared/analysis/*",
+                "**/shared/classes/*",
+                "**/shared/teacher-leaves/*",
+                "**/shared/teachersTab/*",
+                "**/shared/timetable/*",
+                "**/shared/workshops-and-events/*",
+                "**/shared/event-details/*",
+                "**/shared/add-school/*",
+                "**/shared/schools/*",
+                "**/shared/subscriptions/*",
+              ],
+              message:
+                "Import from the feature's shared/<feature> barrel (its index.ts) instead of reaching into an internal file directly.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

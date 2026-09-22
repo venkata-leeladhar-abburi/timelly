@@ -7,10 +7,7 @@ import Spinner from "../common/Spinner";
 import SearchInput from "../common/SearchInput";
 import TableLayout from "../common/TableLayout";
 import BackupEmailPanel from "./BackupEmailPanel";
-import { useSchoolsState } from "./shared/schools/useSchoolsState";
-import { buildSchoolsColumns } from "./shared/schools/schoolsTableColumns";
-import { SchoolMobileCard, SchoolsPagination } from "./shared/schools/SchoolMobileCard";
-import { DeleteSchoolModal } from "./shared/schools/DeleteSchoolModal";
+import { useSchoolsState, buildSchoolsColumns, SchoolMobileCard, SchoolsPagination, DeleteSchoolModal } from "./shared/schools";
 
 export interface SchoolRow {
   slNo: number;

@@ -2,9 +2,7 @@ import { X } from "lucide-react";
 import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import Spinner from "../../../common/Spinner";
 import type { FeePaymentSuccess } from "./types";
-import { useStudentFeesPaymentModalState } from "./student-fees-payment/useStudentFeesPaymentModalState";
-import { FeesSheetTable } from "./student-fees-payment/FeesSheetTable";
-import { PaymentModeStep } from "./student-fees-payment/PaymentModeStep";
+import { useStudentFeesPaymentModalState, FeesSheetTable, PaymentModeStep } from "./student-fees-payment";
 
 export function StudentFeesPaymentModal({
   studentId,

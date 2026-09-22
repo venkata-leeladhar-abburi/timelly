@@ -5,8 +5,7 @@ import SectionHeader from "./SectionHeader";
 import NotificationPanel from "./NotificationPanel";
 import ProfileModal from "./ProfileModal";
 import { AVATAR_URL } from "../../constants/images";
-import { useAppHeaderState } from "./shared/app-header/useAppHeaderState";
-import { AppHeaderMobileSearch } from "./shared/app-header/AppHeaderMobileSearch";
+import { useAppHeaderState, AppHeaderMobileSearch } from "./shared/app-header";
 
 export type HeaderProfile = {
   name: string;

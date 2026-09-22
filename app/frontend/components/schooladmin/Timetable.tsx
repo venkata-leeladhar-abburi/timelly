@@ -3,9 +3,7 @@
 import PageHeader from "../common/PageHeader";
 import TimellyLoader from "../common/TimellyLoader";
 import TimetableGrid from "../timetable/TimetableGrid";
-import { useTimetableState } from "./shared/timetable/useTimetableState";
-import { TimetableEntriesGrid } from "./shared/timetable/TimetableEntriesGrid";
-import { classLabel, DAYS } from "./shared/timetable/timetableTypes";
+import { useTimetableState, TimetableEntriesGrid, classLabel, DAYS } from "./shared/timetable";
 
 export default function SchoolAdminTimetableTab() {
   const {

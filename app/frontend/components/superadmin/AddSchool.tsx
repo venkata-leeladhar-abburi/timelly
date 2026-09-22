@@ -3,8 +3,7 @@
 import { PRIMARY_COLOR } from "../../constants/colors";
 import SuccessPopups from "../common/SuccessPopUps";
 import PageHeader from "../common/PageHeader";
-import { useAddSchoolState } from "./shared/add-school/useAddSchoolState";
-import { AddSchoolFormFields } from "./shared/add-school/AddSchoolFormFields";
+import { useAddSchoolState, AddSchoolFormFields } from "./shared/add-school";
 
 export default function AddSchool() {
   const {

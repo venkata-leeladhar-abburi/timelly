@@ -6,10 +6,7 @@ import PageHeader from "../common/PageHeader";
 import SearchInput from "../common/SearchInput";
 import TableLayout from "../common/TableLayout";
 import Spinner from "../common/Spinner";
-import { useSubscriptionsState } from "./shared/subscriptions/useSubscriptionsState";
-import { buildSubscriptionsColumns } from "./shared/subscriptions/subscriptionsColumns";
-import { SubscriptionMobileCard } from "./shared/subscriptions/SubscriptionMobileCard";
-import { EditSubscriptionModal } from "./shared/subscriptions/EditSubscriptionModal";
+import { useSubscriptionsState, buildSubscriptionsColumns, SubscriptionMobileCard, EditSubscriptionModal } from "./shared/subscriptions";
 
 export type BillingMode = "PARENT_SUBSCRIPTION" | "SCHOOL_PAID";
 

@@ -8,8 +8,7 @@ import type { CommonSettingsProps, PortalVariant } from "../settings/portalSetti
 import ParentTimellyLoader from "../parent/ParentTimellyLoader";
 import PageHeader from "./PageHeader";
 import TimellyLoader from "./TimellyLoader";
-import { usePortalSettingsState } from "./shared/portal-settings/usePortalSettingsState";
-import { getSettingsSubtitle } from "./shared/portal-settings/portalSettingsHelpers";
+import { usePortalSettingsState, getSettingsSubtitle } from "./shared/portal-settings";
 
 export default function PortalSettingsPanel({ portal }: { portal: PortalVariant }) {
   const {

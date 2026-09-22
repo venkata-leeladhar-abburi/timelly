@@ -3,9 +3,7 @@ import SelectInput from "../../common/SelectInput";
 import PrimaryButton from "../../common/PrimaryButton";
 import SecondaryButton from "../../common/SecondaryButton";
 import type { Class, ExtraFee, FeeStructure, Student } from "./types";
-import { useOfflinePaymentFormState, type SelectedHead } from "./shared/offline-payment/useOfflinePaymentFormState";
-import { OfflinePaymentFeeHeadsList } from "./shared/offline-payment/OfflinePaymentFeeHeadsList";
-import { OfflinePaymentAmountPreview } from "./shared/offline-payment/OfflinePaymentAmountPreview";
+import { useOfflinePaymentFormState, type SelectedHead, OfflinePaymentFeeHeadsList, OfflinePaymentAmountPreview } from "./shared/offline-payment";
 
 interface OfflinePaymentFormProps {
   classes: Class[];

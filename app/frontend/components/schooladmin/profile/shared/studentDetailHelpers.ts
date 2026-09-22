@@ -3,22 +3,16 @@ export {
   patchDetailShell,
   buildPlaceholderDetail,
   buildPlaceholderById,
-} from "./studentDetail/studentOptionHelpers";
-
-export {
   normalizeBreakdownHeadKey,
   patchBreakdownAfterDelete,
   patchBreakdownAfterPayment,
   patchBreakdownAfterDeletePayment,
-} from "./studentDetail/feeBreakdownPatchHelpers";
-
-export {
   buildConfirmedPaymentResult,
   patchDetailAfterPayment,
   isSuccessPaymentStatus,
   computeUpdatedFeeAfterDelete,
   patchDetailAfterDelete,
-} from "./studentDetail/feePaymentResultHelpers";
+} from "./studentDetail";
 
 export function dueToPayInputString(due: number): string {
   if (!Number.isFinite(due) || due <= 0) return "";

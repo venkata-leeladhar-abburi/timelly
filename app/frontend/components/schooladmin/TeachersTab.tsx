@@ -5,9 +5,7 @@ import PageHeader from "../common/PageHeader";
 import AppointTeacher from "./teachersTab/AppointTeacher";
 import TeachersList from "./teachersTab/TeachersList";
 import EditTeacher from "./teachersTab/EditTeacher";
-import { useTeachersTabState } from "./shared/teachersTab/useTeachersTabState";
-import { TeacherAttendanceStatCards } from "./shared/teachersTab/TeacherAttendanceStatCards";
-import { DailyAttendanceCard } from "./shared/teachersTab/DailyAttendanceCard";
+import { useTeachersTabState, TeacherAttendanceStatCards, DailyAttendanceCard } from "./shared/teachersTab";
 
 const SchoolAdminTeacherTab = () => {
   const {
