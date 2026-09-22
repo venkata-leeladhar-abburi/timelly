@@ -27,50 +27,12 @@ import {
   BookOpen,
 } from "lucide-react";
 
-/* ---------------- Types ---------------- */
-
-type FeeCollectionRow = {
-  classId: string;
-  label: string;
-  totalFees: number;
-  avgDiscountPercent: number;
-  finalFees: number;
-  paidFee: number;
-  pendingFee: number;
-  collectionPercent: number;
-  duePercent: number;
-};
-
-type EnrollmentByClassSectionRow = {
-  classId: string;
-  className: string;
-  section: string | null;
-  male: number;
-  female: number;
-  total: number;
-};
-
-type GenderViewMode = "CLASS_WISE" | "SECTION_WISE";
-
-type EnrollmentGroupRow = {
-  groupLabel: string;
-  male: number;
-  female: number;
-  total: number;
-};
-
-type EnrollmentSectionRow = EnrollmentGroupRow & {
-  className: string;
-  section: string;
-};
-
 import TimellyLoader from "../common/TimellyLoader";
 import SelectInput from "../common/SelectInput";
 import AnalysisSectionNav from "./AnalysisSectionNav";
 import FeesComparisonPanel from "./analysis/fees-comparison/FeesComparisonPanel";
 import StudentCredentialsPanel from "./analysis/student-credentials/StudentCredentialsPanel";
 import {
-  analysisHasTables,
   defaultAnalysisStartYear,
   fetchSchoolAnalysisFast,
   fetchSchoolAnalysisTables,
@@ -82,36 +44,16 @@ import {
   analysisCacheKey,
   setSchoolAnalysisCached,
 } from "@/lib/school/schoolAnalysisClientCache";
-import type { SchoolAnalysisPayload } from "@/lib/school/schoolAnalysisTypes";
-
-type AnalysisResponse = SchoolAnalysisPayload;
-
 export type { AnalysisSection };
 
-type AnalysisDashboardProps = {
-  section?: AnalysisSection;
-};
-
-type AnalysisTableSection = Extract<
-  AnalysisSection,
-  "gender-enrollment" | "admission-comparison" | "fee-collection"
->;
-
-function sectionNeedsTables(section: AnalysisSection): section is AnalysisTableSection {
-  return (
-    section === "gender-enrollment" ||
-    section === "admission-comparison" ||
-    section === "fee-collection"
-  );
-}
-
-function sectionHasTables(section: AnalysisSection, payload: AnalysisResponse | null | undefined): boolean {
-  if (!sectionNeedsTables(section)) return true;
-  if (section === "gender-enrollment") return Array.isArray(payload?.enrollmentByClassSection);
-  if (section === "admission-comparison") return Array.isArray(payload?.admissionComparison);
-  if (section === "fee-collection") return Array.isArray(payload?.feeCollectionByClass);
-  return analysisHasTables(payload);
-}
+import type {
+  AnalysisDashboardProps,
+  AnalysisResponse,
+  EnrollmentGroupRow,
+  EnrollmentSectionRow,
+  GenderViewMode,
+} from "./analysis-shared/types";
+import { sectionHasTables, sectionNeedsTables } from "./analysis-shared/sectionHelpers";
 
 /* ---------------- Component ---------------- */
 
