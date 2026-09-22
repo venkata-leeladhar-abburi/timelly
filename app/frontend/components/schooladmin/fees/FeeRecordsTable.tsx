@@ -6,7 +6,7 @@ import { Download, Search } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import SelectInput from "../../common/SelectInput";
-import type { Class, FeeRecord } from "./types";
+import type { FeeRecord } from "./types";
 import {
   schoolAdminStudentDetailsFeesUrl,
   warmSchoolAdminStudentDetails,
@@ -22,17 +22,13 @@ import {
 } from "@/lib/fees/feeDayReportExcel";
 import { formatRupee, roundRupee } from "@/lib/formatRupee";
 import { todayYmdLocal } from "@/lib/school/schoolDashboardCollection";
-
-const PAGE_SIZE = 20;
-
-interface FeeRecordsTableProps {
-  fees: FeeRecord[];
-  classes: Class[];
-}
-
-type ReportPeriod = "DAY_WISE" | "MONTH_WISE" | "YEAR_WISE" | "ACADEMIC_YEAR_WISE";
-type ExportFormat = "xlsx" | "csv" | "pdf";
-type StudentStatusFilter = "Active" | "Inactive" | "All";
+import {
+  PAGE_SIZE,
+  type ExportFormat,
+  type FeeRecordsTableProps,
+  type ReportPeriod,
+  type StudentStatusFilter,
+} from "./shared/feeRecordsTableTypes";
 
 export default function FeeRecordsTable({ fees, classes }: FeeRecordsTableProps) {
   const router = useRouter();
