@@ -11,7 +11,6 @@ import { Column } from "@/app/frontend/types/superadmin";
 import {
   loadTeacherMarksClasses,
   peekTeacherMarksClasses,
-  type LiteClassOption,
 } from "@/lib/teacher/loadTeacherFastTabs";
 import {
   normalizeExamTypes,
@@ -23,58 +22,8 @@ import {
 const TeacherReportCard = lazy(() => import("./ReportCard"));
 const TeacherDownloadReports = lazy(() => import("./DownloadReports"));
 
-/* ---------------- TYPES ---------------- */
-
-type StudentRow = {
-  id: string;
-  rollNo: string;
-  name: string;
-  avatar: string;
-  marks: number | "" | "AB";
-  maxMarks: number | "";
-  markId?: string;
-  /** Per-subsection scores when the class term has sections */
-  componentScores?: Record<string, number | "" | "AB">;
-};
-
-type ClassOption = { id: string; name: string; section: string | null };
-type StudentApi = {
-  id: string;
-  rollNo: string | null;
-  user: { id: string; name: string | null; email: string | null; photoUrl?: string | null };
-  class?: { id: string; name: string; section: string | null };
-};
-type MarkApi = {
-  id: string;
-  studentId: string;
-  subject: string;
-  marks: number;
-  totalMarks: number;
-  grade: string | null;
-  examType?: string | null;
-  createdAt: string;
-  components?: Array<{ name: string; marks: number; totalMarks: number }>;
-};
-
-const DEFAULT_EXAM_TYPES = ["TERM 1", "TERM 2", "FINAL"];
-
-function mapLiteClasses(list: LiteClassOption[]): ClassOption[] {
-  return list.map((c) => ({ id: c.id, name: c.name, section: c.section ?? null }));
-}
-
-function uniqueSubjects(list: string[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of list) {
-    const s = String(raw || "").trim();
-    if (!s) continue;
-    const key = s.replace(/\s+/g, " ").toUpperCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(s);
-  }
-  return out;
-}
+import type { ClassOption, MarkApi, StudentApi, StudentRow } from "./shared/types";
+import { DEFAULT_EXAM_TYPES, mapLiteClasses, uniqueSubjects } from "./shared/utils";
 
 export default function TeacherMarksTab() {
   const router = useRouter();
