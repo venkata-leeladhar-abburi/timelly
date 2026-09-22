@@ -4,206 +4,47 @@ import HeaderActionButton from "../common/HeaderActionButton";
 import PageHeader from "../common/PageHeader";
 import CreateHub from "./workshops/CreateHub";
 import CreateEventForm from "./workshops/CreateEventForm";
-import EventCard from "./workshops/EventCard";
 import EventDetailsModal from "./workshops/EventDetailsModal";
 import DeleteEventModal from "./workshops/DeleteEventModal";
-import TimellyLoader from "../common/TimellyLoader";
-import { CalendarDays, CheckCircle, List, Plus, Users, X } from "lucide-react";
-import { ReactNode, useEffect, useMemo, useRef, useState, useCallback } from "react";
-import {
-  loadEventDetails,
-  loadEventsPage,
-  peekEventDetails,
-  peekEventsPage,
-  setEventsPageCache,
-} from "@/lib/school/loadSchoolAdminFastTabs";
-
-interface EventItem {
-  id: string;
-  title: string;
-  description?: string | null;
-  eventDate?: string | null;
-  location?: string | null;
-  mode?: string | null;
-  additionalInfo?: string | null;
-  teacher?: { name?: string | null } | null;
-  photo?: string | null;
-  maxSeats?: number | null;
-  _count?: { registrations: number };
-  type?: string | null;
-  level?: string | null;
-  class?: { id: string; name: string; section?: string | null } | null;
-  teacherId?: string | null;
-  schoolId?: string | null;
-}
+import { Plus, X, type LucideIcon } from "lucide-react";
+import { useWorkshopsAndEventsState } from "./workshops-and-events-shared/useWorkshopsAndEventsState";
+import { WorkshopsStatTiles } from "./workshops-and-events-shared/WorkshopsStatTiles";
+import { WorkshopsEventsList } from "./workshops-and-events-shared/WorkshopsEventsList";
 
 export default function WorkshopsAndEventsTab() {
-  const [activeAction, setActiveAction] = useState<"workshop" | "none">("none");
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(false);
-  const [eventsError, setEventsError] = useState<string | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
-  const [eventDetails, setEventDetails] = useState<EventItem | null>(null);
-  const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<EventItem | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const formRef = useRef<HTMLDivElement | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 3;
-
-  const fetchEvents = useCallback(async (revalidate = false) => {
-    if (!revalidate) {
-      const cached = peekEventsPage();
-      if (cached) {
-        setEvents(cached as EventItem[]);
-        setLoadingEvents(false);
-        void fetchEvents(true);
-        return;
-      }
-    }
-
-    try {
-      setLoadingEvents(events.length === 0);
-      setEventsError(null);
-      const rows = await loadEventsPage({ revalidate });
-      setEvents(rows as EventItem[]);
-    } catch (err: any) {
-      setEventsError(err?.message || "Failed to load events");
-    } finally {
-      setLoadingEvents(false);
-    }
-  }, [events.length]);
-
-  const refetchEventsAfterMutation = useCallback(() => {
-    void fetchEvents(true);
-  }, [fetchEvents]);
-
-  const handleEventUpsert = useCallback(
-    (event?: { id: string } | null) => {
-      if (event?.id) {
-        setEvents((prev) => {
-          const index = prev.findIndex((e) => e.id === event.id);
-          const next =
-            index === -1
-              ? [event as EventItem, ...prev]
-              : prev.map((e) => (e.id === event.id ? { ...e, ...event } : e));
-          setEventsPageCache(next as any);
-          return next;
-        });
-      }
-      refetchEventsAfterMutation();
-    },
-    [refetchEventsAfterMutation]
-  );
-
-  useEffect(() => {
-    void fetchEvents();
-  }, [fetchEvents]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [events.length]);
-
-  useEffect(() => {
-    if (activeAction !== "workshop") return;
-    const timer = setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
-    return () => clearTimeout(timer);
-  }, [activeAction]);
-
-  useEffect(() => {
-    if (!detailsOpen || !selectedEventId) return;
-
-    const controller = new AbortController();
-    const fetchDetails = async () => {
-      try {
-        setDetailsLoading(true);
-        setDetailsError(null);
-        const cached = peekEventDetails(selectedEventId);
-        if (cached) {
-          setEventDetails(cached as EventItem);
-          setDetailsLoading(false);
-        }
-        const data = await loadEventDetails(selectedEventId, {
-          revalidate: Boolean(cached),
-          signal: controller.signal,
-        });
-        setEventDetails(data as EventItem);
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        setDetailsError(err?.message || "Failed to load event details");
-      } finally {
-        setDetailsLoading(false);
-      }
-    };
-
-    fetchDetails();
-    return () => controller.abort();
-  }, [detailsOpen, selectedEventId]);
-
-  const stats = useMemo(() => {
-    const now = Date.now();
-    const upcoming = events.filter((event) => {
-      if (!event.eventDate) return false;
-      const time = new Date(event.eventDate).getTime();
-      return !Number.isNaN(time) && time >= now;
-    }).length;
-    const completed = events.filter((event) => {
-      if (!event.eventDate) return false;
-      const time = new Date(event.eventDate).getTime();
-      return !Number.isNaN(time) && time < now;
-    }).length;
-    const participants = events.reduce(
-      (sum, event) => sum + (event._count?.registrations ?? 0),
-      0
-    );
-
-    return {
-      total: events.length,
-      upcoming,
-      completed,
-      participants,
-    };
-  }, [events]);
-
-  const totalPages = Math.max(1, Math.ceil(events.length / pageSize));
-  const clampedPage = Math.min(currentPage, totalPages);
-  const pagedEvents = events.slice(
-    (clampedPage - 1) * pageSize,
-    clampedPage * pageSize
-  );
-
-  const StatTile = ({
-    title,
-    value,
-    icon,
-  }: {
-    title: string;
-    value: string;
-    icon: ReactNode;
-  }) => (
-    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 md:px-5 md:py-4 shadow-lg backdrop-blur-xl">
-      <div className="flex items-center gap-4">
-        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl bg-white/10 flex items-center justify-center text-lime-400">
-          {icon}
-        </div>
-        <div>
-          <div className="text-xs uppercase tracking-wide text-white/60">
-            {title}
-          </div>
-          <div className="text-xl sm:text-2xl font-semibold text-white">{value}</div>
-        </div>
-      </div>
-    </div>
-  );
+  const {
+    activeAction,
+    setActiveAction,
+    events,
+    loadingEvents,
+    eventsError,
+    detailsOpen,
+    setDetailsOpen,
+    setSelectedEventId,
+    detailsLoading,
+    detailsError,
+    eventDetails,
+    setEventDetails,
+    setDetailsError,
+    editingEvent,
+    setEditingEvent,
+    deleteTarget,
+    setDeleteTarget,
+    deleteLoading,
+    formRef,
+    setCurrentPage,
+    pageSize,
+    handleEventUpsert,
+    stats,
+    totalPages,
+    clampedPage,
+    pagedEventsWithStatus,
+    handleDeleteConfirm,
+  } = useWorkshopsAndEventsState();
 
   const renderButton = (
     type: "workshop",
-    Icon: any,
+    Icon: LucideIcon,
     label: string,
     onClick: () => void,
     primary?: boolean
@@ -284,12 +125,7 @@ export default function WorkshopsAndEventsTab() {
           }
         />
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatTile title="TOTAL" value={`${stats.total}`} icon={<List size={24} />} />
-          <StatTile title="UPCOMING" value={`${stats.upcoming}`} icon={<CalendarDays size={24} />} />
-          <StatTile title="PARTICIPANTS" value={`${stats.participants}`} icon={<Users size={24} />} />
-          <StatTile title="COMPLETED" value={`${stats.completed}`} icon={<CheckCircle size={24} />} />
-        </div>
+        <WorkshopsStatTiles stats={stats} />
 
         <CreateHub events={events} />
 
@@ -325,124 +161,28 @@ export default function WorkshopsAndEventsTab() {
           title={deleteTarget?.title}
           loading={deleteLoading}
           onCancel={() => setDeleteTarget(null)}
-          onConfirm={async () => {
-            if (!deleteTarget) return;
-            const deletingEventId = deleteTarget.id;
-            const snapshot = events;
-            const nextEvents = events.filter((e) => e.id !== deletingEventId);
-            setEvents(nextEvents);
-            setEventsPageCache(nextEvents as any);
-            setDeleteTarget(null);
-            try {
-              setDeleteLoading(true);
-              const res = await fetch(`/api/events/${deletingEventId}`, {
-                method: "DELETE",
-              });
-              const data = await res.json();
-              if (!res.ok) {
-                throw new Error(data?.message || "Failed to delete event");
-              }
-              void fetchEvents(true);
-            } catch (err: any) {
-              setEvents(snapshot);
-              setEventsPageCache(snapshot as any);
-              console.error(err);
-            } finally {
-              setDeleteLoading(false);
-            }
-          }}
+          onConfirm={handleDeleteConfirm}
         />
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            {loadingEvents && events.length > 0 && (
-              <span className="text-sm text-white/50">Refreshing events...</span>
-            )}
-          </div>
-
-          {eventsError && (
-            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {eventsError}
-            </div>
-          )}
-
-          {loadingEvents && events.length === 0 && !eventsError && (
-            <TimellyLoader
-              compact
-              title="Loading workshops"
-              steps={["Events", "Registrations", "Schedules"]}
-            />
-          )}
-
-          {!loadingEvents && events.length === 0 && !eventsError && (
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-6 text-sm text-white/50">
-              No workshops or events yet. Create one above.
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {pagedEvents.map((event) => {
-              const dateValue = event.eventDate ? new Date(event.eventDate) : null;
-              const status = dateValue && !Number.isNaN(dateValue.getTime())
-                ? dateValue.getTime() >= Date.now()
-                  ? "upcoming"
-                  : "completed"
-                : "upcoming";
-
-              return (
-                <EventCard
-                  key={event.id}
-                  title={event.title}
-                  description={event.description}
-                  eventDate={event.eventDate}
-                  location={event.location}
-                  mode={event.mode}
-                  registrations={event._count?.registrations ?? 0}
-                  maxSeats={event.maxSeats}
-                  teacherName={event.teacher?.name ?? ""}
-                  status={status}
-                  photo={event.photo}
-                  additionalInfo={event.additionalInfo}
-                  onViewDetails={() => {
-                    setSelectedEventId(event.id);
-                    setDetailsOpen(true);
-                  }}
-                  onEdit={() => {
-                    setEditingEvent(event);
-                    setActiveAction("workshop");
-                  }}
-                  onDelete={() => setDeleteTarget(event)}
-                />
-              );
-            })}
-          </div>
-
-          {events.length > pageSize && (
-            <div className="flex items-center justify-between pt-3">
-              <span className="text-xs text-white/50">
-                Page {clampedPage} of {totalPages}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={clampedPage === 1}
-                  className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={clampedPage === totalPages}
-                  className="rounded-full px-4 py-2 text-xs font-semibold border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
+        <WorkshopsEventsList
+          loadingEvents={loadingEvents}
+          events={events}
+          eventsError={eventsError}
+          pagedEventsWithStatus={pagedEventsWithStatus}
+          pageSize={pageSize}
+          clampedPage={clampedPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          onViewDetails={(eventId) => {
+            setSelectedEventId(eventId);
+            setDetailsOpen(true);
+          }}
+          onEdit={(event) => {
+            setEditingEvent(event);
+            setActiveAction("workshop");
+          }}
+          onDelete={(event) => setDeleteTarget(event)}
+        />
       </div>
     </div>
   );
