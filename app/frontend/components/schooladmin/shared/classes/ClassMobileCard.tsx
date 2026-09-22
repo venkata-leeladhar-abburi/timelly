@@ -1,5 +1,5 @@
-import SearchInput from "../../common/SearchInput";
-import SelectInput from "../../common/SelectInput";
+import SearchInput from "../../../common/SearchInput";
+import SelectInput from "../../../common/SelectInput";
 import type { SchoolAdminClassRow } from "@/lib/school/loadSchoolAdminFastTabs";
 
 export function ClassMobileCard({

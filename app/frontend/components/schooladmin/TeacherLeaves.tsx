@@ -7,11 +7,11 @@ import {
   FileText,
 } from "lucide-react";
 import PageHeader from "../common/PageHeader";
-import { useTeacherLeavesState } from "./teacher-leaves-shared/useTeacherLeavesState";
-import { IconTab } from "./teacher-leaves-shared/IconTab";
-import { LeaveCardList } from "./teacher-leaves-shared/LeaveCardList";
-import { LeaveTable } from "./teacher-leaves-shared/LeaveTable";
-import { ConditionalApprovalModal } from "./teacher-leaves-shared/ConditionalApprovalModal";
+import { useTeacherLeavesState } from "./shared/teacher-leaves/useTeacherLeavesState";
+import { IconTab } from "./shared/teacher-leaves/IconTab";
+import { LeaveCardList } from "./shared/teacher-leaves/LeaveCardList";
+import { LeaveTable } from "./shared/teacher-leaves/LeaveTable";
+import { ConditionalApprovalModal } from "./shared/teacher-leaves/ConditionalApprovalModal";
 
 const iconStyles = {
   yellow: "border-yellow-400 text-yellow-400 bg-yellow-400/10",

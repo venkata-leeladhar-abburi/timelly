@@ -1,4 +1,4 @@
-import type { TimetableEntry, TimetablePayload } from "../../timetable/TimetableGrid";
+import type { TimetableEntry, TimetablePayload } from "../../../timetable/TimetableGrid";
 
 export type ClassOption = {
   id: string;

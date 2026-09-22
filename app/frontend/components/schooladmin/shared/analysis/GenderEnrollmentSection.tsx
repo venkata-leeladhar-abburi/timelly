@@ -1,6 +1,6 @@
 import { Users, Download } from "lucide-react";
-import SelectInput from "../../common/SelectInput";
-import TimellyLoader from "../../common/TimellyLoader";
+import SelectInput from "../../../common/SelectInput";
+import TimellyLoader from "../../../common/TimellyLoader";
 import type { EnrollmentGroupRow, EnrollmentSectionRow, GenderViewMode } from "./types";
 
 export function GenderEnrollmentSection({

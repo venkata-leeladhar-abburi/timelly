@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
-import AnalysisSectionNav from "../AnalysisSectionNav";
+import AnalysisSectionNav from "../../AnalysisSectionNav";
 
 export function AnalysisFilterHeader({
   classId,

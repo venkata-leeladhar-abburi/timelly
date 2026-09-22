@@ -1,6 +1,6 @@
 import { IndianRupee, Download } from "lucide-react";
-import SelectInput from "../../common/SelectInput";
-import TimellyLoader from "../../common/TimellyLoader";
+import SelectInput from "../../../common/SelectInput";
+import TimellyLoader from "../../../common/TimellyLoader";
 import type { FeeCollectionRow } from "./types";
 
 export function FeeCollectionSection({

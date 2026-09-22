@@ -26,14 +26,14 @@ import type {
   AnalysisDashboardProps,
   AnalysisResponse,
   GenderViewMode,
-} from "./analysis-shared/types";
-import { sectionHasTables, sectionNeedsTables } from "./analysis-shared/sectionHelpers";
-import { buildAnalysisViewModel } from "./analysis-shared/buildAnalysisViewModel";
-import { AnalysisFilterHeader } from "./analysis-shared/AnalysisFilterHeader";
-import { AnalysisOverviewSection } from "./analysis-shared/AnalysisOverviewSection";
-import { GenderEnrollmentSection } from "./analysis-shared/GenderEnrollmentSection";
-import { AdmissionComparisonSection } from "./analysis-shared/AdmissionComparisonSection";
-import { FeeCollectionSection } from "./analysis-shared/FeeCollectionSection";
+} from "./shared/analysis/types";
+import { sectionHasTables, sectionNeedsTables } from "./shared/analysis/sectionHelpers";
+import { buildAnalysisViewModel } from "./shared/analysis/buildAnalysisViewModel";
+import { AnalysisFilterHeader } from "./shared/analysis/AnalysisFilterHeader";
+import { AnalysisOverviewSection } from "./shared/analysis/AnalysisOverviewSection";
+import { GenderEnrollmentSection } from "./shared/analysis/GenderEnrollmentSection";
+import { AdmissionComparisonSection } from "./shared/analysis/AdmissionComparisonSection";
+import { FeeCollectionSection } from "./shared/analysis/FeeCollectionSection";
 
 /* ---------------- Component ---------------- */
 

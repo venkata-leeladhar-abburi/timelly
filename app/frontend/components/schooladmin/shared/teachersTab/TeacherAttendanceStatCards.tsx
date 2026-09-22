@@ -1,5 +1,5 @@
 import { Coffee, Clock, UserCheck, XCircle } from "lucide-react";
-import StatCard from "../../common/statCard";
+import StatCard from "../../../common/statCard";
 
 export function TeacherAttendanceStatCards({
   presentCount,

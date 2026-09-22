@@ -25,8 +25,8 @@ import SearchInput from "../common/SearchInput";
 import InlinePanelTable from "../common/InlinePanelTable";
 import TimellyLoader from "../common/TimellyLoader";
 import StatCard from "./StatCard";
-import { useClassesState } from "./classes-shared/useClassesState";
-import { ClassMobileCard } from "./classes-shared/ClassMobileCard";
+import { useClassesState } from "./shared/classes/useClassesState";
+import { ClassMobileCard } from "./shared/classes/ClassMobileCard";
 
 export default function SchoolAdminClassesTab() {
   const {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { TimetablePayload } from "../../timetable/TimetableGrid";
+import type { TimetablePayload } from "../../../timetable/TimetableGrid";
 import {
   blankEntry,
   classLabel,

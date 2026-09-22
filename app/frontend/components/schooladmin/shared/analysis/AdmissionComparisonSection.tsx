@@ -1,5 +1,5 @@
 import { Users, Download } from "lucide-react";
-import TimellyLoader from "../../common/TimellyLoader";
+import TimellyLoader from "../../../common/TimellyLoader";
 
 type AdmissionComparisonRow = {
   classLabel: string;

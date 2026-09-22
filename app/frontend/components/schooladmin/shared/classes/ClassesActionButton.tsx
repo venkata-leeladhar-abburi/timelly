@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import HeaderActionButton from "../../common/HeaderActionButton";
+import HeaderActionButton from "../../../common/HeaderActionButton";
 
 export function ClassesActionButton({
   type,

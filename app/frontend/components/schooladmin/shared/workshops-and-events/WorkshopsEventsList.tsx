@@ -1,5 +1,5 @@
-import TimellyLoader from "../../common/TimellyLoader";
-import EventCard from "../workshops/EventCard";
+import TimellyLoader from "../../../common/TimellyLoader";
+import EventCard from "../../workshops/EventCard";
 import type { EventItem } from "./workshopsAndEventsTypes";
 
 export function WorkshopsEventsList({

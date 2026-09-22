@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import type { TeacherRow } from "../teachersTab/TeachersList";
+import type { TeacherRow } from "../../teachersTab/TeachersList";
 import {
   fetchTeacherAttendance,
   fetchTeachersList,

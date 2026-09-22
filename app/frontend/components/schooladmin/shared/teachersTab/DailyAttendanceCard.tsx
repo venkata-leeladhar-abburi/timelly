@@ -1,7 +1,7 @@
 import { Calendar, Save } from "lucide-react";
-import TimellyLoader from "../../common/TimellyLoader";
-import TeacherStatCard from "../teachersTab/teacherStatCard";
-import type { TeacherRow } from "../teachersTab/TeachersList";
+import TimellyLoader from "../../../common/TimellyLoader";
+import TeacherStatCard from "../../teachersTab/teacherStatCard";
+import type { TeacherRow } from "../../teachersTab/TeachersList";
 import { ATTENDANCE_STATUSES, todayStr, type AttendanceStatus } from "./teachersTabHelpers";
 
 export function DailyAttendanceCard({

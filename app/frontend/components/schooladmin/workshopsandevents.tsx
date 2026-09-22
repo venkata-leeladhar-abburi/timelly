@@ -7,9 +7,9 @@ import CreateEventForm from "./workshops/CreateEventForm";
 import EventDetailsModal from "./workshops/EventDetailsModal";
 import DeleteEventModal from "./workshops/DeleteEventModal";
 import { Plus, X, type LucideIcon } from "lucide-react";
-import { useWorkshopsAndEventsState } from "./workshops-and-events-shared/useWorkshopsAndEventsState";
-import { WorkshopsStatTiles } from "./workshops-and-events-shared/WorkshopsStatTiles";
-import { WorkshopsEventsList } from "./workshops-and-events-shared/WorkshopsEventsList";
+import { useWorkshopsAndEventsState } from "./shared/workshops-and-events/useWorkshopsAndEventsState";
+import { WorkshopsStatTiles } from "./shared/workshops-and-events/WorkshopsStatTiles";
+import { WorkshopsEventsList } from "./shared/workshops-and-events/WorkshopsEventsList";
 
 export default function WorkshopsAndEventsTab() {
   const {
