@@ -5,9 +5,9 @@ import { SidebarList } from "./components/SidebarList";
 import { DayCollectionByHeadCard } from "./components/DayCollectionByHeadCard";
 import { SchoolDashboardLoader } from "./components/SchoolDashboardLoader";
 import { ROUTES } from "@/app/frontend/constants/routes";
-import { useSchoolDashboardState } from "./shared/useSchoolDashboardState";
-import { DashboardStatsHeader } from "./shared/DashboardStatsHeader";
-import { DashboardNewsSection } from "./shared/DashboardNewsSection";
+import { useSchoolDashboardState } from "./shared";
+import { DashboardStatsHeader } from "./shared";
+import { DashboardNewsSection } from "./shared";
 
 export default function Dashboard() {
   const {

@@ -5,10 +5,10 @@ import { AlertCircle, CheckCircle, User, Briefcase, Lock } from "lucide-react";
 import InputField from "./InputField";
 import RoleSelector from "./RoleSelector";
 import Spinner from "../../common/Spinner";
-import type { UserFormProps } from "./shared/userFormTypes";
-import { useUserFormState } from "./shared/useUserFormState";
-import { TeacherDetailsFields } from "./shared/TeacherDetailsFields";
-import { AccessControlPanel } from "./shared/AccessControlPanel";
+import type { UserFormProps } from "./shared";
+import { useUserFormState } from "./shared";
+import { TeacherDetailsFields } from "./shared";
+import { AccessControlPanel } from "./shared";
 
 export default function UserForm(props: UserFormProps) {
   const { mode = "create" } = props;

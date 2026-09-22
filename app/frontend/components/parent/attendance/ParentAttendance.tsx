@@ -4,10 +4,10 @@ import { AlertCircle, Download, Loader2 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import AttendanceReportTemplate from "../../pdf/AttendanceReportTemplate";
-import { useParentAttendanceState } from "./shared/useParentAttendanceState";
-import { AttendanceStatCardsSection } from "./shared/AttendanceStatCardsSection";
-import { AttendanceCalendarSection } from "./shared/AttendanceCalendarSection";
-import { SelectedDaySection } from "./shared/SelectedDaySection";
+import { useParentAttendanceState } from "./shared";
+import { AttendanceStatCardsSection } from "./shared";
+import { AttendanceCalendarSection } from "./shared";
+import { SelectedDaySection } from "./shared";
 
 export default function ParentAttendanceTab() {
   const {

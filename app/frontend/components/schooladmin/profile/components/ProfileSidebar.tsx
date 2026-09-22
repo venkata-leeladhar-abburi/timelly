@@ -3,12 +3,12 @@
 import { Users, Mail, Phone, MapPin, Pencil, CircleDollarSign } from "lucide-react";
 import { formatStoredAddressForDisplay } from "@/lib/students/studentAddressFormat";
 import { formatDobDisplay } from "@/lib/dobCalendar";
-import { getResidencyLabel, type ProfileSidebarProps } from "./shared/profileSidebarHelpers";
-import { useProfileSidebarState } from "./shared/useProfileSidebarState";
-import { EditStudentModal } from "./shared/EditStudentModal";
-import { EditParentModal } from "./shared/EditParentModal";
+import { getResidencyLabel, type ProfileSidebarProps } from "./shared";
+import { useProfileSidebarState } from "./shared";
+import { EditStudentModal } from "./shared";
+import { EditParentModal } from "./shared";
 
-export type { SidebarSavedPatch } from "./shared/profileSidebarHelpers";
+export type { SidebarSavedPatch } from "./shared";
 
 export const ProfileSidebar = (props: ProfileSidebarProps) => {
   const {

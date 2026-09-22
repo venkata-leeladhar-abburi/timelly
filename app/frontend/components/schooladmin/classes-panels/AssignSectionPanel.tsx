@@ -4,8 +4,8 @@ import { ArrowRightLeft, Plus } from "lucide-react";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 import SuccessPopups from "../../common/SuccessPopUps";
-import { useAssignSectionState, NEW_SECTION_VALUE } from "./shared/useAssignSectionState";
-import { StudentAssignPanel } from "./shared/StudentAssignPanel";
+import { useAssignSectionState, NEW_SECTION_VALUE } from "./shared";
+import { StudentAssignPanel } from "./shared";
 
 interface AssignSectionPanelProps {
   onCancel: () => void;

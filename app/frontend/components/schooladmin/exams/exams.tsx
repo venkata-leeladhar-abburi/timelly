@@ -4,9 +4,9 @@ import { BookOpen, Calendar, CheckCircle2 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import TimellyLoader from "../../common/TimellyLoader";
 import { ChevronDown } from "lucide-react";
-import { useExamsTabState } from "./shared/useExamsTabState";
-import { ExamTypesManager } from "./shared/ExamTypesManager";
-import { SubjectsManager } from "./shared/SubjectsManager";
+import { useExamsTabState } from "./shared";
+import { ExamTypesManager } from "./shared";
+import { SubjectsManager } from "./shared";
 
 export default function ExamsTab() {
     const {

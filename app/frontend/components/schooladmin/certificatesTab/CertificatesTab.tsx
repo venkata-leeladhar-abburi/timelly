@@ -2,12 +2,12 @@
 
 import type { CertificateRequestListItem } from "../Certificates";
 import TimellyLoader from "../../common/TimellyLoader";
-import type { TabStatus } from "./shared/certificatesTabHelpers";
-import { useCertificatesTabState } from "./shared/useCertificatesTabState";
-import { CertificatesMobileCards } from "./shared/CertificatesMobileCards";
-import { CertificatesTableMd } from "./shared/CertificatesTableMd";
-import { CertificatesTableLg } from "./shared/CertificatesTableLg";
-import { ApproveCertificateModal } from "./shared/ApproveCertificateModal";
+import type { TabStatus } from "./shared";
+import { useCertificatesTabState } from "./shared";
+import { CertificatesMobileCards } from "./shared";
+import { CertificatesTableMd } from "./shared";
+import { CertificatesTableLg } from "./shared";
+import { ApproveCertificateModal } from "./shared";
 
 interface CertificatesTabProps {
   certificateRequests: CertificateRequestListItem[];

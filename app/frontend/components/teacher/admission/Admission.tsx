@@ -3,12 +3,12 @@
 import PageHeader from "../../common/PageHeader";
 import PageTabs from "../../schooladmin/schooladmincomponents/PageHeaderTabs";
 import AdmissionReceiptTemplate from "../../pdf/AdmissionReceiptTemplate";
-import { DeleteAdmissionDialog } from "./shared/DeleteAdmissionDialog";
-import { AdmissionPaymentDialog } from "./shared/AdmissionPaymentDialog";
-import { AdmissionFeeAssignDialog } from "./shared/AdmissionFeeAssignDialog";
-import { AdmissionFormView } from "./shared/AdmissionFormView";
-import { AdmissionListView } from "./shared/AdmissionListView";
-import { useAdmissionTabState } from "./shared/useAdmissionTabState";
+import { DeleteAdmissionDialog } from "./shared";
+import { AdmissionPaymentDialog } from "./shared";
+import { AdmissionFeeAssignDialog } from "./shared";
+import { AdmissionFormView } from "./shared";
+import { AdmissionListView } from "./shared";
+import { useAdmissionTabState } from "./shared";
 
 export default function TeacherAdmissionTab() {
   const {

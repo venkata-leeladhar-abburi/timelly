@@ -12,11 +12,11 @@ import { FileSpreadsheet } from "lucide-react";
 import BulkExtraFeeByTimellyModal from "./components/BulkExtraFeeByTimellyModal";
 import PageHeader from "../../common/PageHeader";
 import Spinner from "../../common/Spinner";
-import { StudentNameCard } from "./shared/StudentNameCard";
-import { StudentFeesPaymentModal } from "./shared/StudentFeesPaymentModal";
-import { StudentSearchFilterBar } from "./shared/StudentSearchFilterBar";
-import { ProfileStatCards } from "./shared/ProfileStatCards";
-import { useStudentDetailsPageState } from "./shared/useStudentDetailsPageState";
+import { StudentNameCard } from "./shared";
+import { StudentFeesPaymentModal } from "./shared";
+import { StudentSearchFilterBar } from "./shared";
+import { ProfileStatCards } from "./shared";
+import { useStudentDetailsPageState } from "./shared";
 
 function StudentDetailsPageContent() {
   const {

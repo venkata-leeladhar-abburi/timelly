@@ -15,11 +15,11 @@ import SelectInput from "../../common/SelectInput";
 import InlinePanelTable from "../../common/InlinePanelTable";
 import AttendanceButton from "./AttendanceButton";
 import SuccessPopups from "../../common/SuccessPopUps";
-import { formatLongDate } from "./shared/attendanceHelpers";
-import { useAttendanceState } from "./shared/useAttendanceState";
-import { useAttendanceColumns } from "./shared/useAttendanceColumns";
-import { AttendanceStatCards } from "./shared/AttendanceStatCards";
-import { AttendanceMobileList } from "./shared/AttendanceMobileList";
+import { formatLongDate } from "./shared";
+import { useAttendanceState } from "./shared";
+import { useAttendanceColumns } from "./shared";
+import { AttendanceStatCards } from "./shared";
+import { AttendanceMobileList } from "./shared";
 
 export default function TeacherAttendanceTab() {
   const {

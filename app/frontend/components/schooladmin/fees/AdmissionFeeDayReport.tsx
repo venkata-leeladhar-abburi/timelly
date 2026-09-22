@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, FileSpreadsheet, FileText } from "lucide-react";
-import { defaultDateRange, type GroupMode, type ReportPayload } from "./shared/admissionFeeReportTypes";
-import { exportAdmissionFeeReportExcel } from "./shared/admissionFeeReportExcel";
-import { exportAdmissionFeeReportPdf } from "./shared/admissionFeeReportPdf";
+import { defaultDateRange, type GroupMode, type ReportPayload } from "./shared";
+import { exportAdmissionFeeReportExcel } from "./shared";
+import { exportAdmissionFeeReportPdf } from "./shared";
 
 export default function AdmissionFeeDayReport() {
   const [{ from, to }, setRange] = useState(defaultDateRange);

@@ -2,11 +2,11 @@
 
 import { Award } from "lucide-react";
 import SuccessPopup from "./SuccessPopup";
-import type { HubEvent } from "./shared/createHubTypes";
-import { useCreateHubState } from "./shared/useCreateHubState";
-import { WorkshopAndCertificatePanel } from "./shared/WorkshopAndCertificatePanel";
-import { NamePositionStylePanel } from "./shared/NamePositionStylePanel";
-import { StudentSelectionPanel } from "./shared/StudentSelectionPanel";
+import type { HubEvent } from "./shared";
+import { useCreateHubState } from "./shared";
+import { WorkshopAndCertificatePanel } from "./shared";
+import { NamePositionStylePanel } from "./shared";
+import { StudentSelectionPanel } from "./shared";
 
 interface CreateHubProps {
   events: HubEvent[];

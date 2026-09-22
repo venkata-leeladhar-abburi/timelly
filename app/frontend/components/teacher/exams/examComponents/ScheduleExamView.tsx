@@ -2,9 +2,9 @@
 import { X, Save } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
 import TimellyLoader from "../../../common/TimellyLoader";
-import { useScheduleExamState } from "./shared/useScheduleExamState";
-import { ExamDetailsFormFields } from "./shared/ExamDetailsFormFields";
-import { SyllabusUnitsPanel } from "./shared/SyllabusUnitsPanel";
+import { useScheduleExamState } from "./shared";
+import { ExamDetailsFormFields } from "./shared";
+import { SyllabusUnitsPanel } from "./shared";
 
 export default function ScheduleExamView({
     mode = "create",

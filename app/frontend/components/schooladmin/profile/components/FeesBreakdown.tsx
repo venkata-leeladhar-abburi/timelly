@@ -8,14 +8,14 @@ import { EditExtraFeeModal } from "./EditExtraFeeModal";
 import {
   mergeDiscountApprovals,
   type FeesBreakdownProps as Props,
-} from "./shared/feesBreakdownHelpers";
-import { FeeReceiptPrintLayout } from "./shared/FeeReceiptPrintLayout";
-import { FeeSummaryCards } from "./shared/FeeSummaryCards";
-import { FeeHeadCardsGrid } from "./shared/FeeHeadCardsGrid";
-import { FeePaymentProgressSection } from "./shared/FeePaymentProgressSection";
-import { EditBaseFeeHeadDialog } from "./shared/EditBaseFeeHeadDialog";
-import { RecordHeadPaymentDialog } from "./shared/RecordHeadPaymentDialog";
-import { useFeesBreakdownState } from "./shared/useFeesBreakdownState";
+} from "./shared";
+import { FeeReceiptPrintLayout } from "./shared";
+import { FeeSummaryCards } from "./shared";
+import { FeeHeadCardsGrid } from "./shared";
+import { FeePaymentProgressSection } from "./shared";
+import { EditBaseFeeHeadDialog } from "./shared";
+import { RecordHeadPaymentDialog } from "./shared";
+import { useFeesBreakdownState } from "./shared";
 
 export const FeesBreakdown = (props: Props) => {
   const {

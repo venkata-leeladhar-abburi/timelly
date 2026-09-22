@@ -11,8 +11,8 @@ import {
     GraduationCap,
 } from "lucide-react";
 import { useClasses } from "@/hooks/useClasses";
-import { useCircularFormState } from "./shared/useCircularFormState";
-import { CIRCULAR_RECIPIENTS, IMPORTANCE_LEVELS, PUBLISH_STATUS } from "./shared/circularFormConstants";
+import { useCircularFormState } from "./shared";
+import { CIRCULAR_RECIPIENTS, IMPORTANCE_LEVELS, PUBLISH_STATUS } from "./shared";
 
 type Props = {
     onClose: () => void;

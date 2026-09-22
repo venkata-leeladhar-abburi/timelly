@@ -4,10 +4,10 @@ import { AlertCircle } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import FeePaymentReceiptTemplate from "../../pdf/FeePaymentReceiptTemplate";
-import { useParentFeesState } from "./shared/useParentFeesState";
-import { FeeSummarySection } from "./shared/FeeSummarySection";
-import { DueHeadsSection } from "./shared/DueHeadsSection";
-import { PaymentHistorySection } from "./shared/PaymentHistorySection";
+import { useParentFeesState } from "./shared";
+import { FeeSummarySection } from "./shared";
+import { DueHeadsSection } from "./shared";
+import { PaymentHistorySection } from "./shared";
 
 export default function ParentFeesTab() {
   const {

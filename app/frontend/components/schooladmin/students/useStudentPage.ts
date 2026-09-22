@@ -7,13 +7,13 @@ import {
   StudentStatusFilter,
 } from "./types";
 import { sortStudentsForDisplay } from "./utils";
-import type { Props } from "./shared/hookTypes";
-import { EMPTY_CLASSES } from "./shared/defaults";
-import useStudentFormAdd from "./shared/useStudentFormAdd";
-import useStudentEditDelete from "./shared/useStudentEditDelete";
-import useStudentExport from "./shared/useStudentExport";
-import { useStudentClassesBootstrap } from "./shared/useStudentClassesBootstrap";
-import { useStudentListFetching } from "./shared/useStudentListFetching";
+import type { Props } from "./shared";
+import { EMPTY_CLASSES } from "./shared";
+import { UseStudentFormAdd as useStudentFormAdd } from "./shared";
+import { UseStudentEditDelete as useStudentEditDelete } from "./shared";
+import { UseStudentExport as useStudentExport } from "./shared";
+import { useStudentClassesBootstrap } from "./shared";
+import { useStudentListFetching } from "./shared";
 
 export default function useStudentPage({ classes, reload }: Props) {
   const stableClasses = classes ?? EMPTY_CLASSES;

@@ -1,9 +1,9 @@
 import { ChevronDown, Clock, Plus } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
 import TimellyLoader from "../../../common/TimellyLoader";
-import { useTeacherLeaveState } from "./shared/useTeacherLeaveState";
-import { LeaveApplicationForm } from "./shared/LeaveApplicationForm";
-import { LeaveHistorySection } from "./shared/LeaveHistorySection";
+import { useTeacherLeaveState } from "./shared";
+import { LeaveApplicationForm } from "./shared";
+import { LeaveHistorySection } from "./shared";
 
 export default function TeacherLeave() {
   const {

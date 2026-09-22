@@ -2,10 +2,10 @@
 
 import { X, SquarePen } from "lucide-react";
 import SuccessPopup from "./SuccessPopup";
-import { useCreateEventFormState } from "./shared/useCreateEventFormState";
-import { EventBasicDetailsFields } from "./shared/EventBasicDetailsFields";
-import { EventScheduleMediaFields } from "./shared/EventScheduleMediaFields";
-import type { CreateEventFormProps } from "./shared/createEventFormOptions";
+import { useCreateEventFormState } from "./shared";
+import { EventBasicDetailsFields } from "./shared";
+import { EventScheduleMediaFields } from "./shared";
+import type { CreateEventFormProps } from "./shared";
 
 export default function CreateEventForm({
   onCancel,

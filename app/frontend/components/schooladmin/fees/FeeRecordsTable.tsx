@@ -13,9 +13,9 @@ import {
   type FeeRecordsTableProps,
   type ReportPeriod,
   type StudentStatusFilter,
-} from "./shared/feeRecordsTableTypes";
-import { FeeRecordsRows } from "./shared/FeeRecordsRows";
-import useFeeRecordsExportActions from "./shared/useFeeRecordsExportActions";
+} from "./shared";
+import { FeeRecordsRows } from "./shared";
+import { UseFeeRecordsExportActions as useFeeRecordsExportActions } from "./shared";
 
 export default function FeeRecordsTable({ fees, classes }: FeeRecordsTableProps) {
   const router = useRouter();

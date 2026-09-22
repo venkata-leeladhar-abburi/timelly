@@ -2,10 +2,10 @@
 
 import { CalendarDays, FileSpreadsheet, FileText } from "lucide-react";
 import AnalysisSectionNav from "../../AnalysisSectionNav";
-import { useFeesComparisonState } from "./shared/useFeesComparisonState";
-import { exportExcel } from "./shared/feesComparisonExcelExport";
-import { exportPdf } from "./shared/feesComparisonPdfExport";
-import { DateField, FeesComparisonTable } from "./shared/FeesComparisonTable";
+import { useFeesComparisonState } from "./shared";
+import { exportExcel } from "./shared";
+import { exportPdf } from "./shared";
+import { DateField, FeesComparisonTable } from "./shared";
 
 export default function FeesComparisonPanel() {
   const {

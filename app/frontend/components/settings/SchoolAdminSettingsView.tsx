@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { CommonSettingsProps } from "./portalSettingsTypes";
-import { SchoolAdminAccountCard } from "./shared/SchoolAdminAccountCard";
-import { SchoolEmailDomainCard } from "./shared/SchoolEmailDomainCard";
-import { SchoolHyperPGCredentialsCard } from "./shared/SchoolHyperPGCredentialsCard";
-import { SchoolAdminPasswordCard } from "./shared/SchoolAdminPasswordCard";
+import { SchoolAdminAccountCard } from "./shared";
+import { SchoolEmailDomainCard } from "./shared";
+import { SchoolHyperPGCredentialsCard } from "./shared";
+import { SchoolAdminPasswordCard } from "./shared";
 import {
   SchoolAdminNotificationsCard,
   type SchoolAdminNotification,
-} from "./shared/SchoolAdminNotificationsCard";
+} from "./shared";
 
 export default function SchoolAdminSettingsView({
   form,

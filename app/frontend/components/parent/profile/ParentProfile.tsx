@@ -10,9 +10,9 @@ import {
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import ProfileReportTemplate from "../../pdf/ProfileReportTemplate";
 import PageHeader from "../../common/PageHeader";
-import { useParentProfileState } from "./shared/useParentProfileState";
-import { AcademicPerformanceChart } from "./shared/AcademicPerformanceChart";
-import { StudentDetailsSection } from "./shared/StudentDetailsSection";
+import { useParentProfileState } from "./shared";
+import { AcademicPerformanceChart } from "./shared";
+import { StudentDetailsSection } from "./shared";
 
 export default function ParentProfile() {
   const {

@@ -7,9 +7,9 @@ import CreateEventForm from "../../schooladmin/workshops/CreateEventForm";
 import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
 import DeleteEventModal from "../../schooladmin/workshops/DeleteEventModal";
 import { Plus, Search, X, type LucideIcon } from "lucide-react";
-import { useTeacherWorkshopsState } from "./shared/useTeacherWorkshopsState";
-import { WorkshopStatTiles } from "./shared/WorkshopStatTiles";
-import { WorkshopEventsList } from "./shared/WorkshopEventsList";
+import { useTeacherWorkshopsState } from "./shared";
+import { WorkshopStatTiles } from "./shared";
+import { WorkshopEventsList } from "./shared";
 
 export default function TeacherWorkshopsTab() {
   const {

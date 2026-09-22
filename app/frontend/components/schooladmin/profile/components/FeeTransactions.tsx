@@ -2,10 +2,10 @@ import { Receipt, Printer, Pencil, Trash2 } from "lucide-react";
 import FeePaymentReceiptTemplate from "../../../pdf/FeePaymentReceiptTemplate";
 import { formatReceiptTransactionDate } from "@/lib/fees/receiptDates";
 import { isOfflinePaymentGateway } from "@/lib/fees/feePaymentGateway";
-import type { FeeTransactionsProps as Props } from "./shared/feeTransactionsTypes";
-import { formatPaymentMethod, isSyntheticPaymentId } from "./shared/feeTransactionsHelpers";
-import { useFeeTransactionsState } from "./shared/useFeeTransactionsState";
-import { EditPaymentDialog } from "./shared/EditPaymentDialog";
+import type { FeeTransactionsProps as Props } from "./shared";
+import { formatPaymentMethod, isSyntheticPaymentId } from "./shared";
+import { useFeeTransactionsState } from "./shared";
+import { EditPaymentDialog } from "./shared";
 
 export const FeeTransactions = (props: Props) => {
   const { studentId = "", feesRecordingDisabled = false, transactionsLoading = false } = props;

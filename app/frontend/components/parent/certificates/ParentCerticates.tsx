@@ -5,9 +5,9 @@ import StatCard from "../../common/statCard";
 import CertificatesCard from "./CertificatesCard";
 import ApprovedCertificates from "./ApprovedCertificates";
 import ParentTimellyLoader from "../ParentTimellyLoader";
-import { useParentCertificatesState } from "./shared/useParentCertificatesState";
-import { CertificateRequestsSection } from "./shared/CertificateRequestsSection";
-import { RequestCertificateModal } from "./shared/RequestCertificateModal";
+import { useParentCertificatesState } from "./shared";
+import { CertificateRequestsSection } from "./shared";
+import { RequestCertificateModal } from "./shared";
 
 export default function ParentCertificatesTab() {
   const {
