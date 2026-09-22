@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { RefreshCcw, Users, GraduationCap, UserCheck, IndianRupee, BadgePercent, Clock3, CalendarDays } from "lucide-react";
 import TimellyLoader from "../common/TimellyLoader";
+import { fetchChairmanDashboard } from "@/lib/api/chairmanDashboard";
 
 type ChairmanSummary = {
   schoolName: string;
@@ -63,14 +64,9 @@ function writeCachedSummary(date: string, summary: ChairmanSummary): void {
 
 export function warmChairmanDashboard(date = todayYmd()): void {
   if (readCachedSummary(date)) return;
-  const params = new URLSearchParams({ date });
-  void fetch(`/api/chairman/dashboard?${params.toString()}`, {
-    credentials: "include",
-    cache: "no-store",
-  })
-    .then(async (res) => {
-      if (!res.ok) return null;
-      const data = await res.json().catch(() => ({}));
+  void fetchChairmanDashboard(date)
+    .then(({ ok, data }) => {
+      if (!ok) return null;
       return data.summary as ChairmanSummary | null;
     })
     .then((summary) => {
@@ -130,14 +126,9 @@ export default function ChairmanDashboard() {
     }
     setError("");
     try {
-      const params = new URLSearchParams({ date: collectionDate });
-      const res = await fetch(`/api/chairman/dashboard?${params.toString()}`, {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to load dashboard");
-      const nextSummary = data.summary ?? null;
+      const { ok, data } = await fetchChairmanDashboard(collectionDate);
+      if (!ok) throw new Error(data.message || "Failed to load dashboard");
+      const nextSummary = (data.summary as ChairmanSummary | undefined) ?? null;
       setSummary(nextSummary);
       if (nextSummary) writeCachedSummary(collectionDate, nextSummary);
     } catch (err) {

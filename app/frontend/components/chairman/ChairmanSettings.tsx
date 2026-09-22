@@ -6,6 +6,8 @@ import type { ChangeEvent, FormEvent } from "react";
 import { Lock, MapPin, Phone, Save, User } from "lucide-react";
 import { uploadImage } from "../../utils/upload";
 import TimellyLoader from "../common/TimellyLoader";
+import { fetchChairmanProfile } from "@/lib/api/chairmanProfile";
+import { changePassword, saveUserProfile } from "@/lib/api/portalSettings";
 
 type Profile = {
   name: string;
@@ -66,9 +68,8 @@ export default function ChairmanSettings({ onProfileUpdated }: { onProfileUpdate
     }
     setError("");
     try {
-      const res = await fetch("/api/chairman/me", { credentials: "include", cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to load profile");
+      const { ok, data } = await fetchChairmanProfile();
+      if (!ok) throw new Error(data.message || "Failed to load profile");
       const nextProfile = {
         name: data.user?.name ?? "",
         email: data.user?.email ?? "",
@@ -103,20 +104,14 @@ export default function ChairmanSettings({ onProfileUpdated }: { onProfileUpdate
 
     setSavingProfile(true);
     try {
-      const res = await fetch("/api/user/me", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: profile.name.trim(),
-          mobile: mobile || null,
-          address: profile.address.trim() || null,
-          language: profile.language || "English",
-          photoUrl: profile.photoUrl || null,
-        }),
+      const { ok, data } = await saveUserProfile({
+        name: profile.name.trim(),
+        mobile: mobile || null,
+        address: profile.address.trim() || null,
+        language: profile.language || "English",
+        photoUrl: profile.photoUrl || null,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to update profile");
+      if (!ok) throw new Error(data.message || "Failed to update profile");
       writeCachedProfile(profile);
       setMessage("Profile updated.");
       if (typeof window !== "undefined") {
@@ -149,20 +144,14 @@ export default function ChairmanSettings({ onProfileUpdated }: { onProfileUpdate
     try {
       const photoUrl = await uploadImage(file, "avatars");
       setProfile((prev) => ({ ...prev, photoUrl }));
-      const res = await fetch("/api/user/me", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: profile.name.trim(),
-          mobile: profile.mobile.trim() || null,
-          address: profile.address.trim() || null,
-          language: profile.language || "English",
-          photoUrl,
-        }),
+      const { ok, data } = await saveUserProfile({
+        name: profile.name.trim(),
+        mobile: profile.mobile.trim() || null,
+        address: profile.address.trim() || null,
+        language: profile.language || "English",
+        photoUrl,
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to save profile photo");
+      if (!ok) throw new Error(data.message || "Failed to save profile photo");
       writeCachedProfile({ ...profile, photoUrl });
       setMessage("Profile photo updated.");
       if (typeof window !== "undefined") {
@@ -198,14 +187,8 @@ export default function ChairmanSettings({ onProfileUpdated }: { onProfileUpdate
 
     setSavingPassword(true);
     try {
-      const res = await fetch("/api/user/change-password", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to change password");
+      const { ok, data } = await changePassword({ currentPassword, newPassword });
+      if (!ok) throw new Error(data.message || "Failed to change password");
       setMessage("Password updated.");
       setCurrentPassword("");
       setNewPassword("");
