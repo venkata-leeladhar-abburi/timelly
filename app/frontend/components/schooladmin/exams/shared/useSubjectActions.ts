@@ -1,17 +1,21 @@
 import { useState } from "react";
-import { writeExamsCache, type ExamsCacheSnapshot } from "./examsCacheHelpers";
 
-export function useSubjectActions(getSnapshot: () => ExamsCacheSnapshot) {
-  const [subjects, setSubjects] = useState<string[]>([]);
+/**
+ * Subject CRUD/state. `subjects` is owned by the parent's exams cache
+ * reducer (see useExamsTabState) and passed in along with `setSubjects`,
+ * which dispatches into that shared reducer — no snapshot/closure
+ * indirection needed to keep cache writes in sync with sibling hooks.
+ */
+export function useSubjectActions(
+  subjects: string[],
+  setSubjects: (next: string[]) => void
+) {
   const [subjectsLoading, setSubjectsLoading] = useState(true);
   const [newSubject, setNewSubject] = useState("");
   const [subjectError, setSubjectError] = useState("");
   const [subjectSaving, setSubjectSaving] = useState(false);
   const [editingSubject, setEditingSubject] = useState<string | null>(null);
   const [editingSubjectValue, setEditingSubjectValue] = useState("");
-
-  const updateCache = (next: string[]) =>
-    writeExamsCache(getSnapshot(), { subjects: next });
 
   const deleteSubject = async (name: string) => {
     const upperName = name.trim().toUpperCase();
@@ -40,7 +44,6 @@ export function useSubjectActions(getSnapshot: () => ExamsCacheSnapshot) {
 
       const next = subjects.filter((subject) => subject.toUpperCase() !== upperName);
       setSubjects(next);
-      updateCache(next);
       if (editingSubject === upperName) {
         setEditingSubject(null);
         setEditingSubjectValue("");
@@ -88,7 +91,6 @@ export function useSubjectActions(getSnapshot: () => ExamsCacheSnapshot) {
         new Set(subjects.map((s) => (s.toUpperCase() === fromName ? toName : s)))
       ).sort();
       setSubjects(next);
-      updateCache(next);
       setEditingSubject(null);
       setEditingSubjectValue("");
     } catch (e) {
@@ -131,7 +133,6 @@ export function useSubjectActions(getSnapshot: () => ExamsCacheSnapshot) {
       setNewSubject("");
       const next = Array.from(new Set([...subjects, name])).sort();
       setSubjects(next);
-      updateCache(next);
     } catch (e) {
       console.error("Failed to add subject", e);
       setSubjectError("Failed to add subject");
@@ -142,7 +143,6 @@ export function useSubjectActions(getSnapshot: () => ExamsCacheSnapshot) {
 
   return {
     subjects,
-    setSubjects,
     subjectsLoading,
     setSubjectsLoading,
     newSubject,

@@ -1,9 +1,16 @@
 import { useState } from "react";
 import type { ExamTypeOption } from "@/lib/exams/examTypes";
-import { writeExamsCache, type ExamsCacheSnapshot } from "./examsCacheHelpers";
 
-export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
-  const [examTypes, setExamTypes] = useState<ExamTypeOption[]>([]);
+/**
+ * Exam-type CRUD/state. `examTypes` is owned by the parent's exams cache
+ * reducer (see useExamsTabState) and passed in along with `setExamTypes`,
+ * which dispatches into that shared reducer — no snapshot/closure
+ * indirection needed to keep cache writes in sync with sibling hooks.
+ */
+export function useExamTypeActions(
+  examTypes: ExamTypeOption[],
+  setExamTypes: (next: ExamTypeOption[]) => void
+) {
   const [examTypesLoading, setExamTypesLoading] = useState(true);
   const [newExamType, setNewExamType] = useState("");
   const [newExamTypeMax, setNewExamTypeMax] = useState("");
@@ -16,9 +23,6 @@ export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
   const [expandedExamType, setExpandedExamType] = useState<string | null>(null);
   const [sectionSaving, setSectionSaving] = useState(false);
   const [sectionError, setSectionError] = useState("");
-
-  const updateCache = (next: ExamTypeOption[]) =>
-    writeExamsCache(getSnapshot(), { examTypes: next });
 
   const syncMaxDrafts = (types: ExamTypeOption[]) => {
     const next: Record<string, string> = {};
@@ -70,7 +74,6 @@ export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
       const next = examTypes.filter((type) => type.name.toUpperCase() !== upperName);
       setExamTypes(next);
       syncMaxDrafts(next);
-      updateCache(next);
     } catch (e) {
       console.error("Failed to delete exam type", e);
       setExamTypeError("Failed to delete exam type");
@@ -114,7 +117,6 @@ export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
       }
       setExamTypes(next);
       syncMaxDrafts(next);
-      updateCache(next);
     } catch (e) {
       console.error("Failed to update max marks", e);
       setExamTypeError("Failed to update max marks");
@@ -171,7 +173,6 @@ export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
       );
       setExamTypes(next);
       syncMaxDrafts(next);
-      updateCache(next);
     } catch (e) {
       console.error("Failed to add exam type", e);
       setExamTypeError("Failed to add exam type");
@@ -238,7 +239,6 @@ export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
       }
       setExamTypes(next);
       syncMaxDrafts(next);
-      updateCache(next);
     } catch (e) {
       console.error(e);
       setSectionError("Failed to save subsections");
@@ -249,7 +249,6 @@ export function useExamTypeActions(getSnapshot: () => ExamsCacheSnapshot) {
 
   return {
     examTypes,
-    setExamTypes,
     examTypesLoading,
     setExamTypesLoading,
     newExamType,

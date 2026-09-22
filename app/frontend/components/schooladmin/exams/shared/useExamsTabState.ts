@@ -1,53 +1,61 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useReducer, useRef } from "react";
 import {
   loadExamsPage,
   peekExamsPage,
+  setExamsPageCache,
 } from "@/lib/school/loadSchoolAdminFastTabs";
 import type { ClassData, TermData } from "./types";
-import type { ExamsCacheSnapshot } from "./examsCacheHelpers";
+import {
+  examsCacheReducer,
+  initialExamsCacheState,
+} from "./examsCacheReducer";
 import { useExamTypeActions } from "./useExamTypeActions";
 import { useSubjectActions } from "./useSubjectActions";
 
 /**
- * All state, effects, and handlers for ExamsTab (exams.tsx). Verbatim
- * relocation of the original component body — same order, same closures,
- * same dependency arrays — only the final `return` is new. The component's
- * `if (loading) return <TimellyLoader />` guard stays in the component
- * itself (it's called after all hooks here, with no hooks after it, so
- * moving the guard's SOURCE VALUE (`loading`) out via this hook is safe).
+ * All state, effects, and handlers for ExamsTab (exams.tsx).
  *
- * Exam-type and subject CRUD/state were split out into useExamTypeActions
- * and useSubjectActions (shared/) since they're the largest, most
- * self-contained concerns; both write to the shared exams-page cache via
- * a `getSnapshot` callback defined below so their cache writes still see
- * this hook's latest rawData/classes alongside each other's latest list.
+ * terms/classes/examTypes/subjects — the four fields the shared fast-tab
+ * cache needs — live together in one reducer (examsCacheReducer) instead
+ * of being split across this hook and its two sibling hooks with a
+ * `getSnapshot` callback threaded between them to read each other's
+ * latest values. Every update goes through `dispatch`, and a single
+ * effect below keeps the fast-tab cache in sync with that one source of
+ * truth, so no mutator needs to know about the cache at all.
  */
 export function useExamsTabState() {
-  const [rawData, setRawData] = useState<TermData[]>([]);
-  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [cache, dispatch] = useReducer(examsCacheReducer, initialExamsCacheState);
+  const { terms: rawData, classes, examTypes, subjects } = cache;
+
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedTermName, setSelectedTermName] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [showAllSchedules, setShowAllSchedules] = useState(false);
 
-  const getSnapshot = (): ExamsCacheSnapshot => ({
-    terms: rawData,
-    classes,
-    examTypes: examTypeActions.examTypes,
-    subjects: subjectActions.subjects,
-  });
+  const setExamTypes = (next: typeof examTypes) =>
+    dispatch({ type: "SET_EXAM_TYPES", payload: next });
+  const setSubjects = (next: string[]) =>
+    dispatch({ type: "SET_SUBJECTS", payload: next });
 
-  const examTypeActions = useExamTypeActions(getSnapshot);
-  const subjectActions = useSubjectActions(getSnapshot);
+  const examTypeActions = useExamTypeActions(examTypes, setExamTypes);
+  const subjectActions = useSubjectActions(subjects, setSubjects);
 
-  const {
-    examTypes,
-    setExamTypesLoading,
-    setExamTypes,
-    syncMaxDrafts,
-  } = examTypeActions;
-  const { subjects, setSubjects, setSubjectsLoading } = subjectActions;
+  const { setExamTypesLoading, syncMaxDrafts } = examTypeActions;
+  const { setSubjectsLoading } = subjectActions;
+
+  // Keep the fast-tab cache in sync with this hook's single source of
+  // truth. Skip the very first run so mounting doesn't clobber a cache
+  // entry from a previous visit before the initial fetch below has had a
+  // chance to read it.
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    setExamsPageCache(cache);
+  }, [cache]);
 
   useEffect(() => {
     const applyPayload = (payload: {
@@ -58,11 +66,16 @@ export function useExamsTabState() {
     }) => {
       const data = payload.terms as TermData[];
       const classData = payload.classes as ClassData[];
-      setRawData(data);
-      setClasses(classData);
-      setExamTypes(payload.examTypes);
+      dispatch({
+        type: "SET_PAGE",
+        payload: {
+          terms: data,
+          classes: classData,
+          examTypes: payload.examTypes,
+          subjects: payload.subjects,
+        },
+      });
       syncMaxDrafts(payload.examTypes);
-      setSubjects(payload.subjects);
       setExamTypesLoading(false);
       setSubjectsLoading(false);
 
@@ -112,9 +125,7 @@ export function useExamsTabState() {
     selectedClassId,
     selectedTermName,
     subjects.length,
-    setExamTypes,
     setExamTypesLoading,
-    setSubjects,
     setSubjectsLoading,
   ]);
 
