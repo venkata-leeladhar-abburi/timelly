@@ -8,176 +8,20 @@ import { printFromElement } from "@/lib/pdfUtils";
 import { formatReceiptGeneratedDate, formatReceiptTransactionDate } from "@/lib/fees/receiptDates";
 import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 import { isOfflinePaymentGateway } from "@/lib/fees/feePaymentGateway";
-import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
-
-type PaymentFeeAllocationLine = { name: string; amount: number };
-
-type PaymentRow = {
-  id: string;
-  amount: number;
-  status: string;
-  method: string;
-  createdAt: string;
-  transactionId: string | null;
-  collectedByName?: string | null;
-  collectedByUserId?: string | null;
-  feeTypeName?: string;
-  feeTypeAmount?: number;
-  feeAllocations?: PaymentFeeAllocationLine[];
-};
-
-/** One table row per fee head (split payments are not grouped). */
-type TransactionDisplayRow = {
-  rowKey: string;
-  paymentId: string;
-  amount: number;
-  status: string;
-  method: string;
-  createdAt: string;
-  transactionId: string | null;
-  collectedByName: string | null;
-  feeTypeName: string;
-  sourcePayment: PaymentRow;
-};
-
-function paymentFeeTypeLines(payment: PaymentRow): PaymentFeeAllocationLine[] {
-  if (payment.feeAllocations && payment.feeAllocations.length > 0) {
-    return payment.feeAllocations;
-  }
-  if (payment.feeTypeName) {
-    return [
-      {
-        name: payment.feeTypeName,
-        amount: payment.feeTypeAmount ?? payment.amount,
-      },
-    ];
-  }
-  return [];
-}
-
-/** One table row per fee head on each payment (never merge multiple heads into one row). */
-function paymentsToTransactionRows(payments: PaymentRow[]): TransactionDisplayRow[] {
-  const rows: TransactionDisplayRow[] = [];
-
-  for (const payment of payments) {
-    const lines = paymentFeeTypeLines(payment);
-    const base = {
-      paymentId: payment.id,
-      status: payment.status,
-      method: payment.method,
-      createdAt: payment.createdAt,
-      transactionId: payment.transactionId,
-      collectedByName: payment.collectedByName ?? null,
-      sourcePayment: payment,
-    };
-
-    if (lines.length === 0) {
-      rows.push({
-        ...base,
-        rowKey: payment.id,
-        amount: payment.amount,
-        feeTypeName: payment.feeTypeName || "-",
-      });
-      continue;
-    }
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]!;
-      rows.push({
-        ...base,
-        rowKey: lines.length === 1 ? payment.id : `${payment.id}:${i}:${line.name}`,
-        amount: line.amount,
-        feeTypeName: line.name,
-      });
-    }
-  }
-
-  return rows.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-}
-
-type Props = {
-  fee?: {
-    totalFee: number;
-    amountPaid: number;
-    remainingFee: number;
-  } | null;
-  /** When present, totals prefer breakdown (matches fee head cards). */
-  feeBreakdown?: AdminStudentFeeBreakdownResult | null;
-  payments?: PaymentRow[];
-  studentName?: string;
-  studentId?: string;
-  admissionNumber?: string;
-  applicationFee?: number | null;
-  admissionFee?: number | null;
-  studentCreatedAt?: string;
-  classDisplayName?: string;
-  residencyType?: string;
-  parentName?: string;
-  parentPhone?: string;
-  motherName?: string;
-  /** Refetch student detail after payment edit/delete */
-  onPaymentsChanged?: () => void;
-  onPaymentDeleted?: (result: {
-    paymentId: string;
-    updatedFee: { amountPaid: number; remainingFee: number; finalFee?: number } | null;
-    feeAllocations?: Array<{ name: string; amount: number; key?: string }>;
-  }) => void;
-  feesRecordingDisabled?: boolean;
-  /** True while payment history is still loading from the server. */
-  transactionsLoading?: boolean;
-  /** After recording a payment, auto-open its receipt once rows are ready. */
-  autoPrintPaymentId?: string | null;
-  onAutoPrintDone?: () => void;
-};
-
-function isSyntheticPaymentId(id: string) {
-  return id === "admission-fee" || id === "application-fee";
-}
-
-function isPendingPaymentId(id: string) {
-  return id.startsWith("pending-");
-}
-
-function isSuccessStatus(status: string) {
-  const u = String(status || "").toUpperCase();
-  return u === "SUCCESS" || u === "COMPLETED";
-}
-
-const EDIT_GATEWAY_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "OFFLINE_CASH", label: "Cash" },
-  { value: "OFFLINE_ONLINE", label: "Online (UPI / QR / net banking)" },
-  { value: "OFFLINE_UPI", label: "UPI" },
-  { value: "OFFLINE_BANK_TRANSFER", label: "Bank transfer / NEFT / RTGS" },
-  { value: "OFFLINE_CHEQUE", label: "Cheque" },
-  { value: "OFFLINE_DD", label: "Demand draft (DD)" },
-  { value: "OFFLINE_OTHERS", label: "Others" },
-  { value: "HYPERPG", label: "Online — payment gateway (HyperPG)" },
-];
-
-function formatPaymentMethod(method?: string) {
-  const m = String(method || "").trim().toUpperCase();
-  if (!m) return "-";
-  if (m === "OFFLINE" || m === "CASH" || m === "OFFLINE_CASH") return "Cash";
-  if (m === "UPI" || m === "OFFLINE_UPI") return "UPI";
-  if (m === "CHEQUE" || m === "OFFLINE_CHEQUE") return "Cheque";
-  if (m === "DD" || m === "OFFLINE_DD") return "DD";
-  if (m === "ONLINE" || m === "OFFLINE_ONLINE") return "Online";
-  if (m === "BANK_TRANSFER" || m === "OFFLINE_BANK_TRANSFER") return "Bank Transfer";
-  if (m === "CARD" || m === "OFFLINE_CARD") return "Card";
-  if (m === "HYPERPG") return "Online";
-  if (m === "OFFLINE_OTHERS" || m === "OTHERS") return "Others";
-  if (m.startsWith("OFFLINE_")) {
-    return m
-      .slice("OFFLINE_".length)
-      .toLowerCase()
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  }
-  return method || "-";
-}
+import type {
+  FeeTransactionsProps as Props,
+  PaymentRow,
+  TransactionDisplayRow,
+} from "./shared/feeTransactionsTypes";
+import {
+  EDIT_GATEWAY_OPTIONS,
+  formatPaymentMethod,
+  isPendingPaymentId,
+  isSuccessStatus,
+  isSyntheticPaymentId,
+  paymentsToTransactionRows,
+} from "./shared/feeTransactionsHelpers";
 
 export const FeeTransactions = ({
   fee,
