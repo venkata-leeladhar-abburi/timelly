@@ -3,12 +3,12 @@
 import { ChevronDown, Sparkles } from "lucide-react";
 import PrimaryButton from "../../common/PrimaryButton";
 import type { Class, ExtraFee } from "./types";
-import { classLabel, patchTargetId, scopeLabel } from "./hostel-mess-shared/hostelMessFeesUtils";
-import { useHostelMessFeesState } from "./hostel-mess-shared/useHostelMessFeesState";
-import { SingleClassMessEditor } from "./hostel-mess-shared/SingleClassMessEditor";
-import { StatPill } from "./hostel-mess-shared/StatPill";
-import { DuplicateWarningBanner } from "./hostel-mess-shared/DuplicateWarningBanner";
-import { HostelMessTableSection } from "./hostel-mess-shared/HostelMessTableSection";
+import { classLabel, patchTargetId, scopeLabel } from "./shared/hostel-mess/hostelMessFeesUtils";
+import { useHostelMessFeesState } from "./shared/hostel-mess/useHostelMessFeesState";
+import { SingleClassMessEditor } from "./shared/hostel-mess/SingleClassMessEditor";
+import { StatPill } from "./shared/hostel-mess/StatPill";
+import { DuplicateWarningBanner } from "./shared/hostel-mess/DuplicateWarningBanner";
+import { HostelMessTableSection } from "./shared/hostel-mess/HostelMessTableSection";
 
 const inputClass =
   "w-full min-h-[42px] rounded-xl border border-white/10 bg-[#0B1220]/80 px-4 py-2.5 text-sm text-gray-100 placeholder:text-white/30 focus:border-sky-400/50 focus:outline-none focus:ring-2 focus:ring-sky-400/20";

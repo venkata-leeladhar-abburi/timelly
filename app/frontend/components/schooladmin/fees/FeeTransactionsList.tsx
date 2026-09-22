@@ -9,10 +9,10 @@ import {
   warmSchoolAdminStudentDetails,
 } from "./studentDetailsNav";
 import InlinePagination from "../schooladmincomponents/InlinePagination";
-import { useFeeTransactionsListState } from "./fee-transactions-list-shared/useFeeTransactionsListState";
-import { FeeTransactionsFilters } from "./fee-transactions-list-shared/FeeTransactionsFilters";
-import { FeeTransactionsMobileList } from "./fee-transactions-list-shared/FeeTransactionsMobileList";
-import { FeeTransactionsTable } from "./fee-transactions-list-shared/FeeTransactionsTable";
+import { useFeeTransactionsListState } from "./shared/fee-transactions-list/useFeeTransactionsListState";
+import { FeeTransactionsFilters } from "./shared/fee-transactions-list/FeeTransactionsFilters";
+import { FeeTransactionsMobileList } from "./shared/fee-transactions-list/FeeTransactionsMobileList";
+import { FeeTransactionsTable } from "./shared/fee-transactions-list/FeeTransactionsTable";
 
 interface FeeTransactionsListProps {
   schoolId: string | null;

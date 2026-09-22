@@ -1,4 +1,4 @@
-import type { Class, ExtraFee } from "../types";
+import type { Class, ExtraFee } from "../../types";
 import { findInstallmentPair, isUnsplitLumpExtraFee } from "@/lib/fees/extraFeeInstallments";
 
 export function scopeLabel(scope: string | null | undefined): string {

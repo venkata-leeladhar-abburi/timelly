@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ExtraFee, FeeStructure, Student } from "../types";
+import type { ExtraFee, FeeStructure, Student } from "../../types";
 
 export type SelectedHead =
   | { headType: "BASE_COMPONENT"; componentIndex: number; componentName: string }

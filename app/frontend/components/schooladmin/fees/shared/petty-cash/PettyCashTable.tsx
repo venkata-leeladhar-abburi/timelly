@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from "lucide-react";
-import InlinePagination from "../../schooladmincomponents/InlinePagination";
+import InlinePagination from "../../../schooladmincomponents/InlinePagination";
 import type { PettyCashExpense } from "./pettyCashTypes";
 
 export function PettyCashTable({

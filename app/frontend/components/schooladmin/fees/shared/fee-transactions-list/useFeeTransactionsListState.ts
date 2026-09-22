@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Class } from "../types";
-import type { TransactionItem } from "../RefundModal";
+import type { Class } from "../../types";
+import type { TransactionItem } from "../../RefundModal";
 import {
   fetchFeesTransactions,
   peekFeesTransactions,

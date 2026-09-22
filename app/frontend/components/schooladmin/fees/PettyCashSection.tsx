@@ -1,10 +1,10 @@
 "use client";
 
 import { Download } from "lucide-react";
-import { usePettyCashState } from "./petty-cash-shared/usePettyCashState";
-import { PettyCashForm } from "./petty-cash-shared/PettyCashForm";
-import { PettyCashTable } from "./petty-cash-shared/PettyCashTable";
-import type { FilterType } from "./petty-cash-shared/pettyCashTypes";
+import { usePettyCashState } from "./shared/petty-cash/usePettyCashState";
+import { PettyCashForm } from "./shared/petty-cash/PettyCashForm";
+import { PettyCashTable } from "./shared/petty-cash/PettyCashTable";
+import type { FilterType } from "./shared/petty-cash/pettyCashTypes";
 
 export default function PettyCashSection() {
   const {

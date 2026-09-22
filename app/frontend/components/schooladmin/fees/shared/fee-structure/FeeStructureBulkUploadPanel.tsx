@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import PrimaryButton from "../../../common/PrimaryButton";
+import PrimaryButton from "../../../../common/PrimaryButton";
 
 export function FeeStructureBulkUploadPanel({
   bulkInputRef,

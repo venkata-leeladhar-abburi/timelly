@@ -1,5 +1,5 @@
-import PrimaryButton from "../../../common/PrimaryButton";
-import type { Class, ExtraFee } from "../types";
+import PrimaryButton from "../../../../common/PrimaryButton";
+import type { Class, ExtraFee } from "../../types";
 import { classLabel, existingMessAmountForClass } from "./hostelMessFeesUtils";
 
 const inputClass =

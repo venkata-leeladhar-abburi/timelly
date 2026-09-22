@@ -1,4 +1,4 @@
-import PrimaryButton from "../../../common/PrimaryButton";
+import PrimaryButton from "../../../../common/PrimaryButton";
 import { HEAD_OF_ACCOUNT_OPTIONS, type FormState } from "./pettyCashTypes";
 
 export function PettyCashForm({

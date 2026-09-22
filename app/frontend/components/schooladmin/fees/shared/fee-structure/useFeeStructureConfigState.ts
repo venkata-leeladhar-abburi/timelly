@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import type { Class, FeeStructure } from "../types";
+import type { Class, FeeStructure } from "../../types";
 
 export function useFeeStructureConfigState({
   classes,

@@ -1,4 +1,4 @@
-import type { TransactionItem } from "../RefundModal";
+import type { TransactionItem } from "../../RefundModal";
 import { isOfflinePaymentGateway } from "@/lib/fees/feePaymentGateway";
 
 export function FeeTransactionsTable({

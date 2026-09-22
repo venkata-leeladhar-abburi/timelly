@@ -2,9 +2,9 @@
 
 import { Plus, Pencil, Upload } from "lucide-react";
 import type { Class, FeeStructure } from "./types";
-import { useFeeStructureConfigState } from "./fee-structure-shared/useFeeStructureConfigState";
-import { FeeStructureBulkUploadPanel } from "./fee-structure-shared/FeeStructureBulkUploadPanel";
-import { FeeStructureEditor } from "./fee-structure-shared/FeeStructureEditor";
+import { useFeeStructureConfigState } from "./shared/fee-structure/useFeeStructureConfigState";
+import { FeeStructureBulkUploadPanel } from "./shared/fee-structure/FeeStructureBulkUploadPanel";
+import { FeeStructureEditor } from "./shared/fee-structure/FeeStructureEditor";
 
 interface FeeStructureConfigProps {
   classes: Class[];

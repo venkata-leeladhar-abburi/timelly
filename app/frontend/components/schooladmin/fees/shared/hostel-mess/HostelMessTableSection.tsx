@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import type { Class, ExtraFee } from "../types";
+import type { Class, ExtraFee } from "../../types";
 import { classLabel, existingMessAmountForClass } from "./hostelMessFeesUtils";
 
 const inputClass =

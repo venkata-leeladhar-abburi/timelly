@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
-import SelectInput from "../../../common/SelectInput";
-import SearchInput from "../../../common/SearchInput";
-import type { Class } from "../types";
+import SelectInput from "../../../../common/SelectInput";
+import SearchInput from "../../../../common/SearchInput";
+import type { Class } from "../../types";
 
 export function FeeTransactionsFilters({
   studentSearch,

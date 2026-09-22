@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
-import SelectInput from "../../../common/SelectInput";
-import PrimaryButton from "../../../common/PrimaryButton";
-import type { Class } from "../types";
+import SelectInput from "../../../../common/SelectInput";
+import PrimaryButton from "../../../../common/PrimaryButton";
+import type { Class } from "../../types";
 
 export function FeeStructureEditor({
   editingId,
