@@ -1,14 +1,12 @@
 "use client";
 
 import { Bell, Search, Settings } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import SectionHeader from "./SectionHeader";
-import SearchInput from "./SearchInput";
 import NotificationPanel from "./NotificationPanel";
 import ProfileModal from "./ProfileModal";
 import { AVATAR_URL } from "../../constants/images";
+import { useAppHeaderState } from "./app-header-shared/useAppHeaderState";
+import { AppHeaderMobileSearch } from "./app-header-shared/AppHeaderMobileSearch";
 
 export type HeaderProfile = {
   name: string;
@@ -29,298 +27,27 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ title, profile, hideSearchAndNotifications = false }: AppHeaderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [showProfile, setShowProfile] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [modalProfile, setModalProfile] = useState<HeaderProfile | undefined>(profile);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [liveProfile, setLiveProfile] = useState<HeaderProfile | null>(null);
-
-  const { data: session } = useSession();
-  const isSuperAdminPanel = pathname?.startsWith("/frontend/pages/superadmin");
-  const baseProfile = useMemo(
-    () => ({
-      name: profile?.name?.trim() ? profile.name : session?.user?.name ?? "User",
-      subtitle: profile?.subtitle ?? session?.user?.role ?? "",
-      image:
-        profile?.image != null && profile.image !== ""
-          ? profile.image
-          : session?.user?.image ?? AVATAR_URL,
-      email: profile?.email ?? session?.user?.email ?? "",
-      phone: profile?.phone ?? session?.user?.mobile ?? "",
-      userId: profile?.userId,
-      address: profile?.address,
-      status: profile?.status,
-    }),
-    [
-      profile?.address,
-      profile?.email,
-      profile?.image,
-      profile?.name,
-      profile?.phone,
-      profile?.status,
-      profile?.subtitle,
-      profile?.userId,
-      session?.user?.email,
-      session?.user?.image,
-      session?.user?.mobile,
-      session?.user?.name,
-      session?.user?.role,
-    ]
-  );
-
-  const unreadAbortRef = useRef<AbortController | null>(null);
-  const unreadInFlightRef = useRef(false);
-
-  const fetchUnreadCount = useCallback(async () => {
-    if (hideSearchAndNotifications) return;
-    if (unreadInFlightRef.current) return;
-    unreadInFlightRef.current = true;
-    unreadAbortRef.current?.abort();
-    const controller = new AbortController();
-    unreadAbortRef.current = controller;
-    try {
-      const res = await fetch("/api/notifications?take=1", {
-        credentials: "include",
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      const data = await res.json();
-      if (res.ok && typeof data.unreadCount === "number") {
-        setUnreadCount(data.unreadCount);
-      }
-    } catch {
-      // ignore
-    } finally {
-      unreadInFlightRef.current = false;
-    }
-  }, [hideSearchAndNotifications]);
-
-  const onNotificationSnapshot = useCallback(({ unreadCount: n }: { unreadCount: number }) => {
-    setUnreadCount(n);
-  }, []);
-
-  useEffect(() => {
-    fetchUnreadCount();
-    const onVisible = () => {
-      if (document.visibilityState === "visible") {
-        void fetchUnreadCount();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisible);
-
-    // Panel open: list poll + onSnapshot refresh the badge — skip duplicate header polling
-    if (showNotifications) {
-      return () => {
-        document.removeEventListener("visibilitychange", onVisible);
-        unreadAbortRef.current?.abort();
-        unreadAbortRef.current = null;
-        unreadInFlightRef.current = false;
-      };
-    }
-
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisible);
-      unreadAbortRef.current?.abort();
-      unreadAbortRef.current = null;
-      unreadInFlightRef.current = false;
-    };
-  }, [fetchUnreadCount, showNotifications]);
-  const displayName = (liveProfile?.name && liveProfile.name.trim())
-    ? liveProfile.name
-    : baseProfile.name;
-  const avatarUrlRaw = (liveProfile?.image != null && liveProfile.image !== "")
-    ? liveProfile.image
-    : baseProfile.image;
-  const avatarUrl =
-    typeof avatarUrlRaw === "string" &&
-    avatarUrlRaw.includes("/storage/v1/object/")
-      ? `/api/media?url=${encodeURIComponent(avatarUrlRaw)}`
-      : avatarUrlRaw;
-
-  const refreshLiveProfile = useCallback(async () => {
-    try {
-      const res = await fetch("/api/user/me", { credentials: "include", cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || !data?.user) return;
-      const user = data.user as {
-        id?: string;
-        name?: string;
-        role?: string;
-        email?: string;
-        mobile?: string;
-        address?: string | null;
-        photoUrl?: string | null;
-      };
-      setLiveProfile({
-        name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
-        subtitle: user.role ?? profile?.subtitle ?? session?.user?.role ?? "",
-        image: user.photoUrl ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
-        email: user.email ?? profile?.email ?? session?.user?.email ?? "",
-        phone: user.mobile ?? profile?.phone ?? session?.user?.mobile ?? "",
-        userId: user.id ?? profile?.userId,
-        address: user.address ?? profile?.address,
-        status: profile?.status,
-      });
-    } catch {
-      // ignore
-    }
-  }, [
-    profile?.address,
-    profile?.email,
-    profile?.image,
-    profile?.name,
-    profile?.phone,
-    profile?.status,
-    profile?.subtitle,
-    profile?.userId,
-    session?.user?.email,
-    session?.user?.image,
-    session?.user?.mobile,
-    session?.user?.name,
-    session?.user?.role,
-  ]);
-
-  useEffect(() => {
-    setLiveProfile((prev) => ({
-      ...baseProfile,
-      ...prev,
-      name: prev?.name?.trim() ? prev.name : baseProfile.name,
-      image: prev?.image != null && prev.image !== "" ? prev.image : baseProfile.image,
-    }));
-    setModalProfile((prev) => prev ?? baseProfile);
-  }, [baseProfile]);
-
-  useEffect(() => {
-    const onUpdated = () => {
-      void refreshLiveProfile();
-    };
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "timelly:profile-updated") {
-        void refreshLiveProfile();
-      }
-    };
-    window.addEventListener("teacher-profile-updated", onUpdated);
-    window.addEventListener("profile-updated", onUpdated);
-    window.addEventListener("storage", onStorage);
-    return () => {
-      window.removeEventListener("teacher-profile-updated", onUpdated);
-      window.removeEventListener("profile-updated", onUpdated);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, [refreshLiveProfile]);
-
-  const openSettings = () => {
-    if (pathname?.startsWith("/frontend/pages/")) {
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
-      params.set("tab", "settings");
-      router.push(`${pathname}?${params.toString()}`);
-      return;
-    }
-    router.push("/settings");
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  const handleSearchSubmit = (queryValue?: string) => {
-    const query = (queryValue || searchQuery).trim();
-    if (!query) return;
-
-    const currentPath = pathname || "";
-
-    // Navigate based on current path
-    if (currentPath.startsWith("/frontend/pages/parent")) {
-      router.push(`/frontend/pages/parent?tab=dashboard&search=${encodeURIComponent(query)}`);
-    } else if (currentPath.startsWith("/frontend/pages/teacher")) {
-      router.push(`/frontend/pages/teacher?tab=dashboard&search=${encodeURIComponent(query)}`);
-    } else if (currentPath.startsWith("/frontend/pages/schooladmin")) {
-      router.push(`/frontend/pages/schooladmin?tab=students&search=${encodeURIComponent(query)}`);
-    } else {
-      // Default: navigate to current page with search query
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
-      params.set("search", query);
-      router.push(`${currentPath}?${params.toString()}`);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const inputValue = (e.target as HTMLInputElement).value;
-      handleSearchSubmit(inputValue);
-    }
-  };
-
-  useEffect(() => {
-    if (!showProfile) return;
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await fetch("/api/user/me", { credentials: "include" });
-        const data = await res.json();
-        if (cancelled || !res.ok || !data?.user) return;
-
-        const user = data.user as {
-          id?: string;
-          name?: string;
-          photoUrl?: string | null;
-          role?: string;
-          email?: string;
-          mobile?: string;
-          address?: string | null;
-        };
-
-        let address = user.address ?? profile?.address ?? undefined;
-        const role = user.role ?? profile?.subtitle ?? session?.user?.role ?? "";
-        if (!address && role === "STUDENT") {
-          try {
-            const parentRes = await fetch("/api/student/parent-details", { credentials: "include" });
-            const parentData = await parentRes.json();
-            if (parentRes.ok && parentData?.address) {
-              address = parentData.address;
-            }
-          } catch {
-            // keep fallback
-          }
-        }
-
-        setModalProfile({
-          name: user.name ?? liveProfile?.name ?? profile?.name ?? session?.user?.name ?? "User",
-          subtitle: profile?.subtitle ?? role,
-          image: user.photoUrl ?? liveProfile?.image ?? profile?.image ?? session?.user?.image ?? AVATAR_URL,
-          email: user.email ?? liveProfile?.email ?? profile?.email ?? session?.user?.email ?? "",
-          phone: user.mobile ?? liveProfile?.phone ?? profile?.phone ?? session?.user?.mobile ?? "",
-          userId: user.id ?? liveProfile?.userId ?? profile?.userId,
-          address: address ?? liveProfile?.address,
-          status: profile?.status,
-        });
-      } catch {
-        setModalProfile(liveProfile ?? profile);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
+  const {
+    pathname,
     showProfile,
-    liveProfile,
-    profile,
-    session?.user?.email,
-    session?.user?.image,
-    session?.user?.mobile,
-    session?.user?.name,
-    session?.user?.role,
-  ]);
+    setShowProfile,
+    showNotifications,
+    setShowNotifications,
+    showSearch,
+    setShowSearch,
+    searchQuery,
+    modalProfile,
+    unreadCount,
+    isSuperAdminPanel,
+    fetchUnreadCount,
+    onNotificationSnapshot,
+    displayName,
+    avatarUrl,
+    openSettings,
+    handleSearch,
+    handleSearchSubmit,
+    handleKeyDown,
+  } = useAppHeaderState({ profile, hideSearchAndNotifications });
 
   return (
     <>
@@ -340,27 +67,12 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
 
             {/* SEARCH - hidden for Super Admin */}
             {!hideSearchAndNotifications && (
-              <>
-                {/* <div className="hidden md:block">
-                  <SearchInput 
-                    showSearchIcon 
-                    icon={Search}
-                    iconClickable={true}
-                    onIconClick={() => handleSearchSubmit(searchQuery)}
-                    value={searchQuery}
-                    onChange={handleSearch}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Search..."
-                    className="w-[200px] md:w-[250px]"
-                  />
-                </div> */}
-                <button
-                  className="md:hidden p-2 rounded-lg hover:bg-white/10"
-                  onClick={() => setShowSearch(true)}
-                >
-                  <Search className="text-white"/>
-                </button>
-              </>
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-white/10"
+                onClick={() => setShowSearch(true)}
+              >
+                <Search className="text-white"/>
+              </button>
             )}
 
             {/* NOTIFICATIONS - hidden for Super Admin */}
@@ -450,35 +162,16 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
 
       {/* MOBILE SEARCH PLACEHOLDER - only when search is shown */}
       {!hideSearchAndNotifications && showSearch && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-start p-4 md:hidden">
-          <div className="w-full bg-neutral-900 rounded-xl p-4">
-            <SearchInput 
-              icon={Search} 
-              showSearchIcon
-              value={searchQuery}
-              onChange={handleSearch}
-              onKeyDown={handleKeyDown}
-              placeholder="Search..."
-            />
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={() => {
-                  handleSearchSubmit(searchQuery);
-                  setShowSearch(false);
-                }}
-                className="px-4 py-2 bg-lime-400 text-black rounded-lg text-sm font-medium"
-              >
-                Search
-              </button>
-              <button
-                onClick={() => setShowSearch(false)}
-                className="px-4 py-2 text-sm text-white/60 hover:text-white"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <AppHeaderMobileSearch
+          searchQuery={searchQuery}
+          onChange={handleSearch}
+          onKeyDown={handleKeyDown}
+          onSubmit={() => {
+            handleSearchSubmit(searchQuery);
+            setShowSearch(false);
+          }}
+          onClose={() => setShowSearch(false)}
+        />
       )}
     </>
   );
