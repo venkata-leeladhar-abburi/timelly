@@ -2,9 +2,9 @@
 
 import { GraduationCap, UserPlus } from "lucide-react";
 import TimellyLoader from "../../common/TimellyLoader";
-import { useAppointTeacherState } from "./appoint-teacher-shared/useAppointTeacherState";
-import { AppointTeacherTable } from "./appoint-teacher-shared/AppointTeacherTable";
-import { AppointTeacherMobileList } from "./appoint-teacher-shared/AppointTeacherMobileList";
+import { useAppointTeacherState } from "./shared/useAppointTeacherState";
+import { AppointTeacherTable } from "./shared/AppointTeacherTable";
+import { AppointTeacherMobileList } from "./shared/AppointTeacherMobileList";
 
 type AppointTeacherProps = {
   schoolId?: string | null;

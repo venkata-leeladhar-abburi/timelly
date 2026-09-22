@@ -1,12 +1,12 @@
 "use client";
 
 import TimellyLoader from "../common/TimellyLoader";
-import { formatMoney } from "./discount-approvals-shared/discountApprovalsCache";
-import { useDiscountApprovalsState } from "./discount-approvals-shared/useDiscountApprovalsState";
-import { DiscountApprovalsSearchHeader } from "./discount-approvals-shared/DiscountApprovalsSearchHeader";
-import { DiscountApprovalCard } from "./discount-approvals-shared/DiscountApprovalCard";
+import { formatMoney } from "./shared/discountApprovalsCache";
+import { useDiscountApprovalsState } from "./shared/useDiscountApprovalsState";
+import { DiscountApprovalsSearchHeader } from "./shared/DiscountApprovalsSearchHeader";
+import { DiscountApprovalCard } from "./shared/DiscountApprovalCard";
 
-export { warmDiscountApprovals } from "./discount-approvals-shared/discountApprovalsCache";
+export { warmDiscountApprovals } from "./shared/discountApprovalsCache";
 
 export default function DiscountApprovals() {
   const {
