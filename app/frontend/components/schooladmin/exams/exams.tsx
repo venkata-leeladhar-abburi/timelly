@@ -11,48 +11,7 @@ import {
     setExamsPageCache,
 } from "@/lib/school/loadSchoolAdminFastTabs";
 import type { ExamTypeOption } from "@/lib/exams/examTypes";
-
-interface SyllabusUnit {
-    id: string;
-    unitName: string;
-    completedPercent: number;
-    order: number;
-}
-
-interface SyllabusTracking {
-    id: string;
-    subject: string;
-    completedPercent: number;
-    units: SyllabusUnit[];
-}
-
-interface ExamSchedule {
-    id: string;
-    subject: string;
-    examDate: string;
-    startTime: string;
-    durationMin: number;
-}
-
-interface TermData {
-    id: string;
-    name: string;
-    status: "COMPLETED" | "UPCOMING" | "ONGOING";
-    class: {
-        id: string;
-        name: string;
-        section: string;
-        teacher?: { name: string };
-    };
-    schedules: ExamSchedule[];
-    syllabus: SyllabusTracking[];
-}
-
-interface ClassData {
-    id: string;
-    name: string;
-    section: string;
-}
+import type { ClassData, TermData } from "./shared/types";
 
 export default function ExamsTab() {
     const [examTypes, setExamTypes] = useState<ExamTypeOption[]>([]);
