@@ -1,29 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addStudent, assignStudentsToClass, updateStudent, deleteStudent as deleteStudentApi } from "../../../services/student.service";
-import { toast } from "../../../services/toast.service";
 import {
   ClassItem,
   SelectOption,
-  StudentFormErrors,
-  StudentFormState,
   StudentRow,
   StudentStatusFilter,
 } from "./types";
-import { mergeStudentAfterEdit, sortStudentsForDisplay, toStudentForm } from "./utils";
-import { downloadStudentListPdf } from "@/lib/students/studentListPdf";
-import { invalidateStudentDetailsFast as invalidateStudentDetailsBundleCache } from "@/lib/students/fetchStudentDetailsFast";
+import { sortStudentsForDisplay } from "./utils";
+import type { Props } from "./shared/hookTypes";
+import { EMPTY_CLASSES } from "./shared/defaults";
+import { getClassesCache, preloadClasses } from "./shared/classesPreload";
 import {
   clearStudentListCache,
   readStudentListCache,
   writeStudentListCache,
   type StudentListCacheScope,
 } from "@/lib/students/studentListSessionCache";
-import type { Props } from "./shared/hookTypes";
-import { formatStudentMessage, validateForm } from "./shared/validation";
-import { DEFAULT_FORM, EMPTY_CLASSES } from "./shared/defaults";
-import { getClassesCache, preloadClasses } from "./shared/classesPreload";
+import useStudentFormAdd from "./shared/useStudentFormAdd";
+import useStudentEditDelete from "./shared/useStudentEditDelete";
+import useStudentExport from "./shared/useStudentExport";
 
 export default function useStudentPage({ classes, reload }: Props) {
   const stableClasses = classes ?? EMPTY_CLASSES;
@@ -43,13 +39,7 @@ export default function useStudentPage({ classes, reload }: Props) {
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [activeCount, setActiveCount] = useState<number | null>(null);
   const [inactiveCount, setInactiveCount] = useState<number | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showUploadPanel, setShowUploadPanel] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState<StudentFormState>(DEFAULT_FORM);
-  const [errors, setErrors] = useState<StudentFormErrors>({});
-  const [saving, setSaving] = useState(false);
+  const listFetchGenRef = useRef(0);
 
   const selectedClassIdForFetch = useMemo(() => {
     if (!selectedClass || !selectedSection) return "";
@@ -58,17 +48,6 @@ export default function useStudentPage({ classes, reload }: Props) {
     );
     return match?.id ?? "";
   }, [availableClasses, selectedClass, selectedSection]);
-
-  const [viewStudent, setViewStudent] = useState<StudentRow | null>(null);
-  const [editStudent, setEditStudent] = useState<StudentRow | null>(null);
-  const [deleteStudent, setDeleteStudent] = useState<StudentRow | null>(null);
-  const [editForm, setEditForm] = useState<StudentFormState>(DEFAULT_FORM);
-  const [editErrors, setEditErrors] = useState<StudentFormErrors>({});
-  const [editSaving, setEditSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [exportingDetails, setExportingDetails] = useState(false);
-  const [exportingPdf, setExportingPdf] = useState(false);
-  const listFetchGenRef = useRef(0);
 
   useEffect(() => {
     if (stableClasses.length) {
@@ -100,12 +79,6 @@ export default function useStudentPage({ classes, reload }: Props) {
       active = false;
     };
   }, [stableClasses]);
-
-  useEffect(() => {
-    if (!form.classId && selectedClassIdForFetch) {
-      setForm((prev) => ({ ...prev, classId: selectedClassIdForFetch }));
-    }
-  }, [selectedClassIdForFetch, form.classId]);
 
   useEffect(() => {
     if (!selectedSection) return;
@@ -391,457 +364,35 @@ export default function useStudentPage({ classes, reload }: Props) {
       (!selectedSection || item.section === selectedSection)
   );
 
-  const handleFormChange = (key: keyof StudentFormState, value: string | string[]) => {
-    setForm((prev) => ({ ...prev, [key]: value } as StudentFormState));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
+  const formAdd = useStudentFormAdd({ statusFilter, refreshStats, refreshList });
 
-
-  const handleEditChange = (key: keyof StudentFormState, value: string | string[]) => {
-    setEditForm((prev) => ({ ...prev, [key]: value } as StudentFormState));
-    setEditErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
-
-  const handleSaveStudent = async () => {
-    const nextErrors = validateForm(form, {
-      requireAadhaar: true,
-      requirePhone: true,
-      requireClass: true,
-      requireGender: true,
-      strictOptionalFormats: true,
-    });
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-
-    const aadhaarDigits = form.aadhaarNo.replace(/\D/g, "");
-    const phoneDigits = form.phoneNo.replace(/\D/g, "");
-
-    try {
-      setSaving(true);
-      const classIdPayload = form.classId?.trim() ? form.classId.trim() : undefined;
-      const res: Response = await addStudent({
-        name: form.name.trim(),
-        fatherName: form.fatherName.trim(),
-        motherName: form.motherName?.trim() || undefined,
-        occupation: form.occupation?.trim() || undefined,
-        aadhaarNo: aadhaarDigits,
-        phoneNo: phoneDigits,
-        /** Parent/guardian contact only — student login email is always auto-generated on the server */
-        email: form.email.trim() || undefined,
-        parentEmail: form.email.trim() || undefined,
-        dob: form.dob,
-        classId: classIdPayload,
-        address: form.address?.trim() || undefined,
-        rollNo: form.rollNo?.trim() || undefined,
-        penNumber: form.penNumber?.trim() || undefined,
-        apaarId: form.apaarId?.trim() || undefined,
-        gender: form.gender?.trim() || undefined,
-        residencyType: form.residencyType?.trim() || "Day Scholar",
-        status: form.status || "Active",
-        subjects: Array.isArray(form.subjects) ? form.subjects : [],
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const rawMessage = typeof data.message === "string" ? data.message : "";
-        const lowerRaw = rawMessage.toLowerCase();
-        const message = formatStudentMessage(rawMessage || "Failed to add student");
-
-        // Use raw API text for classification: formatted `message` can match the generic
-        // "timelly id already exists" substring even for the name+ID combined error.
-        if (lowerRaw.includes("student name and timelly id already exist")) {
-          setErrors((prev) => ({
-            ...prev,
-            name: "Already exist.",
-            rollNo: "Already exist.",
-          }));
-        } else if (
-          lowerRaw.includes("timelly id already exists") ||
-          lowerRaw.includes("timelly id is already used")
-        ) {
-          setErrors((prev) => ({ ...prev, rollNo: "Already exist." }));
-        }
-
-        toast.error(message);
-        return;
-      }
-
-      // Student is already created with classId in the create API, so no need for separate assignment
-      toast.success("Student added successfully");
-      setShowSuccess(true);
-      setForm({ ...DEFAULT_FORM, classId: form.classId });
-      setShowAddForm(false);
-      void refreshStats();
-      if (form.status !== "Inactive" && statusFilter !== "Inactive") {
-        void refreshList(true);
-      }
-    } catch (e) {
-      const message =
-        e instanceof Error && e.message
-          ? e.message
-          : "Something went wrong while adding student";
-      toast.error(message);
-    } finally {
-      setSaving(false);
+  useEffect(() => {
+    if (!formAdd.form.classId && selectedClassIdForFetch) {
+      formAdd.setForm((prev) => ({ ...prev, classId: selectedClassIdForFetch }));
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- verbatim relocation of original effect
+  }, [selectedClassIdForFetch, formAdd.form.classId]);
 
-  const handleResetForm = () => {
-    setForm({ ...DEFAULT_FORM });
-    setErrors({});
-  };
+  const editDelete = useStudentEditDelete({
+    availableClasses,
+    selectedClassIdForFetch,
+    statusFilter,
+    patchStudent,
+    removeStudent,
+    refreshStats,
+    onBeforeOpenEdit: () => {
+      formAdd.setShowAddForm(false);
+      formAdd.setShowUploadPanel(false);
+    },
+  });
 
-  const handleUpload = async () => {
-    if (!uploadFile) {
-      const message = "Please select an Excel/CSV file";
-      toast.error(message);
-      throw new Error(message);
-    }
-
-    try {
-      setUploading(true);
-
-      const formData = new FormData();
-      formData.append("file", uploadFile);
-
-      const uploadRes = await fetch("/api/student/bulk-upload", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
-
-      const uploadData = await uploadRes.json();
-
-      if (!uploadRes.ok) {
-        const message = formatStudentMessage(uploadData.message || "Upload failed");
-        toast.error(message);
-        throw new Error(message);
-      }
-
-      if ((uploadData.createdCount || 0) === 0 && (uploadData.failedCount || 0) > 0) {
-        const firstFailed =
-          Array.isArray(uploadData.failed) && uploadData.failed.length > 0
-            ? uploadData.failed[0]
-            : null;
-        const message = firstFailed?.error
-          ? `Upload failed at row ${firstFailed.row}: ${formatStudentMessage(firstFailed.error)}`
-          : "Upload failed. No students were created.";
-        toast.error(message);
-        throw new Error(message);
-      }
-
-      toast.success(
-        `${uploadData.createdCount || 0} students added successfully`
-      );
-      setUploadFile(null);
-      void refreshStats();
-      void refreshList(true);
-      return {
-        createdCount: uploadData.createdCount || 0,
-        failedCount: uploadData.failedCount || 0,
-        failed: Array.isArray(uploadData.failed) ? uploadData.failed : [],
-      };
-    } catch (e) {
-      if (e instanceof Error) {
-        throw e;
-      }
-      throw new Error("Something went wrong. Please try again.");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const openView = (student: StudentRow) => setViewStudent(student);
-
-  const openEdit = (student: StudentRow) => {
-    setShowAddForm(false);
-    setShowUploadPanel(false);
-    setEditStudent(student);
-    setEditForm(toStudentForm(student));
-    setEditErrors({});
-    void (async () => {
-      try {
-        const res = await fetch(`/api/student/${encodeURIComponent(student.id)}`, {
-          credentials: "include",
-          cache: "no-store",
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.student) return;
-        setEditForm((prev) => ({
-          ...prev,
-          name: data.student.name || prev.name,
-          rollNo: data.student.rollNo || prev.rollNo,
-          penNumber: data.student.penNumber || prev.penNumber,
-          apaarId: data.student.apaarId || prev.apaarId,
-          gender: data.student.gender || prev.gender,
-          residencyType: data.student.residencyType || prev.residencyType,
-          dob: data.student.dob || prev.dob,
-          classId: data.student.class?.id || prev.classId,
-          section: data.student.class?.section || prev.section,
-          fatherName: data.student.fatherName || prev.fatherName,
-          motherName: data.student.motherName || prev.motherName,
-          occupation: data.student.fatherOccupation || prev.occupation,
-          officeAddress: data.student.officeAddress || prev.officeAddress,
-          phoneNo: data.student.phone || prev.phoneNo,
-          email: data.student.parentEmail || data.student.email || prev.email,
-          address: data.student.address || prev.address,
-          aadhaarNo: data.student.aadhaarNo || prev.aadhaarNo,
-          parentAadharNo: data.student.parentAadharNo || prev.parentAadharNo,
-          parentWhatsapp: data.student.parentWhatsapp || prev.parentWhatsapp,
-          bankAccountNo: data.student.bankAccountNo || prev.bankAccountNo,
-          applicationFee:
-            data.student.applicationFee != null
-              ? String(data.student.applicationFee)
-              : prev.applicationFee,
-          admissionFee:
-            data.student.admissionFee != null ? String(data.student.admissionFee) : prev.admissionFee,
-          previousSchool: data.student.previousSchool || prev.previousSchool,
-          houseNo: data.student.houseNo || prev.houseNo,
-          street: data.student.street || prev.street,
-          city: data.student.city || prev.city,
-          town: data.student.town || prev.town,
-          state: data.student.state || prev.state,
-          pinCode: data.student.pinCode || prev.pinCode,
-          nationality: data.student.nationality || prev.nationality,
-          languagesAtHome: data.student.languagesAtHome || prev.languagesAtHome,
-          caste: data.student.caste || prev.caste,
-          religion: data.student.religion || prev.religion,
-          emergencyFatherNo: data.student.emergencyFatherNo || prev.emergencyFatherNo,
-          emergencyMotherNo: data.student.emergencyMotherNo || prev.emergencyMotherNo,
-          emergencyGuardianNo: data.student.emergencyGuardianNo || prev.emergencyGuardianNo,
-          status: data.student.status || prev.status,
-          subjects: Array.isArray(data.student.subjects) ? data.student.subjects : prev.subjects,
-        }));
-      } catch {
-        // keep defaults from list row
-      }
-    })();
-  };
-
-  const openDelete = (student: StudentRow) => setDeleteStudent(student);
-
-  const closeView = () => setViewStudent(null);
-  const closeEdit = () => setEditStudent(null);
-  const closeDelete = () => setDeleteStudent(null);
-
-  const handleEditSave = async () => {
-    if (!editStudent) return;
-    const nextErrors = validateForm(editForm, {
-      requireAadhaar: false,
-      requirePhone: false,
-    });
-    setEditErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
-    setEditSaving(true);
-    try {
-      const res = await updateStudent(editStudent.id, {
-        name: editForm.name.trim(),
-        fatherName: editForm.fatherName.trim(),
-        motherName: editForm.motherName.trim() || undefined,
-        occupation: editForm.occupation.trim() || undefined,
-        classId: editForm.classId || undefined,
-        dob: editForm.dob || undefined,
-        aadhaarNo: editForm.aadhaarNo.trim() || undefined,
-        rollNo: editForm.rollNo.trim() || undefined,
-        penNumber: editForm.penNumber.trim() || undefined,
-        apaarId: editForm.apaarId.trim() || undefined,
-        phoneNo: editForm.phoneNo.trim() || undefined,
-        email: editForm.email.trim() || undefined,
-        address: editForm.address.trim() || undefined,
-        gender: editForm.gender.trim() || undefined,
-        residencyType: editForm.residencyType?.trim() || "Day Scholar",
-        parentAadharNo: editForm.parentAadharNo.trim() || undefined,
-        parentWhatsapp: editForm.parentWhatsapp.trim() || undefined,
-        bankAccountNo: editForm.bankAccountNo.trim() || undefined,
-        officeAddress: editForm.officeAddress.trim() || undefined,
-        houseNo: editForm.houseNo.trim() || undefined,
-        street: editForm.street.trim() || undefined,
-        city: editForm.city.trim() || undefined,
-        town: editForm.town.trim() || undefined,
-        state: editForm.state.trim() || undefined,
-        pinCode: editForm.pinCode.trim() || undefined,
-        nationality: editForm.nationality.trim() || undefined,
-        languagesAtHome: editForm.languagesAtHome.trim() || undefined,
-        caste: editForm.caste.trim() || undefined,
-        religion: editForm.religion.trim() || undefined,
-        emergencyFatherNo: editForm.emergencyFatherNo.trim() || undefined,
-        emergencyMotherNo: editForm.emergencyMotherNo.trim() || undefined,
-        emergencyGuardianNo: editForm.emergencyGuardianNo.trim() || undefined,
-        applicationFee: editForm.applicationFee.trim()
-          ? Number(editForm.applicationFee)
-          : null,
-        admissionFee: editForm.admissionFee.trim() ? Number(editForm.admissionFee) : null,
-        status: editForm.status || "Active",
-        subjects: Array.isArray(editForm.subjects) ? editForm.subjects : [],
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.message || "Failed to update student");
-        return;
-      }
-
-      const resolvedClass = editForm.classId
-        ? availableClasses.find((c) => c.id === editForm.classId) ?? null
-        : null;
-      const updated = mergeStudentAfterEdit(editStudent, editForm, resolvedClass);
-      const updatedClassId = updated.class?.id;
-      const becameInactive = (updated.status || "Active") === "Inactive";
-      const becameActive = (updated.status || "Active") === "Active";
-
-      const movedOutOfFilteredClass =
-        Boolean(selectedClassIdForFetch) &&
-        Boolean(updatedClassId) &&
-        updatedClassId !== selectedClassIdForFetch;
-
-      const shouldRemoveFromList =
-        (statusFilter === "Active" && becameInactive) ||
-        (statusFilter === "Inactive" && becameActive) ||
-        movedOutOfFilteredClass;
-
-      if (shouldRemoveFromList) {
-        removeStudent(editStudent.id);
-      } else {
-        patchStudent(editStudent.id, () => updated);
-      }
-
-      if (becameInactive || becameActive) {
-        invalidateStudentDetailsBundleCache(editStudent.id);
-        clearStudentListCache();
-      }
-
-      toast.success(
-        becameInactive
-          ? "Student marked inactive. They no longer appear in class lists or portal."
-          : typeof data.message === "string" && data.message
-            ? data.message
-            : "Student updated successfully"
-      );
-      closeEdit();
-
-      void refreshStats();
-    } catch {
-      toast.error("Failed to update student");
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteStudent) return;
-    const student = deleteStudent;
-    try {
-      const res = await deleteStudentApi(student.id);
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.message || "Failed to delete student");
-        return;
-      }
-      toast.success("Student deleted successfully");
-      closeDelete();
-      removeStudent(student.id);
-      void refreshStats();
-    } catch {
-      toast.error("Failed to delete student");
-    }
-  };
-
-  const buildExportParams = () => {
-    const params = new URLSearchParams();
-    if (selectedClassIdForFetch) {
-      params.set("classId", selectedClassIdForFetch);
-    } else {
-      if (selectedClass) params.set("className", selectedClass);
-      if (selectedSection) params.set("section", selectedSection);
-    }
-    if (statusFilter !== "All") {
-      params.set("status", statusFilter);
-    }
-    return params;
-  };
-
-  const handleDownloadExcel = async () => {
-    if (exportingDetails) return;
-    setExportingDetails(true);
-    try {
-      const res = await fetch(
-        `/api/student/export-details?${buildExportParams().toString()}`,
-        { credentials: "include", cache: "no-store" }
-      );
-      if (!res.ok) {
-        let message = "Export failed";
-        try {
-          const data = (await res.json()) as { message?: string };
-          if (typeof data.message === "string" && data.message) {
-            message = data.message;
-          }
-        } catch {
-          /* ignore */
-        }
-        toast.error(message);
-        return;
-      }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download =
-        statusFilter === "Inactive"
-          ? "Inactive-students-report.xlsx"
-          : "Student-details-report.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      toast.success("Excel report downloaded");
-    } catch {
-      toast.error("Export failed");
-    } finally {
-      setExportingDetails(false);
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    if (exportingPdf) return;
-    if (!filteredStudents.length) {
-      toast.error("No students to export");
-      return;
-    }
-    setExportingPdf(true);
-    try {
-      const schoolRes = await fetch("/api/school/mine", {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const schoolPayload = await schoolRes.json().catch(() => ({}));
-      const statusLabel =
-        statusFilter === "All" ? "All Students" : `${statusFilter} Students`;
-      const classLabel = selectedClass
-        ? `Class ${selectedClass}${selectedSection ? ` ${selectedSection}` : ""}`
-        : "All Classes";
-      await downloadStudentListPdf({
-        students: filteredStudents,
-        title: `${statusLabel} (${filteredStudents.length})`,
-        subtitle: classLabel,
-        filename: `students-${statusFilter.toLowerCase()}.pdf`,
-        school: schoolPayload?.school as {
-          name?: string;
-          address?: string;
-          location?: string;
-          affiliationLine?: string;
-          logoUrl?: string | null;
-          admins?: Array<{ photoUrl?: string | null }>;
-        },
-      });
-      toast.success("PDF downloaded");
-    } catch {
-      toast.error("PDF export failed");
-    } finally {
-      setExportingPdf(false);
-    }
-  };
-
-  const handleDownloadReport = handleDownloadExcel;
+  const exportState = useStudentExport({
+    filteredStudents,
+    selectedClass,
+    selectedSection,
+    selectedClassIdForFetch,
+    statusFilter,
+  });
 
   return {
     filterClassOptions,
@@ -857,20 +408,7 @@ export default function useStudentPage({ classes, reload }: Props) {
     setStatusFilter,
     searchQuery,
     setSearchQuery,
-    showAddForm,
-    setShowAddForm,
-    showUploadPanel,
-    setShowUploadPanel,
-    uploadFile,
-    setUploadFile,
-    uploading,
-    handleUpload,
-    form,
-    errors,
-    saving,
-    handleFormChange,
-    handleResetForm,
-    handleSaveStudent,
+    ...formAdd,
     filteredStudents,
     tableLoading: listLoading,
     loadingMore,
@@ -879,28 +417,7 @@ export default function useStudentPage({ classes, reload }: Props) {
     activeCount,
     inactiveCount,
     selectedClassObj,
-    viewStudent,
-    editStudent,
-    deleteStudent,
-    editForm,
-    setEditForm,
-    editErrors,
-    editSaving,
-    handleEditChange,
-    openView,
-    openEdit,
-    openDelete,
-    closeView,
-    closeEdit,
-    closeDelete,
-    handleEditSave,
-    handleDelete,
-    handleDownloadReport,
-    handleDownloadExcel,
-    handleDownloadPdf,
-    exportingDetails,
-    exportingPdf,
-    showSuccess,
-    setShowSuccess,
+    ...editDelete,
+    ...exportState,
   };
 }
