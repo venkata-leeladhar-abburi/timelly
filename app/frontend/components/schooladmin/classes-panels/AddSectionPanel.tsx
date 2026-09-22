@@ -2,6 +2,9 @@
 
 import { Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createClass } from "@/lib/api/classes";
+import { fetchClassList } from "@/lib/api/classList";
+import { fetchTeacherList } from "@/lib/api/teacher";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 import SuccessPopups from "../../common/SuccessPopUps";
@@ -36,13 +39,12 @@ export default function AddSectionPanel({
     const loadClasses = async () => {
       setIsLoadingClasses(true);
       try {
-        const response = await fetch("/api/class/list", { method: "GET" });
-        if (!response.ok) {
+        const { ok, data } = await fetchClassList();
+        if (!ok) {
           throw new Error("Failed to load classes.");
         }
-        const data = await response.json();
         if (isActive) {
-          setClasses(Array.isArray(data?.classes) ? data.classes : []);
+          setClasses(Array.isArray(data?.classes) ? (data.classes as { id: string; name: string; section?: string | null }[]) : []);
         }
       } catch {
         if (isActive) {
@@ -58,11 +60,10 @@ export default function AddSectionPanel({
     const loadTeachers = async () => {
       setIsLoadingTeachers(true);
       try {
-        const response = await fetch("/api/teacher/list", { method: "GET" });
-        if (!response.ok) {
+        const { ok, data } = await fetchTeacherList();
+        if (!ok) {
           throw new Error("Failed to load teachers.");
         }
-        const data = await response.json();
         if (isActive) {
           setTeachers(Array.isArray(data?.teachers) ? data.teachers : []);
         }
@@ -103,19 +104,14 @@ export default function AddSectionPanel({
         throw new Error("Selected class not found.");
       }
 
-      const response = await fetch("/api/class/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: selectedClass.name,
-          section: sectionName.trim(),
-          teacherId: teacherId || undefined,
-        }),
+      const { ok, data } = await createClass({
+        name: selectedClass.name,
+        section: sectionName.trim(),
+        teacherId: teacherId || undefined,
       });
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.message || "Failed to save section.");
+      if (!ok) {
+        throw new Error(data?.message || "Failed to save section.");
       }
 
       setShowSuccess(true);

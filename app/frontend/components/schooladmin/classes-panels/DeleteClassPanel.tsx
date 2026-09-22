@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
+import { deleteClass } from "@/lib/api/classes";
 
 type ClassRow = {
   id: string;
@@ -30,12 +31,8 @@ export default function DeleteClassPanel({
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`/api/class/${row.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      const { ok, data } = await deleteClass(row.id);
+      if (!ok) {
         setError(data?.message || "Failed to delete class.");
         return;
       }

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Pencil, X, Save } from "lucide-react";
+import { fetchClass, updateClass } from "@/lib/api/classes";
+import { fetchClassList } from "@/lib/api/classList";
+import { fetchTeacherList } from "@/lib/api/teacher";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 
@@ -41,11 +44,10 @@ export default function EditClassPanel({
     const loadTeachers = async () => {
       setIsLoadingTeachers(true);
       try {
-        const response = await fetch("/api/teacher/list", { method: "GET" });
-        if (!response.ok) {
+        const { ok, data } = await fetchTeacherList();
+        if (!ok) {
           throw new Error("Failed to load teachers.");
         }
-        const data = await response.json();
         if (isActive) {
           const list = Array.isArray(data?.teachers) ? data.teachers : [];
           setTeachers(
@@ -71,21 +73,21 @@ export default function EditClassPanel({
     const loadClass = async () => {
       setIsLoadingClass(true);
       try {
-        const response = await fetch(`/api/class/${row.id}`, { method: "GET" });
-        if (!response.ok) {
+        const { ok, data } = await fetchClass(row.id);
+        if (!ok) {
           throw new Error("Failed to load class.");
         }
-        const data = await response.json();
         const classData = data?.class;
         if (isActive && classData) {
           const sectionValue = classData.section ?? "";
           setSection(sectionValue);
           setTeacherId(classData?.teacher?.id ?? "");
 
-          const listResponse = await fetch("/api/class/list", { method: "GET" });
-          if (listResponse.ok) {
-            const listData = await listResponse.json();
-            const rows = Array.isArray(listData?.classes) ? listData.classes : [];
+          const listResult = await fetchClassList();
+          if (listResult.ok) {
+            const rows = (Array.isArray(listResult.data?.classes)
+              ? listResult.data.classes
+              : []) as { name?: string; section?: string | null }[];
             const matchingSections: string[] = rows
               .filter((item: { name?: string }) => item?.name === classData.name)
               .map((item: { section?: string | null }) => item?.section ?? null)
@@ -138,18 +140,12 @@ export default function EditClassPanel({
     setSaveError(null);
     setSaveLoading(true);
     try {
-      const res = await fetch(`/api/class/${row.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name,
-          section,
-          teacherId: teacherId === "" ? null : teacherId,
-        }),
+      const { ok, data } = await updateClass(row.id, {
+        name,
+        section,
+        teacherId: teacherId === "" ? null : teacherId,
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         setSaveError(data?.message || "Failed to update class.");
         return;
       }

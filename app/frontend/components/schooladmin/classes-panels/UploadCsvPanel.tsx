@@ -2,6 +2,7 @@
 
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
+import { uploadClassesCsv } from "@/lib/api/classes";
 import SuccessPopups from "../../common/SuccessPopUps";
 
 interface UploadCsvPanelProps {
@@ -37,20 +38,12 @@ export default function UploadCsvPanel({ onCancel, onSuccess }: UploadCsvPanelPr
     setError(null);
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const { ok, data: payload } = await uploadClassesCsv(file);
 
-      const response = await fetch("/api/class/bulk-upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
+      if (!ok) {
         throw new Error(payload?.message || "Upload failed.");
       }
 
-      const payload = await response.json().catch(() => null);
       const createdCount = payload?.createdCount ?? 0;
       const failedCount = payload?.failedCount ?? 0;
       setSuccessMessage(

@@ -2,6 +2,8 @@
 
 import { Plus, Save } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createClass } from "@/lib/api/classes";
+import { fetchTeacherList } from "@/lib/api/teacher";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 import SuccessPopups from "../../common/SuccessPopUps";
@@ -30,11 +32,10 @@ export default function AddClassPanel({ onCancel, onSuccess }: AddClassPanelProp
     const loadTeachers = async () => {
       setIsLoadingTeachers(true);
       try {
-        const response = await fetch("/api/teacher/list", { method: "GET" });
-        if (!response.ok) {
+        const { ok, data } = await fetchTeacherList();
+        if (!ok) {
           throw new Error("Failed to load teachers.");
         }
-        const data = await response.json();
         if (isActive) {
           setTeachers(Array.isArray(data?.teachers) ? data.teachers : []);
         }
@@ -65,19 +66,14 @@ export default function AddClassPanel({ onCancel, onSuccess }: AddClassPanelProp
     setError(null);
     setIsSaving(true);
     try {
-      const response = await fetch("/api/class/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: className.trim(),
-          section: section.trim() || undefined,
-          teacherId: teacherId || undefined,
-        }),
+      const { ok, data } = await createClass({
+        name: className.trim(),
+        section: section.trim() || undefined,
+        teacherId: teacherId || undefined,
       });
 
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.message || "Failed to create class.");
+      if (!ok) {
+        throw new Error(data?.message || "Failed to create class.");
       }
 
       setShowSuccess(true);
