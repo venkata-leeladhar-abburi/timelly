@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Pencil } from "lucide-react";
+import { fetchTeacherDetails, type TeacherDetails } from "@/lib/api/teacher";
 import { TeacherRow } from "./TeachersList";
 
 interface Props {
@@ -9,22 +10,6 @@ interface Props {
     onClose: () => void;
     onEdit: (teacher: TeacherRow) => void;
 }
-
-type TeacherDetails = {
-    id: string;
-    name: string | null;
-    email: string | null;
-    teacherId: string | null;
-    subject: string | null;
-    subjects: string[] | null;
-    qualification: string | null;
-    experience: string | null;
-    joiningDate: string | null;
-    teacherStatus: string | null;
-    mobile: string | null;
-    address: string | null;
-    assignedClasses?: { id: string; name: string; section: string | null }[];
-};
 
 const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
     const [details, setDetails] = useState<TeacherDetails | null>(null);
@@ -43,11 +28,8 @@ const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
         (async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/teacher/${teacher.id}`, {
-                    credentials: "include",
-                });
-                const data = await res.json();
-                if (!cancelled && res.ok) {
+                const { ok, data } = await fetchTeacherDetails(teacher.id);
+                if (!cancelled && ok) {
                     setDetails(data.teacher || null);
                 }
             } finally {

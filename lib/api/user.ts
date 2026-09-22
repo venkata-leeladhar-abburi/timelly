@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiDelete, apiRequest, validateApiResponse } from "./http";
+import { apiDelete, apiPut, apiRequest, validateApiResponse } from "./http";
 
 export const DeleteUserResponseSchema = z.object({
   message: z.string().optional(),
@@ -33,4 +33,29 @@ export function bulkImportUsers(file: File) {
     method: "POST",
     body: formData,
   });
+}
+
+export type UpdateUserResponse = {
+  message?: string;
+  user?: {
+    name?: string;
+    teacherId?: string;
+    subject?: string;
+    designation?: string;
+    mobile?: string;
+    photoUrl?: string;
+  };
+};
+
+export function updateUser(
+  id: string,
+  payload: {
+    name: string;
+    teacherId: string;
+    designation: string;
+    mobile: string;
+    photoUrl: string;
+  }
+) {
+  return apiPut<UpdateUserResponse>(`/api/user/${id}`, payload);
 }

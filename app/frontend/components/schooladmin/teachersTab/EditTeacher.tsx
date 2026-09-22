@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { updateUser } from "@/lib/api/user";
 import type { TeacherRow } from "./TeachersList";
 
 interface Props {
@@ -35,21 +36,14 @@ const EditTeacher = ({ teacher, onClose, onSave }: Props) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/user/${teacher.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: formData.name,
-          teacherId: formData.teacherId,
-          designation: formData.subject,
-          mobile: formData.phone,
-          photoUrl: formData.avatar,
-        }),
+      const { ok, data } = await updateUser(teacher.id, {
+        name: formData.name,
+        teacherId: formData.teacherId,
+        designation: formData.subject,
+        mobile: formData.phone,
+        photoUrl: formData.avatar,
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Failed to update teacher.");
+      if (!ok) throw new Error(data?.message || "Failed to update teacher.");
 
       const updated = data?.user || {};
       onSave({
