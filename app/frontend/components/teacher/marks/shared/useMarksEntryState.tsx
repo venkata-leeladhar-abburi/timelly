@@ -1,40 +1,28 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import {
-  loadTeacherMarksClasses,
-  peekTeacherMarksClasses,
-} from "@/lib/teacher/loadTeacherFastTabs";
-import {
-  normalizeExamTypes,
-  maxMarksForExamType,
-  sectionsForExamType,
-  type ExamTypeOption,
-} from "@/lib/exams/examTypes";
-import type { ClassOption, MarkApi, StudentApi, StudentRow } from "./types";
-import { DEFAULT_EXAM_TYPES, mapLiteClasses, uniqueSubjects } from "./utils";
+import { peekTeacherMarksClasses } from "@/lib/teacher/loadTeacherFastTabs";
+import { maxMarksForExamType, sectionsForExamType } from "@/lib/exams/examTypes";
+import type { MarkApi, StudentApi, StudentRow } from "./types";
 import { useMarksEntryColumns } from "./useMarksEntryColumns";
 import { useMarksSaveAll } from "./useMarksSaveAll";
+import { useMarksClassesMetadata } from "./useMarksClassesMetadata";
+import { useMarksRowMutators } from "./useMarksRowMutators";
 
 /**
  * All state, effects, and handlers for the marks-entry sub-tab of Marks.tsx.
  * Verbatim relocation of the original component body — same order, same
  * closures, same dependency arrays — only the final `return` is new.
+ *
+ * Classes/subject/exam-type metadata loading and row-value mutators were
+ * split into useMarksClassesMetadata and useMarksRowMutators (both plain
+ * domain hooks); fetchStudentsAndMarks stays here because it and
+ * useMarksSaveAll (further below) each need the other — pulling it out
+ * would require an indirection layer for little benefit.
  */
 export function useMarksEntryState() {
   const router = useRouter();
   const [subTab, setSubTab] = useState<"entry" | "report-card" | "download">("entry");
   const initialClasses = peekTeacherMarksClasses();
-  const [classes, setClasses] = useState<ClassOption[]>(() =>
-    initialClasses ? mapLiteClasses(initialClasses) : []
-  );
-  const [classesLoading, setClassesLoading] = useState(() => !initialClasses);
-  const [subjectOptions, setSubjectOptions] = useState<string[]>([]);
-  const [subjectsLoading, setSubjectsLoading] = useState(true);
-  const [examTypeCatalog, setExamTypeCatalog] = useState<ExamTypeOption[]>(
-    DEFAULT_EXAM_TYPES.map((name) => ({ name, maxMarks: null, sections: [] }))
-  );
-  const [examTypeOptions, setExamTypeOptions] =
-    useState<string[]>(DEFAULT_EXAM_TYPES);
   const [form, setForm] = useState<{
     classId: string;
     classLabel: string;
@@ -57,6 +45,28 @@ export function useMarksEntryState() {
       maxMarks: 100,
     };
   });
+  const [activeBtn, setActiveBtn] = useState<null | "save" | "import" | "export">(null);
+  const [rows, setRows] = useState<StudentRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const userSelectedClassRef = useRef(false);
+  const userSelectedExamTypeRef = useRef(false);
+
+  const {
+    classes,
+    classesLoading,
+    subjectOptions,
+    subjectsLoading,
+    examTypeCatalog,
+    examTypeOptions,
+    setExamTypeOptions,
+  } = useMarksClassesMetadata({
+    initialClasses,
+    form,
+    setForm,
+    userSelectedClassRef,
+    userSelectedExamTypeRef,
+  });
+
   const configuredMaxMarks = maxMarksForExamType(examTypeCatalog, form.examType);
   const termSections = sectionsForExamType(examTypeCatalog, form.examType);
   const hasSubsections = termSections.length > 0;
@@ -64,13 +74,6 @@ export function useMarksEntryState() {
   const maxMarksLocked =
     hasSubsections ||
     (configuredMaxMarks != null && configuredMaxMarks > 0);
-  const [activeBtn, setActiveBtn] = useState<null | "save" | "import" | "export">(null);
-  const [rows, setRows] = useState<StudentRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [editingMaxId, setEditingMaxId] = useState<string | null>(null);
-  const [editingMaxValue, setEditingMaxValue] = useState("");
-  const userSelectedClassRef = useRef(false);
-  const userSelectedExamTypeRef = useRef(false);
 
   const classOptions = classes.map((c) => ({
     value: c.id,
@@ -83,50 +86,6 @@ export function useMarksEntryState() {
         return ["Section A"];
       })()
     : ["Section A"];
-  const fetchClasses = useCallback(async () => {
-    const cached = peekTeacherMarksClasses();
-    if (cached?.length) {
-      setClasses(mapLiteClasses(cached));
-      setClassesLoading(false);
-      setForm((prev) => {
-        if (userSelectedClassRef.current && prev.classId) return prev;
-        if (prev.classId) return prev;
-        const first = cached[0];
-        return {
-          ...prev,
-          classId: first.id,
-          classLabel: first.section ? `${first.name} - ${first.section}` : first.name,
-          section: first.section || "Section A",
-        };
-      });
-    } else {
-      setClassesLoading(true);
-    }
-
-    try {
-      const list = await loadTeacherMarksClasses({ revalidate: true });
-      setClasses(mapLiteClasses(list));
-      setForm((prev) => {
-        if (userSelectedClassRef.current && prev.classId) return prev;
-        const stillValid = list.some((c) => c.id === prev.classId);
-        if (stillValid) return prev;
-        if (list.length === 0) {
-          return { ...prev, classId: "", classLabel: "", section: "" };
-        }
-        const first = list[0];
-        return {
-          ...prev,
-          classId: first.id,
-          classLabel: first.section ? `${first.name} - ${first.section}` : first.name,
-          section: first.section || "Section A",
-        };
-      });
-    } catch {
-      if (!peekTeacherMarksClasses()?.length) setClasses([]);
-    } finally {
-      setClassesLoading(false);
-    }
-  }, []);
 
   const fetchStudentsAndMarks = useCallback(async () => {
     if (!form.classId || !form.subject) {
@@ -267,85 +226,6 @@ export function useMarksEntryState() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- form.maxMarks intentionally excluded (matches original); setSaveMessage is a stable setter
   }, [form.classId, form.subject, form.examType, examTypeCatalog, termSections]);
 
-  const fetchMetadata = useCallback(async (classId: string) => {
-    setSubjectsLoading(true);
-    try {
-      const [examTypesRes, meRes, termsRes] = await Promise.all([
-        fetch("/api/exam-types", { cache: "no-store" }).catch(() => null),
-        fetch("/api/user/me", { cache: "no-store", credentials: "include" }).catch(() => null),
-        fetch(`/api/exams/terms?${classId ? `classId=${classId}` : ""}`, {
-          cache: "no-store",
-          credentials: "include",
-        }).catch(() => null),
-      ]);
-
-      const allExamNames = new Set<string>();
-
-      if (examTypesRes?.ok) {
-        const data = await examTypesRes.json().catch(() => ({}));
-        const catalog = normalizeExamTypes(data.examTypes);
-        if (catalog.length > 0) {
-          setExamTypeCatalog(catalog);
-          catalog.forEach((t) => allExamNames.add(t.name));
-        }
-      }
-
-      if (termsRes?.ok) {
-        const data = await termsRes.json().catch(() => ({}));
-        const exams = Array.isArray(data.exams) ? data.exams : [];
-        exams.forEach((exam: { name?: string }) => {
-          if (exam.name?.trim()) allExamNames.add(exam.name.trim().toUpperCase());
-        });
-      }
-
-      if (allExamNames.size > 0) {
-        setExamTypeOptions((prev) => Array.from(new Set([...allExamNames, ...prev])));
-        setForm((prev) =>
-          allExamNames.has(prev.examType) || userSelectedExamTypeRef.current
-            ? prev
-            : { ...prev, examType: Array.from(allExamNames)[0] }
-        );
-      }
-
-      let teacherSubjects: string[] = [];
-      if (meRes?.ok) {
-        const data = await meRes.json().catch(() => ({}));
-        const user = data?.user;
-        const fromList = Array.isArray(user?.subjects) ? user.subjects : [];
-        const primary = typeof user?.subject === "string" ? user.subject : "";
-        teacherSubjects = uniqueSubjects([...fromList, primary].filter(Boolean));
-      }
-
-      setSubjectOptions(teacherSubjects);
-      setForm((prev) => {
-        if (teacherSubjects.length === 0) {
-          return { ...prev, subject: "" };
-        }
-        const match = teacherSubjects.find(
-          (s) => s.replace(/\s+/g, " ").toUpperCase() === prev.subject.replace(/\s+/g, " ").toUpperCase()
-        );
-        return match ? { ...prev, subject: match } : { ...prev, subject: teacherSubjects[0] };
-      });
-    } finally {
-      setSubjectsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchClasses();
-    fetchMetadata(initialClasses?.[0]?.id ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const locked = maxMarksForExamType(examTypeCatalog, form.examType);
-    if (locked != null && locked > 0) {
-      setForm((prev) =>
-        prev.maxMarks === locked ? prev : { ...prev, maxMarks: locked }
-      );
-    }
-  }, [examTypeCatalog, form.examType]);
-
   useEffect(() => {
     fetchStudentsAndMarks();
   }, [fetchStudentsAndMarks]);
@@ -403,152 +283,32 @@ export function useMarksEntryState() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateMarks = (id: string, value: string) => {
-    const num = value === "" ? "" : Math.min(1000, Math.max(0, Number(value)));
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, marks: num } : r)));
-  };
-
-  const updateComponentScore = (studentId: string, sectionName: string, value: string) => {
-    const section = termSections.find((s) => s.name === sectionName);
-    const max = section?.maxMarks ?? 1000;
-    const num =
-      value === ""
-        ? ("" as const)
-        : Math.min(max, Math.max(0, Number(value)));
-
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== studentId) return r;
-        const nextScores = { ...(r.componentScores || {}), [sectionName]: num };
-        let total: number | "" | "AB" = 0;
-        let allEmpty = true;
-        let anyAb = false;
-        for (const sec of termSections) {
-          const v = nextScores[sec.name];
-          if (v === "AB") anyAb = true;
-          if (v !== "" && v !== undefined) allEmpty = false;
-          if (typeof v === "number") total = (typeof total === "number" ? total : 0) + v;
-        }
-        if (anyAb && allEmpty === false) {
-          // keep numeric total from non-AB parts; AB on one section still allows others
-        }
-        return {
-          ...r,
-          componentScores: nextScores,
-          marks: allEmpty ? ("" as const) : (total as number),
-          maxMarks: sectionsTotalMax || r.maxMarks,
-        };
-      })
-    );
-  };
-
-  const toggleAbsent = (id: string) => {
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const goingAbsent = r.marks !== "AB";
-        if (hasSubsections) {
-          const nextScores: Record<string, number | "" | "AB"> = {};
-          for (const sec of termSections) {
-            nextScores[sec.name] = goingAbsent ? "AB" : "";
-          }
-          return {
-            ...r,
-            marks: goingAbsent ? ("AB" as const) : ("" as const),
-            componentScores: nextScores,
-            maxMarks: sectionsTotalMax || r.maxMarks,
-          };
-        }
-        return { ...r, marks: goingAbsent ? ("AB" as const) : ("" as const) };
-      })
-    );
-  };
-
-  const updateMaxMarks = (value: string) => {
-    if (maxMarksLocked) return;
-    // Allow fully clearing the field — applies to all students
-    if (value.trim() === "") {
-      setForm((prev) => ({ ...prev, maxMarks: "" }));
-      setRows((prev) => prev.map((r) => ({ ...r, maxMarks: "" as const })));
-      setEditingMaxId(null);
-      return;
-    }
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return;
-    const num = Math.min(1000, Math.max(1, parsed));
-    setForm((prev) => ({ ...prev, maxMarks: num }));
-    setRows((prev) =>
-      prev.map((r) => {
-        const nextMarks =
-          r.marks !== "" && r.marks !== "AB" && Number(r.marks) > num ? num : r.marks;
-        return { ...r, maxMarks: num, marks: nextMarks };
-      })
-    );
-    setEditingMaxId(null);
-  };
-
-  const updateRowMaxMarks = (id: string, value: string) => {
-    if (value.trim() === "") {
-      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, maxMarks: "" as const } : r)));
-      return;
-    }
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return;
-    const num = Math.min(1000, Math.max(1, parsed));
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const nextMarks =
-          r.marks !== "" && r.marks !== "AB" && Number(r.marks) > num ? num : r.marks;
-        return { ...r, maxMarks: num, marks: nextMarks };
-      })
-    );
-    setForm((prev) => ({ ...prev, maxMarks: num }));
-  };
-
-  const startEditMaxMarks = (id: string, current: number | "") => {
-    if (maxMarksLocked) return;
-    setEditingMaxId(id);
-    setEditingMaxValue(current === "" ? "" : String(current));
-  };
-
-  const commitEditMaxMarks = (id: string) => {
-    updateRowMaxMarks(id, editingMaxValue);
-    setEditingMaxId(null);
-    setEditingMaxValue("");
-  };
-
-  const getPercentage = (m: number | "" | "AB", max: number | "") =>
-    m === "" || max === "" || max <= 0
-      ? "--"
-      : m === "AB"
-        ? "Absent"
-        : `${((Number(m) / max) * 100).toFixed(1)}%`;
-
-  const getGrade = (m: number | "" | "AB", max: number | "") => {
-    if (m === "AB") return "AB";
-    if (m === "" || max === "" || max <= 0) return "--";
-    const pct = (Number(m) / max) * 100;
-    if (pct >= 90) return "A+";
-    if (pct >= 80) return "A";
-    if (pct >= 70) return "B+";
-    if (pct >= 60) return "B";
-    return "C";
-  };
-
-  const total = rows.length;
-  const entered = rows.filter((r) => {
-    if (hasSubsections) {
-      if (r.marks === "AB") return true;
-      return termSections.every((sec) => {
-        const v = r.componentScores?.[sec.name];
-        return v !== "" && v !== undefined;
-      });
-    }
-    return r.marks !== "";
-  }).length;
-  const absentCount = rows.filter((r) => r.marks === "AB").length;
-  const pending = total - entered;
+  const {
+    editingMaxId,
+    setEditingMaxId,
+    editingMaxValue,
+    setEditingMaxValue,
+    updateMarks,
+    updateComponentScore,
+    toggleAbsent,
+    updateMaxMarks,
+    startEditMaxMarks,
+    commitEditMaxMarks,
+    getPercentage,
+    getGrade,
+    total,
+    entered,
+    absentCount,
+    pending,
+  } = useMarksRowMutators({
+    rows,
+    setRows,
+    setForm,
+    termSections,
+    hasSubsections,
+    sectionsTotalMax,
+    maxMarksLocked,
+  });
 
   const { saveLoading, saveMessage, setSaveMessage, handleSaveAll } = useMarksSaveAll({
     form,

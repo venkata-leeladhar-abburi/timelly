@@ -11,6 +11,14 @@ export type StudentRow = {
 };
 
 export type ClassOption = { id: string; name: string; section: string | null };
+export type MarksEntryForm = {
+  classId: string;
+  classLabel: string;
+  section: string;
+  subject: string;
+  examType: string;
+  maxMarks: number | "";
+};
 export type StudentApi = {
   id: string;
   rollNo: string | null;
