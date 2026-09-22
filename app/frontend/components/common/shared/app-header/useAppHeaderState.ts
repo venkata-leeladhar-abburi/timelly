@@ -4,6 +4,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { AVATAR_URL } from "../../../../constants/images";
 import type { HeaderProfile } from "../../AppHeader";
+import {
+  fetchCurrentUser,
+  fetchParentDetails,
+  fetchUnreadNotificationsCount,
+} from "@/lib/api/appHeader";
 
 export function useAppHeaderState({
   profile,
@@ -67,13 +72,8 @@ export function useAppHeaderState({
     const controller = new AbortController();
     unreadAbortRef.current = controller;
     try {
-      const res = await fetch("/api/notifications?take=1", {
-        credentials: "include",
-        cache: "no-store",
-        signal: controller.signal,
-      });
-      const data = await res.json();
-      if (res.ok && typeof data.unreadCount === "number") {
+      const { ok, data } = await fetchUnreadNotificationsCount(controller.signal);
+      if (ok && typeof data.unreadCount === "number") {
         setUnreadCount(data.unreadCount);
       }
     } catch {
@@ -129,18 +129,9 @@ export function useAppHeaderState({
 
   const refreshLiveProfile = useCallback(async () => {
     try {
-      const res = await fetch("/api/user/me", { credentials: "include", cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok || !data?.user) return;
-      const user = data.user as {
-        id?: string;
-        name?: string;
-        role?: string;
-        email?: string;
-        mobile?: string;
-        address?: string | null;
-        photoUrl?: string | null;
-      };
+      const { ok, data } = await fetchCurrentUser({ cache: "no-store" });
+      if (!ok || !data?.user) return;
+      const user = data.user;
       setLiveProfile({
         name: user.name ?? profile?.name ?? session?.user?.name ?? "User",
         subtitle: user.role ?? profile?.subtitle ?? session?.user?.role ?? "",
@@ -248,27 +239,17 @@ export function useAppHeaderState({
 
     (async () => {
       try {
-        const res = await fetch("/api/user/me", { credentials: "include" });
-        const data = await res.json();
-        if (cancelled || !res.ok || !data?.user) return;
+        const { ok, data } = await fetchCurrentUser();
+        if (cancelled || !ok || !data?.user) return;
 
-        const user = data.user as {
-          id?: string;
-          name?: string;
-          photoUrl?: string | null;
-          role?: string;
-          email?: string;
-          mobile?: string;
-          address?: string | null;
-        };
+        const user = data.user;
 
         let address = user.address ?? profile?.address ?? undefined;
         const role = user.role ?? profile?.subtitle ?? session?.user?.role ?? "";
         if (!address && role === "STUDENT") {
           try {
-            const parentRes = await fetch("/api/student/parent-details", { credentials: "include" });
-            const parentData = await parentRes.json();
-            if (parentRes.ok && parentData?.address) {
+            const { ok: parentOk, data: parentData } = await fetchParentDetails();
+            if (parentOk && parentData?.address) {
               address = parentData.address;
             }
           } catch {

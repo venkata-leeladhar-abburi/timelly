@@ -5,6 +5,11 @@ import type {
   PortalVariant,
   PreferencesState,
 } from "../../../settings/portalSettingsTypes";
+import {
+  changePassword,
+  saveParentDetails,
+  saveUserProfile,
+} from "@/lib/api/portalSettings";
 
 export type UserMe = {
   id: string;
@@ -93,39 +98,29 @@ export async function saveProfile(form: FormState, portal: PortalVariant) {
     throw new Error("Phone number should contain at least 10 digits.");
   }
 
-  const [userRes, parentDetailsRes] = await Promise.all([
-    fetch("/api/user/me", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: form.name?.trim() || "",
-        mobile: mobile || null,
-        address: form.address?.trim() || null,
-        language: form.language || "English",
-        photoUrl: form.photoUrl || null,
-      }),
+  const [userResult, parentResult] = await Promise.all([
+    saveUserProfile({
+      name: form.name?.trim() || "",
+      mobile: mobile || null,
+      address: form.address?.trim() || null,
+      language: form.language || "English",
+      photoUrl: form.photoUrl || null,
     }),
-    portal === "parent" ? fetch("/api/student/parent-details", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        address: form.address || null,
-        fatherName: form.fatherName || null,
-        fatherPhone: form.fatherPhone || null,
-        motherName: form.motherName || null,
-        occupation: form.occupation || null,
-      }),
-    }) : Promise.resolve(null),
+    portal === "parent"
+      ? saveParentDetails({
+          address: form.address || null,
+          fatherName: form.fatherName || null,
+          fatherPhone: form.fatherPhone || null,
+          motherName: form.motherName || null,
+          occupation: form.occupation || null,
+        })
+      : null,
   ]);
 
-  const userData = await userRes.json();
-  if (!userRes.ok) throw new Error(userData?.message || "Failed to save account settings.");
+  if (!userResult.ok) throw new Error(userResult.data?.message || "Failed to save account settings.");
 
-  if (portal === "parent" && parentDetailsRes) {
-    const parentData = await parentDetailsRes.json();
-    if (!parentDetailsRes.ok) {
-      throw new Error(parentData?.message || "Failed to save parent details.");
-    }
+  if (portal === "parent" && parentResult && !parentResult.ok) {
+    throw new Error(parentResult.data?.message || "Failed to save parent details.");
   }
 }
 
@@ -144,16 +139,11 @@ export async function savePassword(
   validatePasswordInput(passwords);
   setPasswordSaving(true);
   try {
-    const res = await fetch("/api/user/change-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        currentPassword: passwords.currentPassword,
-        newPassword: passwords.newPassword,
-      }),
+    const { ok, data } = await changePassword({
+      currentPassword: passwords.currentPassword,
+      newPassword: passwords.newPassword,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Failed to update password.");
+    if (!ok) throw new Error(data?.message || "Failed to update password.");
   } finally {
     setPasswordSaving(false);
   }

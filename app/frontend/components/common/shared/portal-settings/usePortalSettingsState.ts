@@ -25,6 +25,11 @@ import {
   saveProfile,
   type UserMe,
 } from "./portalSettingsHelpers";
+import {
+  fetchCurrentUserSettings,
+  fetchParentDetailsSettings,
+  saveUserProfile,
+} from "@/lib/api/portalSettings";
 
 export function usePortalSettingsState(portal: PortalVariant) {
   const { data: session } = useSession();
@@ -61,31 +66,26 @@ export function usePortalSettingsState(portal: PortalVariant) {
       setLoading(true);
     }
     try {
-      const [userData, parentDetailsRes] = await Promise.all([
+      const [userData, parentDetailsResult] = await Promise.all([
         portal === "parent"
-          ? fetch("/api/user/me").then(async (res) => {
-              const data = await res.json();
-              if (!res.ok || !data?.user) throw new Error(data?.message || "Unable to load settings");
+          ? fetchCurrentUserSettings().then(({ ok, data }) => {
+              if (!ok || !data?.user) throw new Error(data?.message || "Unable to load settings");
               return data;
             })
           : loadSettingsUser({ revalidate: Boolean(cachedUser) }),
-        portal === "parent" ? fetch("/api/student/parent-details") : Promise.resolve(null),
+        portal === "parent" ? fetchParentDetailsSettings() : null,
       ]);
 
       const u = userData.user as UserMe;
       setUserId(u.id ?? "");
 
-      let parentDetails: any = {};
-      if (portal === "parent" && parentDetailsRes) {
-        try {
-          const parentData = await parentDetailsRes.json();
-          if (parentDetailsRes.ok && parentData) {
-            parentDetails = parentData;
-          }
-        } catch (e) {
+      let parentDetails: Record<string, string | null | undefined> = {};
+      if (portal === "parent" && parentDetailsResult) {
+        if (parentDetailsResult.ok && parentDetailsResult.data) {
+          parentDetails = parentDetailsResult.data;
+        } else {
           // If parent details fetch fails, use empty values
-          console.warn("Failed to load parent details:", e);
-          parentDetails = {};
+          console.warn("Failed to load parent details");
         }
       }
 
@@ -158,19 +158,14 @@ export function usePortalSettingsState(portal: PortalVariant) {
         // Update form state immediately
         setForm((prev) => ({ ...prev, photoUrl }));
         // Save to database immediately
-        const res = await fetch("/api/user/me", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: form.name.trim(),
-            mobile: form.mobile.trim() || null,
-            address: form.address?.trim() || null,
-            language: form.language,
-            photoUrl: photoUrl || null,
-          }),
+        const { ok, data } = await saveUserProfile({
+          name: form.name.trim(),
+          mobile: form.mobile.trim() || null,
+          address: form.address?.trim() || null,
+          language: form.language,
+          photoUrl: photoUrl || null,
         });
-        const data = await res.json();
-        if (!res.ok) {
+        if (!ok) {
           throw new Error(data?.message || "Failed to save photo");
         }
         // Update initial form to reflect saved state
