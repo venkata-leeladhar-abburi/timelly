@@ -1,50 +1,93 @@
-import { apiGet, apiPost } from "./http";
+import { z } from "zod";
+import { apiGet, apiPost, validateApiResponse } from "./http";
 import type { ClassOption, TeacherOption } from "@/app/frontend/components/schooladmin/shared/timetable/timetableTypes";
 import type { TimetablePayload } from "@/app/frontend/components/timetable/TimetableGrid";
 
+// These three payload shapes (ClassOption, TeacherOption, TimetablePayload)
+// are owned by their component/feature types and already reasonably typed
+// there; the schemas below check the top-level envelope shape rather than
+// re-modeling every nested optional field, so a genuinely malformed
+// response is still caught without risking false-positive warnings from a
+// hand-mirrored schema drifting out of sync with those types.
 export type ClassListResponse = {
   message?: string;
   classes?: ClassOption[];
 };
+const ClassListResponseSchema = z.object({
+  message: z.string().optional(),
+  classes: z.array(z.unknown()).optional(),
+});
 
 export type TeacherListResponse = {
   message?: string;
   teachers?: TeacherOption[];
 };
+const TeacherListResponseSchema = z.object({
+  message: z.string().optional(),
+  teachers: z.array(z.unknown()).optional(),
+});
 
 export type AllTimetablesResponse = {
   message?: string;
   timetables?: TimetablePayload[];
 };
+const AllTimetablesResponseSchema = z.object({
+  message: z.string().optional(),
+  timetables: z.array(z.unknown()).optional(),
+});
 
 export type TimetableResponse = {
   message?: string;
   timetable?: TimetablePayload;
 };
+const TimetableResponseSchema = z.object({
+  message: z.string().optional(),
+  timetable: z.unknown().optional(),
+});
 
-export function fetchClassListLite() {
-  return apiGet<ClassListResponse>("/api/class/list?lite=1");
+export async function fetchClassListLite() {
+  const result = await apiGet<ClassListResponse>("/api/class/list?lite=1");
+  return {
+    ...result,
+    data: validateApiResponse(ClassListResponseSchema, result.data, "fetchClassListLite") as ClassListResponse,
+  };
 }
 
-export function fetchTeacherList() {
-  return apiGet<TeacherListResponse>("/api/teacher/list");
+export async function fetchTeacherList() {
+  const result = await apiGet<TeacherListResponse>("/api/teacher/list");
+  return {
+    ...result,
+    data: validateApiResponse(TeacherListResponseSchema, result.data, "fetchTeacherList") as TeacherListResponse,
+  };
 }
 
-export function fetchAllTimetables() {
-  return apiGet<AllTimetablesResponse>("/api/timetable?all=1");
+export async function fetchAllTimetables() {
+  const result = await apiGet<AllTimetablesResponse>("/api/timetable?all=1");
+  return {
+    ...result,
+    data: validateApiResponse(AllTimetablesResponseSchema, result.data, "fetchAllTimetables") as AllTimetablesResponse,
+  };
 }
 
-export function fetchTimetableForClass(classId: string) {
-  return apiGet<TimetableResponse>(`/api/timetable?classId=${encodeURIComponent(classId)}`, {
+export async function fetchTimetableForClass(classId: string) {
+  const result = await apiGet<TimetableResponse>(`/api/timetable?classId=${encodeURIComponent(classId)}`, {
     cache: "no-store",
   });
+  return {
+    ...result,
+    data: validateApiResponse(TimetableResponseSchema, result.data, "fetchTimetableForClass") as TimetableResponse,
+  };
 }
 
-export function saveTimetable(payload: {
+export async function saveTimetable(payload: {
   classId: string;
   title: string;
   notes: string;
   entries: unknown[];
 }) {
-  return apiPost<TimetableResponse>("/api/timetable", payload);
+  const result = await apiPost<TimetableResponse>("/api/timetable", payload);
+  return {
+    ...result,
+    data: validateApiResponse(TimetableResponseSchema, result.data, "saveTimetable") as TimetableResponse,
+  };
 }

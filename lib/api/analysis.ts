@@ -1,32 +1,51 @@
-import { apiGet } from "./http";
+import { z } from "zod";
+import { apiGet, validateApiResponse } from "./http";
 
-export type FeeTransactionsResponse = {
-  message?: string;
-  transactions?: Array<{
-    amount: number;
-    createdAt: string;
-    transactionId?: string | null;
-    feeAllocations?: Array<{ name: string; amount: number }>;
-    student: {
-      id: string;
-      admissionNumber?: string | null;
-      user?: { name?: string | null };
-      class?: { name?: string | null; section?: string | null } | null;
-    };
-  }>;
-};
+export const FeeTransactionsResponseSchema = z.object({
+  message: z.string().optional(),
+  transactions: z
+    .array(
+      z.object({
+        amount: z.number(),
+        createdAt: z.string(),
+        transactionId: z.string().nullable().optional(),
+        feeAllocations: z.array(z.object({ name: z.string(), amount: z.number() })).optional(),
+        student: z.object({
+          id: z.string(),
+          admissionNumber: z.string().nullable().optional(),
+          user: z.object({ name: z.string().nullable().optional() }).optional(),
+          class: z
+            .object({ name: z.string().nullable().optional(), section: z.string().nullable().optional() })
+            .nullable()
+            .optional(),
+        }),
+      })
+    )
+    .optional(),
+});
+export type FeeTransactionsResponse = z.infer<typeof FeeTransactionsResponseSchema>;
 
-export type FeeSummaryResponse = {
-  message?: string;
-  [key: string]: unknown;
-};
+export const FeeSummaryResponseSchema = z
+  .object({
+    message: z.string().optional(),
+  })
+  .passthrough(); // consumer reads a handful of summary fields loosely by name
+export type FeeSummaryResponse = z.infer<typeof FeeSummaryResponseSchema>;
 
-export function fetchFeeTransactionsForExport() {
-  return apiGet<FeeTransactionsResponse>("/api/fees/transactions?limit=200", {
+export async function fetchFeeTransactionsForExport() {
+  const result = await apiGet<FeeTransactionsResponse>("/api/fees/transactions?limit=200", {
     cache: "no-store",
   });
+  return {
+    ...result,
+    data: validateApiResponse(FeeTransactionsResponseSchema, result.data, "fetchFeeTransactionsForExport"),
+  };
 }
 
-export function fetchFeeSummaryForExport() {
-  return apiGet<FeeSummaryResponse>("/api/fees/summary", { cache: "no-store" });
+export async function fetchFeeSummaryForExport() {
+  const result = await apiGet<FeeSummaryResponse>("/api/fees/summary", { cache: "no-store" });
+  return {
+    ...result,
+    data: validateApiResponse(FeeSummaryResponseSchema, result.data, "fetchFeeSummaryForExport"),
+  };
 }

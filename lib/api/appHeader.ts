@@ -1,36 +1,54 @@
-import { apiGet } from "./http";
+import { z } from "zod";
+import { apiGet, validateApiResponse } from "./http";
 
-export type CurrentUserResponse = {
-  user?: {
-    id?: string;
-    name?: string;
-    role?: string;
-    email?: string;
-    mobile?: string;
-    address?: string | null;
-    photoUrl?: string | null;
-  };
-};
+export const CurrentUserResponseSchema = z.object({
+  user: z
+    .object({
+      id: z.string().optional(),
+      name: z.string().optional(),
+      role: z.string().optional(),
+      email: z.string().optional(),
+      mobile: z.string().optional(),
+      address: z.string().nullable().optional(),
+      photoUrl: z.string().nullable().optional(),
+    })
+    .optional(),
+});
+export type CurrentUserResponse = z.infer<typeof CurrentUserResponseSchema>;
 
-export type ParentDetailsResponse = {
-  address?: string;
-};
+export const ParentDetailsResponseSchema = z.object({
+  address: z.string().optional(),
+});
+export type ParentDetailsResponse = z.infer<typeof ParentDetailsResponseSchema>;
 
-export type UnreadNotificationsResponse = {
-  unreadCount?: number;
-};
+export const UnreadNotificationsResponseSchema = z.object({
+  unreadCount: z.number().optional(),
+});
+export type UnreadNotificationsResponse = z.infer<typeof UnreadNotificationsResponseSchema>;
 
-export function fetchUnreadNotificationsCount(signal?: AbortSignal) {
-  return apiGet<UnreadNotificationsResponse>("/api/notifications?take=1", {
+export async function fetchUnreadNotificationsCount(signal?: AbortSignal) {
+  const result = await apiGet<UnreadNotificationsResponse>("/api/notifications?take=1", {
     cache: "no-store",
     signal,
   });
+  return {
+    ...result,
+    data: validateApiResponse(UnreadNotificationsResponseSchema, result.data, "fetchUnreadNotificationsCount"),
+  };
 }
 
-export function fetchCurrentUser(opts?: { cache?: RequestCache }) {
-  return apiGet<CurrentUserResponse>("/api/user/me", { cache: opts?.cache });
+export async function fetchCurrentUser(opts?: { cache?: RequestCache }) {
+  const result = await apiGet<CurrentUserResponse>("/api/user/me", { cache: opts?.cache });
+  return {
+    ...result,
+    data: validateApiResponse(CurrentUserResponseSchema, result.data, "fetchCurrentUser"),
+  };
 }
 
-export function fetchParentDetails() {
-  return apiGet<ParentDetailsResponse>("/api/student/parent-details");
+export async function fetchParentDetails() {
+  const result = await apiGet<ParentDetailsResponse>("/api/student/parent-details");
+  return {
+    ...result,
+    data: validateApiResponse(ParentDetailsResponseSchema, result.data, "fetchParentDetails"),
+  };
 }

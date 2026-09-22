@@ -1,3 +1,5 @@
+import type { ZodType } from "zod";
+
 /**
  * Small fetch wrapper shared by the lib/api/<feature>.ts modules.
  *
@@ -74,4 +76,24 @@ export function apiDelete<T = unknown>(
   init?: Omit<RequestInit, "method">
 ): Promise<ApiResult<T>> {
   return apiRequest<T>(input, { ...init, method: "DELETE" });
+}
+
+/**
+ * Validates a parsed JSON response against a zod schema — the typed half of
+ * the API boundary (see lib/api/*.ts) that pairs with each route's own
+ * request-shape validation. Never throws: on a mismatch it logs a warning
+ * and returns the raw data unchanged, so a server-side field rename or bug
+ * degrades to "log and keep working" rather than a hard client crash. This
+ * keeps the schema purely descriptive/diagnostic on the client — it never
+ * blocks a response from reaching the hook that asked for it.
+ */
+export function validateApiResponse<T>(schema: ZodType<T>, data: unknown, context: string): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(`[api] Unexpected response shape for ${context}:`, result.error);
+    }
+    return data as T;
+  }
+  return result.data as T;
 }
