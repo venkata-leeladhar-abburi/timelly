@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
@@ -84,7 +85,7 @@ export async function POST(
 
     return NextResponse.json({ unit }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Exams syllabus units POST:", e);
+    logger.error("Exams syllabus units POST:", e);
     const err = e as { code?: string };
     if (err?.code === "P2021") {
       return NextResponse.json(

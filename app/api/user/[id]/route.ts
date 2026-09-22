@@ -5,6 +5,7 @@ import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
+import { logger } from "@/lib/logger";
 
 type Params = Promise<{ id: string }>;
 
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       assignedClasses,
     });
   } catch (error: any) {
-    console.error("User fetch error:", error);
+    logger.error("User fetch error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -103,7 +104,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       photoUrl,
     } = body;
 
-    console.log(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
+    logger.info(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
 
     // Check if user exists and belongs to same school
     const user = await prisma.user.findUnique({
@@ -112,7 +113,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
     });
 
     if (!user) {
-      console.warn(`User not found for id=${id}`);
+      logger.warn(`User not found for id=${id}`);
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
@@ -223,7 +224,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       },
     });
   } catch (error: any) {
-    console.error("User update error:", error);
+    logger.error("User update error:", error);
     return NextResponse.json(
       { message: error.message || "Internal server error" },
       { status: 500 }
@@ -289,7 +290,7 @@ export async function DELETE(
       message: "User deleted successfully",
     });
   } catch (error: any) {
-    console.error("User deletion error:", error);
+    logger.error("User deletion error:", error);
     return NextResponse.json(
       { message: error.message || "Internal server error" },
       { status: 500 }

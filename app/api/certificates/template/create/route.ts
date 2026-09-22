@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Create certificate template error:", error);
+    logger.error("Create certificate template error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

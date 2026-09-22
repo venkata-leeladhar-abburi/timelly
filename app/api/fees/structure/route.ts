@@ -10,6 +10,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(payload);
   } catch (error: any) {
-    console.error("Fee structure GET error:", error);
+    logger.error("Fee structure GET error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
@@ -115,7 +116,7 @@ export async function PUT(req: Request) {
       throw applyErr;
     }
   } catch (error: any) {
-    console.error("Fee structure PUT error:", error);
+    logger.error("Fee structure PUT error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
@@ -203,7 +204,7 @@ export async function DELETE(req: Request) {
     await invalidateSchoolFeeReadCaches(schoolId);
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Fee structure DELETE error:", error);
+    logger.error("Fee structure DELETE error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

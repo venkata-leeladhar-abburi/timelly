@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 export async function POST(
   req: Request,
@@ -77,7 +78,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Reject TC error:", error);
+    logger.error("Reject TC error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

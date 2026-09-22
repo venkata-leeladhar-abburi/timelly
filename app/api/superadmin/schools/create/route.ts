@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { logger } from "@/lib/logger";
 
 /**
  * Single API: create school + school admin user and link them (user.schoolId = school.id).
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (e: unknown) {
-    console.error("Superadmin create school:", e);
+    logger.error("Superadmin create school:", e);
     const err = e as { code?: string; name?: string; cause?: unknown };
     if (err?.code === "P2002") {
       return NextResponse.json({ message: "Email already exists" }, { status: 400 });

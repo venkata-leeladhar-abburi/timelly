@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(req: Request) {
   try {
@@ -67,7 +68,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ school: updated }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Superadmin update school subscription:", e);
+    logger.error("Superadmin update school subscription:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

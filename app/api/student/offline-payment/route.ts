@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { resolveOfflinePaymentCollectorFromSession } from "@/lib/fees/offlinePaymentCollector";
 import { isActiveStudent } from "@/lib/students/studentStatus";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
     try {
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
             },
         });
     } catch (error: unknown) {
-        console.error("Error recording offline payment:", error);
+        logger.error("Error recording offline payment:", error);
         const message = error instanceof Error ? error.message : "Failed to record offline payment";
         return NextResponse.json({ message }, { status: 500 });
     }

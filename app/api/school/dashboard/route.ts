@@ -14,6 +14,7 @@ import {
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
+import { logger } from "@/lib/logger";
 
 declare const globalThis: {
   schoolDashboardPurgeLastRunAt?: number;
@@ -26,7 +27,7 @@ function maybePurgeExpiredNewsFeeds() {
   if (now - lastRun < intervalMs) return;
   globalThis.schoolDashboardPurgeLastRunAt = now;
   purgeExpiredNewsFeeds().catch((error) => {
-    console.warn("Newsfeed purge skipped due to error:", error);
+    logger.warn("Newsfeed purge skipped due to error:", error);
   });
 }
 
@@ -282,7 +283,7 @@ export async function GET(request: Request) {
     setSchoolDashboardServerCached(cacheKey, payload, 120_000);
     return NextResponse.json(payload);
   } catch (error: unknown) {
-    console.error("School dashboard error:", error);
+    logger.error("School dashboard error:", error);
 
     const err = error as { code?: string; message?: string; name?: string };
     if (

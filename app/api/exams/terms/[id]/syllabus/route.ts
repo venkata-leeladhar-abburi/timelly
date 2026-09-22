@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
@@ -57,7 +58,7 @@ export async function GET(
 
     return NextResponse.json({ syllabus }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams syllabus GET:", e);
+    logger.error("Exams syllabus GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -122,7 +123,7 @@ export async function POST(
 
     return NextResponse.json({ record }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Exams syllabus POST:", e);
+    logger.error("Exams syllabus POST:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

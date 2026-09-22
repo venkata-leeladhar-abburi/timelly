@@ -6,6 +6,7 @@ import {
   createNotificationsForUserIds,
   getClassStaffNotifyUserIds,
 } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -102,7 +103,7 @@ export async function POST(req: Request) {
         );
       }
     } catch (nErr) {
-      console.warn("Certificate request notification failed:", nErr);
+      logger.warn("Certificate request notification failed:", nErr);
     }
 
     return NextResponse.json(
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Apply certificate request error:", {
+    logger.error("Apply certificate request error:", {
       message: error?.message,
       code: error?.code,
       meta: error?.meta,

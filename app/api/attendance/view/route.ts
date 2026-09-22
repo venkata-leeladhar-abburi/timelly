@@ -7,6 +7,7 @@ import {
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
 } from "@/lib/parent/parentPortalSwr";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; studentId?: string | null };
@@ -128,7 +129,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
-    console.error("View attendance error:", error);
+    logger.error("View attendance error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

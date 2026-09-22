@@ -31,6 +31,7 @@ import {
   mergeStudentProfilePayments,
   resolveStudentAdmissionApplicationFees,
 } from "@/lib/admission/studentAdmissionApplicationPayments";
+import { logger } from "@/lib/logger";
 
 type RouteParams =
   | { params: { id: string } }
@@ -396,7 +397,7 @@ export async function GET(_req: Request, context: RouteParams) {
       }
     );
   } catch (error: unknown) {
-    console.error("Student details error:", error);
+    logger.error("Student details error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -704,7 +705,7 @@ export async function PUT(req: Request, context: RouteParams) {
             });
           }
         } catch (err) {
-          console.error("Student application sync (background):", err);
+          logger.error("Student application sync (background):", err);
         }
       })();
     }
@@ -740,7 +741,7 @@ export async function PUT(req: Request, context: RouteParams) {
             amountPaid: fee?.amountPaid ?? 0,
           });
         } catch (err) {
-          console.error("Student fee sync (background):", err);
+          logger.error("Student fee sync (background):", err);
         }
       })();
     }
@@ -778,7 +779,7 @@ export async function PUT(req: Request, context: RouteParams) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Student update error:", error);
+    logger.error("Student update error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -821,7 +822,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
 
     return NextResponse.json({ message: "Student deleted successfully" }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Student delete error:", error);
+    logger.error("Student delete error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

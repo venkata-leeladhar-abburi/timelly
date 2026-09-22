@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { randomUUID } from "crypto";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -71,7 +72,7 @@ export async function GET(
 
     return NextResponse.json({ sections: term.sections, termId: term.id, termName: term.name });
   } catch (e: unknown) {
-    console.error("Term sections GET:", e);
+    logger.error("Term sections GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -173,7 +174,7 @@ export async function PUT(
 
     return NextResponse.json({ sections }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Term sections PUT:", e);
+    logger.error("Term sections PUT:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

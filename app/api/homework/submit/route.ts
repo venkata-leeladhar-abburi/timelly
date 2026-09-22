@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { invalidateParentPortalCaches } from "@/lib/parent/invalidateParentPortalCaches";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
       { status: existingSubmission ? 200 : 201 }
     );
   } catch (error: any) {
-    console.error("Submit homework error:", error);
+    logger.error("Submit homework error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

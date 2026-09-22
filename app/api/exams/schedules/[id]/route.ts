@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
@@ -120,7 +121,7 @@ export async function GET(
 
     return NextResponse.json({ exam }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams schedule GET [id]:", e);
+    logger.error("Exams schedule GET [id]:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -175,7 +176,7 @@ export async function PUT(
     });
     return NextResponse.json({ schedule: updated }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams schedule PUT [id]:", e);
+    logger.error("Exams schedule PUT [id]:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -210,7 +211,7 @@ export async function DELETE(
     await prisma.examSchedule.delete({ where: { id } });
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams schedule DELETE [id]:", e);
+    logger.error("Exams schedule DELETE [id]:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

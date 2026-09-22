@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -45,7 +46,6 @@ export async function GET() {
         remarks: true,
         createdAt: true,
 
-
         student: {
           select: {
             id: true,
@@ -72,7 +72,7 @@ export async function GET() {
 
     return NextResponse.json(leaves, { status: 200 });
   } catch (e: unknown) {
-    console.error("Student leaves all:", e);
+    logger.error("Student leaves all:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

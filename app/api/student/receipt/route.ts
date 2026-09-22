@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { generateReceiptPDFServer } from "@/lib/fees/receiptGeneratorServer";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role?: string } }) {
     let schoolId = session.user.schoolId;
@@ -210,7 +211,7 @@ export async function GET(request: NextRequest) {
             },
         });
     } catch (error) {
-        console.error("Receipt generation error:", error);
+        logger.error("Receipt generation error:", error);
         return NextResponse.json(
             { error: "Failed to generate receipt" },
             { status: 500 }

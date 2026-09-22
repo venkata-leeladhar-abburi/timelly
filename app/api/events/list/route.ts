@@ -7,6 +7,7 @@ import {
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
 } from "@/lib/parent/parentPortalSwr";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -143,7 +144,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ events }, { status: 200 });
   } catch (error: unknown) {
-    console.error("List events error:", error);
+    logger.error("List events error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

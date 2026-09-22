@@ -15,6 +15,7 @@ import { studentApplicationForStudentCreateSelect } from "@/lib/admission/studen
 import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
 import { invalidateStudentListCaches } from "@/lib/students/invalidateStudentListCaches";
 import { parseDobToDate } from "@/lib/dobCalendar";
+import { logger } from "@/lib/logger";
 
 function normalizeResidencyType(value: unknown) {
   if (typeof value !== "string") return "Day Scholar";
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("Student creation request received");
+    logger.info("Student creation request received");
 
     let schoolId = session.user.schoolId;
 
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    console.log("Received student data:", {
+    logger.info("Received student data:", {
       name: body.name,
       fatherName: body.fatherName,
       aadhaarNo: body.aadhaarNo ? "***" : undefined,
@@ -196,35 +197,35 @@ export async function POST(req: Request) {
 
     // Validate all required fields
     if (!effectiveName || typeof effectiveName !== "string" || !effectiveName.trim()) {
-      console.error("Validation failed: Student name is required", { name, type: typeof name });
+      logger.error("Validation failed: Student name is required", { name, type: typeof name });
       return NextResponse.json(
         { message: "Student name is required" },
         { status: 400 }
       );
     }
     if (!effectiveDob) {
-      console.error("Validation failed: Date of birth is required", { dob, type: typeof dob });
+      logger.error("Validation failed: Date of birth is required", { dob, type: typeof dob });
       return NextResponse.json(
         { message: "Date of birth (dob) is required" },
         { status: 400 }
       );
     }
     if (!effectiveFatherName || typeof effectiveFatherName !== "string" || !effectiveFatherName.trim()) {
-      console.error("Validation failed: Father's name is required", { fatherName, type: typeof fatherName });
+      logger.error("Validation failed: Father's name is required", { fatherName, type: typeof fatherName });
       return NextResponse.json(
         { message: "Father's name is required" },
         { status: 400 }
       );
     }
     if (!effectiveAadhaarNo || typeof effectiveAadhaarNo !== "string" || !effectiveAadhaarNo.trim()) {
-      console.error("Validation failed: Aadhaar number is required", { aadhaarNo: aadhaarNo ? "***" : undefined, type: typeof aadhaarNo });
+      logger.error("Validation failed: Aadhaar number is required", { aadhaarNo: aadhaarNo ? "***" : undefined, type: typeof aadhaarNo });
       return NextResponse.json(
         { message: "Aadhaar number is required" },
         { status: 400 }
       );
     }
     if (!effectivePhoneNo || typeof effectivePhoneNo !== "string" || !effectivePhoneNo.trim()) {
-      console.error("Validation failed: Phone number is required", { phoneNo, type: typeof phoneNo });
+      logger.error("Validation failed: Phone number is required", { phoneNo, type: typeof phoneNo });
       return NextResponse.json(
         { message: "Phone number is required" },
         { status: 400 }
@@ -257,7 +258,7 @@ export async function POST(req: Request) {
         : String(effectiveDob ?? "")
     );
     if (!dobDate) {
-      console.error("Validation failed: Invalid date of birth format");
+      logger.error("Validation failed: Invalid date of birth format");
       return NextResponse.json(
         { message: "Invalid date of birth format" },
         { status: 400 }
@@ -271,14 +272,14 @@ export async function POST(req: Request) {
         select: { id: true, schoolId: true },
       });
       if (!classExists) {
-        console.error("Validation failed: Class not found", classId);
+        logger.error("Validation failed: Class not found", classId);
         return NextResponse.json(
           { message: "Class not found" },
           { status: 400 }
         );
       }
       if (classExists.schoolId !== schoolId) {
-        console.error("Validation failed: Class does not belong to school");
+        logger.error("Validation failed: Class does not belong to school");
         return NextResponse.json(
           { message: "Class does not belong to your school" },
           { status: 400 }
@@ -330,7 +331,7 @@ export async function POST(req: Request) {
     // Remove any spaces or dashes from aadhaar number for validation
     const aadhaarCleaned = aadhaarTrimmed.replace(/[\s-]/g, "");
     if (aadhaarCleaned.length < 12) {
-      console.error("Validation failed: Aadhaar number must be at least 12 digits", { length: aadhaarCleaned.length });
+      logger.error("Validation failed: Aadhaar number must be at least 12 digits", { length: aadhaarCleaned.length });
       return NextResponse.json(
         { message: "Aadhaar number must be at least 12 digits" },
         { status: 400 }
@@ -341,7 +342,7 @@ export async function POST(req: Request) {
       select: { id: true },
     });
     if (existingAadhaar) {
-      console.error("Validation failed: Aadhaar number already exists");
+      logger.error("Validation failed: Aadhaar number already exists");
       return NextResponse.json(
         { message: "Aadhaar number already exists" },
         { status: 400 }
@@ -623,7 +624,7 @@ export async function POST(req: Request) {
       }
     );
 
-    console.log("Student created successfully:", {
+    logger.info("Student created successfully:", {
       id: student.id,
       name: student.user?.name,
       admissionNumber: student.admissionNumber,
@@ -638,7 +639,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Student creation error:", error);
+    logger.error("Student creation error:", error);
     
     const err = error as { code?: string; message?: string; meta?: { target?: string[] } };
     // Handle transaction timeout errors

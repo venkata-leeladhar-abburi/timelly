@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -91,7 +92,7 @@ export async function GET(req: Request) {
       }
     );
   } catch (error: any) {
-    console.error("Download marks error:", error);
+    logger.error("Download marks error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

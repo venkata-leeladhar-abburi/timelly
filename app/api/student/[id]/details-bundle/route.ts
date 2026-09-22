@@ -15,6 +15,7 @@ import {
   getShellCached,
   setShellCached,
 } from "@/lib/fees/studentFeeReadCache";
+import { logger } from "@/lib/logger";
 
 type RouteParams =
   | { params: { id: string } }
@@ -177,7 +178,7 @@ export async function GET(req: Request, context: RouteParams) {
 
     return NextResponse.json({ ...detail, feeBreakdown }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Student details bundle error:", error);
+    logger.error("Student details bundle error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

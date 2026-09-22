@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 type Params = Promise<{ id: string }>;
 
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Teacher fetch error:", error);
+    logger.error("Teacher fetch error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

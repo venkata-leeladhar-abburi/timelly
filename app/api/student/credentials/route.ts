@@ -13,6 +13,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null };
@@ -185,7 +186,7 @@ export async function GET(req: Request) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Student credentials error:", error);
+    logger.error("Student credentials error:", error);
     const message = error instanceof Error ? error.message : "Internal server error";
     const status = message.includes("Class not found") ? 404 : 500;
     return NextResponse.json({ message }, { status });

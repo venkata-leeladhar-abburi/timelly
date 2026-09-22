@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getOrCreateBackupSchedule, sendFeesBackupEmail } from "@/lib/fees/sendFeesBackupEmail";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/superadmin/backup/email
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
       messageId: result.messageId,
     });
   } catch (error: unknown) {
-    console.error("Superadmin backup email error:", error);
+    logger.error("Superadmin backup email error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

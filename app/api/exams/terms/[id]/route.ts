@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { ExamTermStatus } from "@prisma/client";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
@@ -60,7 +61,7 @@ export async function GET(
     if (!term) return NextResponse.json({ message: "Exam term not found" }, { status: 404 });
     return NextResponse.json({ term }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams term GET:", e);
+    logger.error("Exams term GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -109,7 +110,7 @@ export async function PUT(
     });
     return NextResponse.json({ term }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams term PUT:", e);
+    logger.error("Exams term PUT:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

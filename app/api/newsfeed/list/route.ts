@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { purgeExpiredNewsFeeds } from "@/lib/newsfeedRetention";
+import { logger } from "@/lib/logger";
 
 const NEWSFEED_PURGE_INTERVAL_MS = 5 * 60 * 1000;
 let lastPurgeStartedAt = 0;
@@ -119,7 +120,7 @@ export async function GET() {
     if (now - lastPurgeStartedAt > NEWSFEED_PURGE_INTERVAL_MS) {
       lastPurgeStartedAt = now;
       void purgeExpiredNewsFeeds().catch((error) => {
-        console.warn("News feed retention cleanup failed:", error);
+        logger.warn("News feed retention cleanup failed:", error);
       });
     }
 
@@ -169,12 +170,12 @@ export async function GET() {
 
       return NextResponse.json({ newsFeeds }, { status: 200 });
     } catch (prismaErr) {
-      console.warn("News feed list via Prisma failed, trying raw SQL:", prismaErr);
+      logger.warn("News feed list via Prisma failed, trying raw SQL:", prismaErr);
       const newsFeeds = await listViaRawSql(schoolId, userId);
       return NextResponse.json({ newsFeeds }, { status: 200 });
     }
   } catch (error: unknown) {
-    console.error("List news feeds error:", error);
+    logger.error("List news feeds error:", error);
     const msg =
       error instanceof Error
         ? error.message

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { saveClassFeeStructureAndSyncStudents } from "@/lib/fees/classFeeStructureApply";
+import { logger } from "@/lib/logger";
 
 function normHeader(k: string) {
   return k
@@ -178,7 +179,7 @@ export async function POST(req: Request) {
       failed,
     });
   } catch (error: any) {
-    console.error("Fee structure bulk POST error:", error);
+    logger.error("Fee structure bulk POST error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

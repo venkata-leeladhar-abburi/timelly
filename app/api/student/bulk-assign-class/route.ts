@@ -10,6 +10,7 @@ import {
   buildTuitionBulkCache,
   buildStudentFeeRecalcPayload,
 } from "@/lib/fees/studentTuitionFromStructure";
+import { logger } from "@/lib/logger";
 
 const STAFF_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN", "TEACHER"]);
 const MAX_BULK_ASSIGN = 500;
@@ -175,7 +176,7 @@ export async function PUT(req: Request) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Bulk assign student to class error:", error);
+    logger.error("Bulk assign student to class error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

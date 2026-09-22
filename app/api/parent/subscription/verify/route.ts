@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
 
     if (!statusRes.ok) {
       const errText = await statusRes.text();
-      console.error("HyperPG subscription status error:", statusRes.status, errText);
+      logger.error("HyperPG subscription status error:", statusRes.status, errText);
       return NextResponse.json(
         { message: "Could not verify subscription order with payment gateway" },
         { status: 502 }
@@ -180,7 +181,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Verify parent subscription error:", error);
+    logger.error("Verify parent subscription error:", error);
     return NextResponse.json(
       {
         message:

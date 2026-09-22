@@ -14,6 +14,7 @@ import {
   PARENT_DASHBOARD_FAST_TTL,
   PARENT_DASHBOARD_FULL_TTL,
 } from "@/lib/parent/parentPortalSwr";
+import { logger } from "@/lib/logger";
 
 declare const globalThis: {
   parentDashboardPurgeLastRunAt?: number;
@@ -25,7 +26,7 @@ function maybePurgeExpiredNewsFeeds() {
   if (now - lastRun < 10 * 60 * 1000) return;
   globalThis.parentDashboardPurgeLastRunAt = now;
   purgeExpiredNewsFeeds().catch((error) => {
-    console.warn("Newsfeed purge skipped due to error:", error);
+    logger.warn("Newsfeed purge skipped due to error:", error);
   });
 }
 
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
-    console.error("Parent home dashboard error:", error);
+    logger.error("Parent home dashboard error:", error);
 
     const err = error as { code?: string; message?: string; name?: string };
     if (

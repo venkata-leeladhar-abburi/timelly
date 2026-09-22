@@ -7,6 +7,7 @@ import {
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
 } from "@/lib/parent/parentPortalSwr";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ fee }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Fetch student fee error:", error);
+    logger.error("Fetch student fee error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

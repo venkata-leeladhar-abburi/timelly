@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
   _req: Request,
@@ -35,7 +36,7 @@ export async function PATCH(
 
     return NextResponse.json({ leave }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Student leave approve:", e);
+    logger.error("Student leave approve:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

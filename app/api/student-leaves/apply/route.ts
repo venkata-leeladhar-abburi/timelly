@@ -8,6 +8,7 @@ import {
   getClassStaffNotifyUserIds,
 } from "@/lib/notificationService";
 import { invalidateParentPortalCaches } from "@/lib/parent/invalidateParentPortalCaches";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -86,14 +87,14 @@ export async function POST(req: Request) {
         );
       }
     } catch (nErr) {
-      console.warn("Student leave request notification failed:", nErr);
+      logger.warn("Student leave request notification failed:", nErr);
     }
 
     invalidateParentPortalCaches({ schoolId: student.schoolId, studentId });
 
     return NextResponse.json({ leave }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Student leave apply:", e);
+    logger.error("Student leave apply:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

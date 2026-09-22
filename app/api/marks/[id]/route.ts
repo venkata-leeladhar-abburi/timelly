@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { assertTeacherCanEnterMarks } from "@/lib/teacher/teacherMarksScope";
 import { parseMarkComponents, sumComponents } from "@/lib/exams/markComponents";
 import { randomUUID } from "crypto";
+import { logger } from "@/lib/logger";
 
 function calculateGrade(marks: number, totalMarks: number): string {
   const percentage = (marks / totalMarks) * 100;
@@ -204,7 +205,7 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Update marks error:", error);
+    logger.error("Update marks error:", error);
     return NextResponse.json(
       {
         message:
@@ -256,7 +257,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Delete marks error:", error);
+    logger.error("Delete marks error:", error);
     return NextResponse.json(
       {
         message:

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /**
  * Superadmin dashboard – single API returning all dashboard data.
@@ -89,7 +90,7 @@ export async function GET() {
 
     return NextResponse.json(payload, { status: 200 });
   } catch (e: unknown) {
-    console.error("Superadmin dashboard:", e);
+    logger.error("Superadmin dashboard:", e);
     
     // Handle database connection errors
     const err = e as { code?: string; message?: string; name?: string };

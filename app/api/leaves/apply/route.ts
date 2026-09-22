@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
+import { logger } from "@/lib/logger";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
 
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
     return NextResponse.json(leave, { status: 201 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal Server Error";
-    console.error("Leaves apply error:", e);
+    logger.error("Leaves apply error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

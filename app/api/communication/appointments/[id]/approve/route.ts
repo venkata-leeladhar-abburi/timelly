@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 type ApproveParams =
   | { params: { id: string } }
@@ -61,12 +62,11 @@ export async function POST(_req: Request, context: ApproveParams) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Approve appointment error:", error);
+    logger.error("Approve appointment error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
     );
   }
 }
-
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const WRITABLE_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN"]);
@@ -189,7 +190,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ timetable, classId }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Get timetable error:", error);
+    logger.error("Get timetable error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -279,7 +280,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Timetable saved successfully", timetable }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Save timetable error:", error);
+    logger.error("Save timetable error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

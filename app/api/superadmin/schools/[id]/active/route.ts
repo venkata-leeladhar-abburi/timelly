@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /**
  * Set school active/deactive. When deactive, the school is paused (all working tabs blocked).
@@ -35,7 +36,7 @@ export async function PATCH(
       school: { id: existing.id, name: existing.name, isActive },
     }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Superadmin school active PATCH:", e);
+    logger.error("Superadmin school active PATCH:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

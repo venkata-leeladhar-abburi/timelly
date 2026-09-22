@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { hashStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
 import { invalidateTenant } from "@/lib/cache/tenantCache";
+import { logger } from "@/lib/logger";
 
 const MAX_RESET = 5000;
 
@@ -132,7 +133,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Student credentials reset error:", error);
+    logger.error("Student credentials reset error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

@@ -7,6 +7,7 @@ import {
   parentPortalSwrWrite,
   PARENT_ANALYTICS_TTL,
 } from "@/lib/parent/parentPortalSwr";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
   try {
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(response);
   } catch (error: unknown) {
-    console.error("Analytics error:", error);
+    logger.error("Analytics error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

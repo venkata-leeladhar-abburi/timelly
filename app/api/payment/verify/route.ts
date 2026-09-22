@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
 
     if (!statusRes.ok) {
       const errText = await statusRes.text();
-      console.error("HyperPG order status error:", statusRes.status, errText);
+      logger.error("HyperPG order status error:", statusRes.status, errText);
       return NextResponse.json(
         { message: "Could not verify order status with payment gateway" },
         { status: 502 }
@@ -277,7 +278,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Verify payment error:", error);
+    logger.error("Verify payment error:", error);
     return NextResponse.json(
       {
         message:

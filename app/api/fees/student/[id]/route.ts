@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { logger } from "@/lib/logger";
 
 type RouteParams =
   | { params: { id: string } }
@@ -38,7 +39,7 @@ export async function GET(_req: Request, context: RouteParams) {
 
     return NextResponse.json({ fee });
   } catch (error: any) {
-    console.error("Get fee by student error:", error);
+    logger.error("Get fee by student error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
@@ -246,7 +247,7 @@ export async function PATCH(req: Request, context: RouteParams) {
 
     return NextResponse.json({ fee: updated });
   } catch (error: any) {
-    console.error("Update student fee error:", error);
+    logger.error("Update student fee error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

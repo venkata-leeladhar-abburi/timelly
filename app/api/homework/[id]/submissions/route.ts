@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 type RouteContext = { params: Promise<{ id: string }> | { params: { id: string } } };
 
@@ -90,7 +91,7 @@ export async function GET(req: Request, context: RouteContext) {
       submissions: list,
     });
   } catch (e: unknown) {
-    console.error("Homework submissions error:", e);
+    logger.error("Homework submissions error:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

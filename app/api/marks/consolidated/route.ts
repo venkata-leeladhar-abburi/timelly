@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -337,7 +338,7 @@ export async function GET(req: Request) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Consolidated marks error:", error);
+    logger.error("Consolidated marks error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

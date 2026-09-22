@@ -1,6 +1,7 @@
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -20,7 +21,7 @@ const leaves = await prisma.leaveRequest.findMany({
 
     return new Response(JSON.stringify(leaves), { status: 200 });
   } catch (err: any) {
-    console.error("Fetch all leaves error:", err);
+    logger.error("Fetch all leaves error:", err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 }

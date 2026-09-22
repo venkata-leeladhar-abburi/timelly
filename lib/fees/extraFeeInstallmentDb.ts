@@ -11,6 +11,7 @@ import {
   splitAmountInHalf,
 } from "@/lib/fees/extraFeeInstallments";
 import { FEE_MUTATION_TX } from "@/lib/fees/prismaFeeMutationTx";
+import { logger } from "@/lib/logger";
 
 const LOG_PREFIX = "[ExtraFee Installments]";
 
@@ -19,7 +20,7 @@ export function logExtraFeeInstallment(
   step: string,
   detail: Record<string, unknown> = {}
 ) {
-  console.log(`${LOG_PREFIX} ${step}`, detail);
+  logger.info(`${LOG_PREFIX} ${step}`, detail);
 }
 
 export type ExtraFeeCreatePayload = {

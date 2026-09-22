@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 const SCORE_BASELINE = 50;
 
@@ -114,7 +115,7 @@ export async function GET(req: Request) {
       { status: 200 }
     );
   } catch (e: unknown) {
-    console.error("Teacher audit teachers GET:", e);
+    logger.error("Teacher audit teachers GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

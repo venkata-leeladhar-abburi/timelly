@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { logger } from "@/lib/logger";
 
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -49,11 +50,11 @@ function markRedisSuccess() {
 
 function markRedisFailure(context: string, error?: unknown) {
   redisFailureCount += 1;
-  console.warn(`[Redis] ${context} failed (${redisFailureCount}).`, error);
+  logger.warn(`[Redis] ${context} failed (${redisFailureCount}).`, error);
   if (redisFailureCount >= 2) {
     redisDisabledUntil = Date.now() + redisCircuitCooldownMs;
     redisFailureCount = 0;
-    console.warn(`[Redis] Temporarily disabled for ${redisCircuitCooldownMs}ms to keep APIs fast.`);
+    logger.warn(`[Redis] Temporarily disabled for ${redisCircuitCooldownMs}ms to keep APIs fast.`);
   }
 }
 

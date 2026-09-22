@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _req: Request,
@@ -72,7 +73,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Get event registrations error:", error);
+    logger.error("Get event registrations error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

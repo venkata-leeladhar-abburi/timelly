@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
 
@@ -93,7 +94,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     return NextResponse.json(leave, { status: 200 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal Server Error";
-    console.error("Leaves update error:", e);
+    logger.error("Leaves update error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -132,7 +133,7 @@ export async function DELETE(req: Request, { params }: { params: Params }) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal Server Error";
-    console.error("Leaves delete error:", e);
+    logger.error("Leaves delete error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 /** Day collection — ?from=YYYY-MM-DD&to=YYYY-MM-DD&part=summary | heads (fast) or full payload. */
 export async function GET(request: Request) {
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
     setSchoolDashboardServerCached(cacheKey, payload, part === "summary" ? 120_000 : 90_000);
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
-    console.error("Dashboard collection error:", error);
+    logger.error("Dashboard collection error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

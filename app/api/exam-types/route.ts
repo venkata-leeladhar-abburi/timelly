@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { randomUUID } from "crypto";
+import { logger } from "@/lib/logger";
 
 const DEFAULT_EXAM_TYPES = ["TERM 1", "TERM 2", "FINAL"];
 
@@ -151,7 +152,7 @@ export async function GET() {
 
     return NextResponse.json({ examTypes }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exam types GET:", e);
+    logger.error("Exam types GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -226,7 +227,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ examType }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Exam types POST:", e);
+    logger.error("Exam types POST:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -317,7 +318,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ examType }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exam types PATCH:", e);
+    logger.error("Exam types PATCH:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -390,7 +391,7 @@ export async function DELETE(req: Request) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exam types DELETE:", e);
+    logger.error("Exam types DELETE:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

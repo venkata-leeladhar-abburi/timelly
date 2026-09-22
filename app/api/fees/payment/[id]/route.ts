@@ -6,6 +6,7 @@ import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { deleteFastFeePayment } from "@/lib/fees/deleteFastFeePayment";
+import { logger } from "@/lib/logger";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -219,7 +220,7 @@ export async function PATCH(req: Request, context: RouteParams) {
     await invalidateStudentFeeReadCaches({ studentId: payment.studentId, schoolId });
     return NextResponse.json({ payment: updated, message: "Payment updated" }, { status: 200 });
   } catch (error: unknown) {
-    console.error("PATCH /api/fees/payment/[id] error:", error);
+    logger.error("PATCH /api/fees/payment/[id] error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -267,7 +268,7 @@ export async function DELETE(req: Request, context: RouteParams) {
       : msg.includes("blocked") || msg.includes("cannot") || msg.includes("Only school")
         ? 400
         : 500;
-    if (status === 500) console.error("DELETE /api/fees/payment/[id] error:", error);
+    if (status === 500) logger.error("DELETE /api/fees/payment/[id] error:", error);
     return NextResponse.json({ message: msg }, { status });
   }
 }

@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 interface Params {
   id: string;
@@ -55,7 +56,7 @@ export async function PATCH(req: Request, { params }: { params: Params | Promise
     return new Response(JSON.stringify(leave), { status: 200 });
 
   } catch (err: any) {
-    console.error("Approve leave failed:", err);
+    logger.error("Approve leave failed:", err);
     return new Response(JSON.stringify({ error: err.message || "Unable to approve leave" }), { status: 500 });
   }
 }

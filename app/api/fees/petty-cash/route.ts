@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { logger } from "@/lib/logger";
 
 async function createPettyCashExpenseWithAutoVoucher(
   schoolId: string,
@@ -77,7 +78,7 @@ export async function GET() {
     return NextResponse.json({ expenses });
   } catch (error: unknown) {
     const err = error as { message?: string };
-    console.error("Petty cash GET error:", error);
+    logger.error("Petty cash GET error:", error);
     return NextResponse.json(
       { message: err?.message || "Internal server error" },
       { status: 500 }
@@ -146,7 +147,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ expense }, { status: 201 });
   } catch (error: unknown) {
     const err = error as { message?: string };
-    console.error("Petty cash POST error:", error);
+    logger.error("Petty cash POST error:", error);
     return NextResponse.json(
       { message: err?.message || "Internal server error" },
       { status: 500 }

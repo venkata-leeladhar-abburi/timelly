@@ -33,6 +33,7 @@ import {
 } from "@/lib/fees/recordFastOfflineFeePayment";
 import { reconcileStudentFeeIntegrity } from "@/lib/fees/reconcileStudentFeeIntegrity";
 import { roundRupee } from "@/lib/formatRupee";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   const [session, body] = await Promise.all([
@@ -656,7 +657,7 @@ export async function POST(req: Request) {
       { status: paymentAndAllocations.idempotent ? 200 : 201 }
     );
   } catch (error: any) {
-    console.error("Offline payment error:", error);
+    logger.error("Offline payment error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

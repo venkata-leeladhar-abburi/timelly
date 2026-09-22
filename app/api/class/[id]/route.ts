@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   req: Request,
@@ -65,7 +66,7 @@ export async function GET(
 
     return NextResponse.json({ class: classData }, { status: 200 });
   } catch (error: any) {
-    console.error("Get class error:", error);
+    logger.error("Get class error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
@@ -152,7 +153,7 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Update class error:", error);
+    logger.error("Update class error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
@@ -223,7 +224,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Delete class error:", error);
+    logger.error("Delete class error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

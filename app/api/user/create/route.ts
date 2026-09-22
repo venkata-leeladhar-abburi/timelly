@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -187,7 +188,7 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("User creation error:", error);
+    logger.error("User creation error:", error);
     return NextResponse.json(
       { message: error.message || "Internal server error" },
       { status: 500 }

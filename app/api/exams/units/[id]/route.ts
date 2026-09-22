@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /** PATCH: update unit completedPercent (used by teacher portal for progress) */
 export async function PATCH(
@@ -45,7 +46,7 @@ export async function PATCH(
 
     return NextResponse.json({ unit }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams unit PATCH:", e);
+    logger.error("Exams unit PATCH:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

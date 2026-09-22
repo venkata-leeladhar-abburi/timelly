@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 type EndParams =
   | { params: { id: string } }
@@ -69,7 +70,7 @@ export async function POST(_req: Request, context: EndParams) {
     );
   } catch (error: unknown) {
     const err = error as { message?: string };
-    console.error("End chat error:", error);
+    logger.error("End chat error:", error);
     return NextResponse.json(
       { message: err?.message || "Internal server error" },
       { status: 500 }

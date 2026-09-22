@@ -18,6 +18,7 @@ import {
 } from "@/lib/fees/studentTuitionFromStructure";
 import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
 import { isMessCategoryExtraFeeName } from "@/lib/fees/extraFeeResidencyScope";
+import { logger } from "@/lib/logger";
 
 async function loadSchoolExtras(schoolId: string) {
   return prisma.extraFee.findMany({
@@ -78,7 +79,7 @@ export async function GET() {
       ).length,
     });
   } catch (error: unknown) {
-    console.error("GET cleanup-duplicates error:", error);
+    logger.error("GET cleanup-duplicates error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -180,7 +181,7 @@ export async function POST() {
       allocationNamesBackfilled,
     });
   } catch (error: unknown) {
-    console.error("POST cleanup-duplicates error:", error);
+    logger.error("POST cleanup-duplicates error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

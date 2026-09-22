@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { NotificationType } from "@prisma/client";
 import { apiMemGetSwr, apiMemSet } from "@/lib/cache/apiMemoryCache";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
       headers: { "Cache-Control": "private, no-store, must-revalidate" },
     });
   } catch (e: unknown) {
-    console.error("Notifications GET:", e);
+    logger.error("Notifications GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ notification }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Notifications POST:", e);
+    logger.error("Notifications POST:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

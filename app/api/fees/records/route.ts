@@ -9,6 +9,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { roundRupee } from "@/lib/formatRupee";
 import { storedDiscountRupeeAmount } from "@/lib/fees/studentFeeHeadDiscount";
+import { logger } from "@/lib/logger";
 
 /**
  * Fast fee records list for the Fees Records table (no per-head allocation work).
@@ -94,7 +95,7 @@ export async function GET(req: Request) {
     setSchoolDashboardServerCached(memKey, payload, 25_000);
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
-    console.error("Fee records list error:", error);
+    logger.error("Fee records list error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

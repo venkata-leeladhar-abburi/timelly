@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
@@ -57,7 +58,7 @@ export async function GET(
 
     return NextResponse.json({ schedules }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exams schedule GET:", e);
+    logger.error("Exams schedule GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -112,7 +113,7 @@ export async function POST(
 
     return NextResponse.json({ schedule }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Exams schedule POST:", e);
+    logger.error("Exams schedule POST:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

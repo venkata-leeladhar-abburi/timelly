@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
   req: Request,
@@ -106,7 +107,7 @@ export async function PATCH(
     return NextResponse.json({ expense });
   } catch (error: unknown) {
     const err = error as { message?: string };
-    console.error("Petty cash PATCH error:", error);
+    logger.error("Petty cash PATCH error:", error);
     return NextResponse.json(
       { message: err?.message || "Internal server error" },
       { status: 500 }
@@ -149,7 +150,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const err = error as { message?: string };
-    console.error("Petty cash DELETE error:", error);
+    logger.error("Petty cash DELETE error:", error);
     return NextResponse.json(
       { message: err?.message || "Internal server error" },
       { status: 500 }

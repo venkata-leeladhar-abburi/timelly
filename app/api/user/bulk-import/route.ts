@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
+import { logger } from "@/lib/logger";
 
 const VALID_ROLES = ["SUPERADMIN", "SCHOOLADMIN", "TEACHER", "STUDENT"];
 
@@ -143,7 +144,7 @@ export async function POST(req: NextRequest) {
       errors: errors.slice(0, 20), // Return first 20 errors
     });
   } catch (error: any) {
-    console.error("Bulk import error:", error);
+    logger.error("Bulk import error:", error);
     return NextResponse.json(
       { message: error.message || "Internal server error" },
       { status: 500 }

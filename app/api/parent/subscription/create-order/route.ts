@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -146,7 +147,7 @@ export async function POST(req: Request) {
 
     const errText = await res.text();
     if (!res.ok) {
-      console.error("HyperPG subscription session error:", res.status, errText);
+      logger.error("HyperPG subscription session error:", res.status, errText);
       let details = errText.slice(0, 500);
       try {
         const j = JSON.parse(errText) as Record<string, unknown>;
@@ -209,7 +210,7 @@ export async function POST(req: Request) {
       payment_url: paymentUrl,
     });
   } catch (err: unknown) {
-    console.error("Parent subscription order error:", err);
+    logger.error("Parent subscription order error:", err);
     return NextResponse.json(
       {
         error: "Failed to create subscription order",

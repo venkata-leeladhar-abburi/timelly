@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import prisma from "@/lib/db";
 import { buildFeesBackupEmailContent } from "@/lib/fees/feesBackupEmailTemplate";
 import { generateSchoolFeesBackupBuffer, type SchoolFeesBackupFile } from "@/lib/fees/generateSchoolFeesBackupBuffer";
+import { logger } from "@/lib/logger";
 
 export type SendFeesBackupEmailResult = {
   ok: boolean;
@@ -77,7 +78,7 @@ export async function sendFeesBackupEmail(options: {
       const file = await generateSchoolFeesBackupBuffer(id);
       if (file) attachments.push(file);
     } catch (err) {
-      console.error("Fees backup generate failed for school", id, err);
+      logger.error("Fees backup generate failed for school", id, err);
     }
   }
 
@@ -123,7 +124,7 @@ export async function sendFeesBackupEmail(options: {
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to send email";
-    console.error("Fees backup email send failed:", message);
+    logger.error("Fees backup email send failed:", message);
     return { ok: false, recipient, schoolsSent: [], error: message };
   }
 }

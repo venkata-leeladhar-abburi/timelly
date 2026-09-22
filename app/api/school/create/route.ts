@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +11,6 @@ export async function POST(req: Request) {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
 
     const { name, address, location } = await req.json();
 
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     );
 
   } catch (error) {
-    console.error("Create school error:", error);
+    logger.error("Create school error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

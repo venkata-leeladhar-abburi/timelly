@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -84,7 +85,7 @@ export async function GET(req: Request) {
       sections: term?.sections ?? [],
     });
   } catch (e: unknown) {
-    console.error("Term sections resolve GET:", e);
+    logger.error("Term sections resolve GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

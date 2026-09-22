@@ -2,6 +2,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 interface Params {
   id: string;
@@ -122,7 +123,7 @@ export async function PATCH(
     });
 
   } catch (error: any) {
-    console.error("Leave approval failed:", error);
+    logger.error("Leave approval failed:", error);
     return new Response(
       JSON.stringify({
         error: error.message || "Something went wrong"

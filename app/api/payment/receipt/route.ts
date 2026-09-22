@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/payment/receipt?order_id=xxx
@@ -91,7 +92,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ receipt });
   } catch (error) {
-    console.error("Payment receipt error:", error);
+    logger.error("Payment receipt error:", error);
     return NextResponse.json(
       { message: "Failed to fetch receipt" },
       { status: 500 }

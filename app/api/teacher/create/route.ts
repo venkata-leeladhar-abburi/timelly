@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Create teacher error:", error);
+    logger.error("Create teacher error:", error);
 
     if (error?.code === "P2002" && error?.meta?.target?.includes("email")) {
       return NextResponse.json(

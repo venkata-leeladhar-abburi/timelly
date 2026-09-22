@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -167,7 +168,7 @@ export async function POST(req: Request) {
         } catch (_) {
           if (refundResText.length < 200) errMsg = refundResText;
         }
-        console.error("HyperPG refund error:", refundRes.status, refundResText);
+        logger.error("HyperPG refund error:", refundRes.status, refundResText);
         return NextResponse.json(
           { message: errMsg },
           { status: 400 }
@@ -282,7 +283,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Refund error:", error);
+    logger.error("Refund error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

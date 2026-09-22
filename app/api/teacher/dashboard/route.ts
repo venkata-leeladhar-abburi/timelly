@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -69,7 +70,7 @@ export async function GET() {
         take: 4,
       });
     } catch (err) {
-      console.warn("Teacher dashboard events fallback:", err);
+      logger.warn("Teacher dashboard events fallback:", err);
       events = [];
     }
 
@@ -130,7 +131,7 @@ export async function GET() {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Teacher dashboard error:", error);
+    logger.error("Teacher dashboard error:", error);
     
     // Handle database connection errors
     const err = error as { code?: string; message?: string; name?: string };

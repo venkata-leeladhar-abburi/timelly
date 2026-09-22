@@ -15,6 +15,7 @@ import {
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -382,7 +383,7 @@ export async function GET(req: Request) {
       }
     );
   } catch (error: any) {
-    console.error("Fee summary error:", error);
+    logger.error("Fee summary error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

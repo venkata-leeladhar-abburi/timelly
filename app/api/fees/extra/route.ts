@@ -15,6 +15,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { invalidateAssignCatalogServerCache } from "@/lib/fees/assignCatalogServerCache";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
+import { logger } from "@/lib/logger";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -113,7 +114,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(payload);
   } catch (error: any) {
-    console.error("Extra fees GET error:", error);
+    logger.error("Extra fees GET error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }
@@ -239,7 +240,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ extraFee, extraFeeIds: ids }, { status: 201 });
   } catch (error: any) {
-    console.error("Extra fee POST error:", error);
+    logger.error("Extra fee POST error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

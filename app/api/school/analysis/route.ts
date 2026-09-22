@@ -13,6 +13,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
     setSchoolDashboardServerCached(cacheKey, payload, ttlMs);
     return NextResponse.json(payload);
   } catch (error) {
-    console.error("Analysis API error:", error);
+    logger.error("Analysis API error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

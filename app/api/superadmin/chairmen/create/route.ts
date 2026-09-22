@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Superadmin create chairman:", error);
+    logger.error("Superadmin create chairman:", error);
     const err = error as { code?: string; message?: string };
     if (err?.code === "P1001") {
       return NextResponse.json(

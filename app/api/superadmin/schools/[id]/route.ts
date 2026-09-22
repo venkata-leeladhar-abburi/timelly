@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /**
  * Permanently delete a school and tenant data: students (fees, payments, etc.),
@@ -118,7 +119,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (e: unknown) {
-    console.error("Superadmin school DELETE:", e);
+    logger.error("Superadmin school DELETE:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

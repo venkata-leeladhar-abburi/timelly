@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { generateSchoolFeesBackupBuffer } from "@/lib/fees/generateSchoolFeesBackupBuffer";
+import { logger } from "@/lib/logger";
 
 /**
  * Download a full fees backup Excel for one school (superadmin only).
@@ -36,7 +37,7 @@ export async function GET(
       },
     });
   } catch (error: unknown) {
-    console.error("Superadmin school fees backup export error:", error);
+    logger.error("Superadmin school fees backup export error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

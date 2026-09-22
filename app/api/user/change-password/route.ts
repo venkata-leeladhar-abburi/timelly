@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Password updated" }, { status: 200 });
   } catch (e: unknown) {
-    console.error("User change-password POST:", e);
+    logger.error("User change-password POST:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

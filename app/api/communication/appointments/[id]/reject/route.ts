@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 type RejectParams =
   | { params: { id: string } }
@@ -61,7 +62,7 @@ export async function POST(_req: Request, context: RejectParams) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Reject appointment error:", error);
+    logger.error("Reject appointment error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { createNotification } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 export async function POST(
   req: Request,
@@ -46,7 +47,7 @@ export async function POST(
               });
             
             if (uploadError) {
-              console.error("File upload error:", uploadError);
+              logger.error("File upload error:", uploadError);
               return NextResponse.json(
                 { message: uploadError.message || "File upload failed" },
                 { status: 500 }
@@ -68,7 +69,7 @@ export async function POST(
           documentUrl = documentUrlInput;
         }
       } catch (formError) {
-        console.error("FormData parsing error:", formError);
+        logger.error("FormData parsing error:", formError);
         // Continue without document if FormData parsing fails
       }
     } else {
@@ -226,7 +227,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("Approve certificate request error:", error);
+    logger.error("Approve certificate request error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

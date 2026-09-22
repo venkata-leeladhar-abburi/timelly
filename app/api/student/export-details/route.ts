@@ -9,6 +9,7 @@ import {
   studentToDetailsExportRow,
 } from "@/lib/students/studentDetailsExport";
 import { resolveStudentDisplayClass } from "@/lib/students/resolveStudentDisplayClass";
+import { logger } from "@/lib/logger";
 
 const MAX_EXPORT = 5000;
 
@@ -149,7 +150,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (error: unknown) {
-    console.error("Student details export error:", error);
+    logger.error("Student details export error:", error);
     return NextResponse.json(
       {
         message:

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -41,7 +42,7 @@ export async function GET() {
       fatherPhone: student.phoneNo ?? "",
     });
   } catch (e: unknown) {
-    console.error("Get parent details error:", e);
+    logger.error("Get parent details error:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -92,7 +93,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ message: "Parent details updated successfully" });
   } catch (e: unknown) {
-    console.error("Update parent details error:", e);
+    logger.error("Update parent details error:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

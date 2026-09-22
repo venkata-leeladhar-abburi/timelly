@@ -6,6 +6,7 @@ import {
   createNotificationsForUserIds,
   getSchoolUserIds,
 } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
@@ -117,7 +118,7 @@ export async function POST(req: Request) {
         title.length > 80 ? title.slice(0, 80) + "…" : title
       );
     } catch (nErr) {
-      console.warn("Workshop notification failed:", nErr);
+      logger.warn("Workshop notification failed:", nErr);
     }
 
     return NextResponse.json(
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Create event error:", error);
+    logger.error("Create event error:", error);
     return NextResponse.json(
       { message: error?.message || "Internal server error" },
       { status: 500 }

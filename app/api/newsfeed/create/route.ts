@@ -7,6 +7,7 @@ import {
   createNotificationsForUserIds,
   getSchoolUserIds,
 } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 function generateId(): string {
   const prefix = "c";
@@ -97,7 +98,7 @@ export async function POST(req: Request) {
           title.length > 60 ? title.slice(0, 60) + "…" : title
         );
       } catch (nErr) {
-        console.warn("News notification creation failed:", nErr);
+        logger.warn("News notification creation failed:", nErr);
       }
 
       return NextResponse.json(
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
         { status: 201 }
       );
     } catch (prismaErr) {
-      console.warn("News feed create via Prisma failed, trying raw SQL:", prismaErr);
+      logger.warn("News feed create via Prisma failed, trying raw SQL:", prismaErr);
     }
 
     const id = generateId();
@@ -150,7 +151,7 @@ export async function POST(req: Request) {
         title.length > 60 ? title.slice(0, 60) + "…" : title
       );
     } catch (nErr) {
-      console.warn("News notification creation failed (raw insert path):", nErr);
+      logger.warn("News notification creation failed (raw insert path):", nErr);
     }
 
     return NextResponse.json(
@@ -172,7 +173,7 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error("Create news feed error:", error);
+    logger.error("Create news feed error:", error);
     const msg = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ message: msg }, { status: 500 });
   }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { TeacherAuditCategory } from "@prisma/client";
+import { logger } from "@/lib/logger";
 
 /* ================= HELPERS ================= */
 const SCORE_BASELINE = 50;
@@ -97,7 +98,7 @@ export async function GET(
       { status: 200 }
     );
   } catch (e: unknown) {
-    console.error("Teacher audit records GET:", e);
+    logger.error("Teacher audit records GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -217,7 +218,7 @@ const category: TeacherAuditCategory =
 
     return NextResponse.json({ record }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Teacher audit records POST:", e);
+    logger.error("Teacher audit records POST:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

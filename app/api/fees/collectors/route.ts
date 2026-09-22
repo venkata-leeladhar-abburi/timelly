@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/fees/collectors
@@ -64,7 +65,7 @@ export async function GET() {
 
     return NextResponse.json({ collectors }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Fee collectors error:", error);
+    logger.error("Fee collectors error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

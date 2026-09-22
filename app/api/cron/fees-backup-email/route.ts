@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { shouldRunScheduledBackup } from "@/lib/backupScheduleUtils";
 import { sendFeesBackupEmail } from "@/lib/fees/sendFeesBackupEmail";
+import { logger } from "@/lib/logger";
 
 function isAuthorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET?.trim();
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
     const sent = results.filter((r) => r.ok).length;
     return NextResponse.json({ message: "Cron completed", sent, results });
   } catch (error: unknown) {
-    console.error("Fees backup email cron error:", error);
+    logger.error("Fees backup email cron error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

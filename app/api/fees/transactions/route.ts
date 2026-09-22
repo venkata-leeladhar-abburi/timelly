@@ -9,6 +9,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { loadFeeReportTransactions } from "@/lib/fees/loadDayFeeCollectionTransactions";
 import { buildFeeHeadAmountsByPaymentId, dominantFeeHead, feeHeadLinesFromMap } from "@/lib/fees/paymentFeeHeadLines";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/fees/transactions
@@ -195,7 +196,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
-    console.error("Transactions error:", error);
+    logger.error("Transactions error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

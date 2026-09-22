@@ -8,6 +8,7 @@ import {
   setUserListCached,
   userListCacheKey,
 } from "@/lib/school/userListServerCache";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   try {
@@ -85,7 +86,7 @@ export async function GET(req: Request) {
     setUserListCached(cacheKey, payload);
     return NextResponse.json(payload);
   } catch (error: unknown) {
-    console.error(error);
+    logger.error(error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

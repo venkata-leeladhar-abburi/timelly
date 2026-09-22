@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { randomUUID } from "crypto";
+import { logger } from "@/lib/logger";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -141,7 +142,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ examType: updated }, { status: 200 });
   } catch (e: unknown) {
-    console.error("Exam type sections PUT:", e);
+    logger.error("Exam type sections PUT:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

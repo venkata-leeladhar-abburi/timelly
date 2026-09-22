@@ -7,6 +7,7 @@ import { structureMultiplierAfterDiscount } from "@/lib/fees/studentTuitionFromS
 import type { Prisma } from "@prisma/client";
 import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
 import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
+import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -423,9 +424,9 @@ export async function POST(req: Request) {
 
     const errText = await res.text();
     if (!res.ok) {
-      console.error("HyperPG session error:", res.status, errText);
-      console.error("HyperPG request URL:", hyperpgBaseUrl + "/session");
-      console.error("HyperPG auth style:", hyperpgAuthStyle, "Authorization length:", headers.Authorization?.length ?? 0);
+      logger.error("HyperPG session error:", res.status, errText);
+      logger.error("HyperPG request URL:", hyperpgBaseUrl + "/session");
+      logger.error("HyperPG auth style:", hyperpgAuthStyle, "Authorization length:", headers.Authorization?.length ?? 0);
       let details = errText.slice(0, 500);
       try {
         const j = JSON.parse(errText) as Record<string, unknown>;
@@ -463,7 +464,7 @@ export async function POST(req: Request) {
       null;
 
     if (!paymentUrl) {
-      console.error("HyperPG response missing payment_links.web:", data);
+      logger.error("HyperPG response missing payment_links.web:", data);
       return NextResponse.json(
         { error: "Payment gateway did not return payment URL" },
         { status: 500 }
@@ -513,7 +514,7 @@ export async function POST(req: Request) {
       payment_url: paymentUrl,
     });
   } catch (err: unknown) {
-    console.error("Order creation error:", err);
+    logger.error("Order creation error:", err);
     return NextResponse.json(
       {
         error: "Failed to create order",

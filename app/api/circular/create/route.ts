@@ -8,6 +8,7 @@ import {
   createNotificationsForUserIds,
   getSchoolUserIds,
 } from "@/lib/notificationService";
+import { logger } from "@/lib/logger";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -79,13 +80,13 @@ export async function POST(req: Request) {
           subject.length > 80 ? subject.slice(0, 80) + "…" : subject
         );
       } catch (nErr) {
-        console.warn("Circular notification creation failed:", nErr);
+        logger.warn("Circular notification creation failed:", nErr);
       }
     }
 
     return NextResponse.json({ circular }, { status: 201 });
   } catch (e: unknown) {
-    console.error("Circular create:", e);
+    logger.error("Circular create:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

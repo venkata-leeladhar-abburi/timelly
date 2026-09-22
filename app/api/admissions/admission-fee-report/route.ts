@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { admissionFeeTotalsByChannel } from "@/lib/fees/admissionFeeCollectionChannel";
 import prisma from "@/lib/db";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
+import { logger } from "@/lib/logger";
 
 function parseYmd(value: string | null): Date | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return null;
@@ -153,7 +154,7 @@ export async function GET(req: Request) {
     if (status === 403) {
       return NextResponse.json({ message: "You do not have permission to manage admissions" }, { status: 403 });
     }
-    console.error("Admission fee report error:", error);
+    logger.error("Admission fee report error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

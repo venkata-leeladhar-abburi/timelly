@@ -8,6 +8,7 @@ import * as XLSX from "xlsx";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
+import { logger } from "@/lib/logger";
 
 function toStr(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -227,7 +228,7 @@ export async function POST(req: Request) {
         );
         const rawDob = row.dob ?? row.dateOfBirth ?? row["Date of Birth"];
 
-        console.log("[student bulk upload] Parsed row", {
+        logger.info("[student bulk upload] Parsed row", {
           row: rowNumber,
           name,
           fatherName,
@@ -561,14 +562,14 @@ export async function POST(req: Request) {
           }
         );
 
-        console.log("[student bulk upload] Created student successfully", {
+        logger.info("[student bulk upload] Created student successfully", {
           row: rowNumber,
           name,
         });
 
         created.push({ row: rowNumber, name });
       } catch (err: any) {
-        console.error("[student bulk upload] Failed row", {
+        logger.error("[student bulk upload] Failed row", {
           row: rowNumber,
           error: err?.message || "Unknown error while creating student",
           rawRow: row,
@@ -590,7 +591,7 @@ export async function POST(req: Request) {
     });
 
   } catch (err: any) {
-    console.error("Bulk upload error", err);
+    logger.error("Bulk upload error", err);
     return NextResponse.json(
       { message: err?.message || "Internal server error" },
       { status: 500 }

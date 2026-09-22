@@ -6,6 +6,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -74,7 +75,7 @@ export async function GET() {
     setSchoolDashboardServerCached(cacheKey, payload, 60_000);
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
-    console.error("List teachers error:", error);
+    logger.error("List teachers error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

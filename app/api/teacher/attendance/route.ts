@@ -8,6 +8,7 @@ import {
   purgeSchoolDashboardServerCacheMatching,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { logger } from "@/lib/logger";
 
 type TeacherAttendanceRow = {
   id: string;
@@ -176,7 +177,7 @@ export async function GET(req: Request) {
     setSchoolDashboardServerCached(cacheKey, payload, 30_000);
     return NextResponse.json(payload);
   } catch (error: unknown) {
-    console.error("Get teacher attendance error:", error);
+    logger.error("Get teacher attendance error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -282,7 +283,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Attendance saved", ok: true, saved: rows.length });
   } catch (error: unknown) {
-    console.error("Mark teacher attendance error:", error);
+    logger.error("Mark teacher attendance error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

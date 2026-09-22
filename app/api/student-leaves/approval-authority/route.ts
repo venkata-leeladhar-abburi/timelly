@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -77,7 +78,7 @@ export async function GET() {
       photoUrl: teacher.photoUrl ?? null,
     });
   } catch (error) {
-    console.error("STUDENT_CLASS_TEACHER_ERROR:", error);
+    logger.error("STUDENT_CLASS_TEACHER_ERROR:", error);
     return NextResponse.json(
       { message: "Server error" },
       { status: 500 }

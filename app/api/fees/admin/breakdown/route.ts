@@ -9,6 +9,7 @@ import {
   setBreakdownMemCached,
 } from "@/lib/fees/studentFeeReadCache";
 import { tenantCacheKey, swrGet, swrSet } from "@/lib/cache/tenantCache";
+import { logger } from "@/lib/logger";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -107,7 +108,7 @@ export async function GET(req: Request) {
     if (message.includes("not found")) {
       return NextResponse.json({ message }, { status: 404 });
     }
-    console.error("Admin fee breakdown error:", error);
+    logger.error("Admin fee breakdown error:", error);
     return NextResponse.json({ message }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -80,7 +81,7 @@ export async function GET() {
       { status: 200 }
     );
   } catch (e: unknown) {
-    console.error("User me GET:", e);
+    logger.error("User me GET:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }
@@ -175,7 +176,7 @@ export async function PUT(req: Request) {
 
     return NextResponse.json({ user }, { status: 200 });
   } catch (e: unknown) {
-    console.error("User me PUT:", e);
+    logger.error("User me PUT:", e);
     return NextResponse.json(
       { message: e instanceof Error ? e.message : "Internal server error" },
       { status: 500 }

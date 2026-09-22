@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 async function verifyAndGetFeed(id: string, schoolId: string) {
   const rows = await prisma.$queryRawUnsafe<{ id: string }[]>(
@@ -61,7 +62,7 @@ export async function PUT(
       // Fallback: raw SQL update (Prisma delegate can lag behind migrations).
       // Log first — otherwise a real error (bad data, constraint violation) gets
       // silently masked by the raw-SQL retry instead of surfacing.
-      console.error("newsFeed.update failed, falling back to raw SQL:", prismaError);
+      logger.error("newsFeed.update failed, falling back to raw SQL:", prismaError);
       const parts: string[] = [];
       const values: unknown[] = [];
       let idx = 1;
@@ -91,7 +92,7 @@ export async function PUT(
       );
     }
   } catch (error: unknown) {
-    console.error("Update news feed error:", error);
+    logger.error("Update news feed error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -126,7 +127,7 @@ export async function DELETE(
     try {
       await prisma.newsFeed.delete({ where: { id } });
     } catch (prismaError: unknown) {
-      console.error("newsFeed.delete failed, falling back to raw SQL:", prismaError);
+      logger.error("newsFeed.delete failed, falling back to raw SQL:", prismaError);
       await prisma.$executeRawUnsafe(
         `DELETE FROM "NewsFeed" WHERE id = $1 AND "schoolId" = $2`,
         id,
@@ -135,7 +136,7 @@ export async function DELETE(
     }
     return NextResponse.json({ message: "News feed deleted successfully" }, { status: 200 });
   } catch (error: unknown) {
-    console.error("Delete news feed error:", error);
+    logger.error("Delete news feed error:", error);
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
