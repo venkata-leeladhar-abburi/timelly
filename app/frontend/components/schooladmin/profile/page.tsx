@@ -25,15 +25,14 @@ import {
 import { readStudentListCacheLegacy, clearStudentListCache, writeStudentListCacheLegacy } from "@/lib/students/studentListSessionCache";
 import { isInactiveStudentStatus } from "@/lib/students/resolveStudentDisplayClass";
 import { resolveStudentDisplayName } from "@/lib/students/resolveStudentDisplayName";
-import { StudentSearchAutocomplete } from "./components/StudentSearchAutocomplete";
 import { Calendar, BookOpen, Activity, Clock, FileSpreadsheet } from "lucide-react";
 import BulkExtraFeeByTimellyModal from "./components/BulkExtraFeeByTimellyModal";
 import PageHeader from "../../common/PageHeader";
 import Spinner from "../../common/Spinner";
-import SelectInput from "../../common/SelectInput";
 import type { FeeDeleteSuccess, FeePaymentSuccess, StudentDetail, StudentOption } from "./shared/types";
 import { StudentNameCard } from "./shared/StudentNameCard";
 import { StudentFeesPaymentModal } from "./shared/StudentFeesPaymentModal";
+import { StudentSearchFilterBar } from "./shared/StudentSearchFilterBar";
 import {
   buildPlaceholderById,
   buildPlaceholderDetail,
@@ -219,6 +218,14 @@ function StudentDetailsPageContent() {
       });
       setSelectedId(student.id);
       syncStudentIdInUrl(student.id);
+    },
+    [syncStudentIdInUrl]
+  );
+
+  const changeSelectedId = useCallback(
+    (nextId: string | null) => {
+      setSelectedId(nextId);
+      syncStudentIdInUrl(nextId);
     },
     [syncStudentIdInUrl]
   );
@@ -579,62 +586,24 @@ function StudentDetailsPageContent() {
         onClose={() => setBulkExtraFeeOpen(false)}
         onApplied={() => setReloadKey((k) => k + 1)}
       />
-      <div className="bg-white/5 backdrop-blur-xl border-b border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-6 overflow-visible relative z-20 isolate min-w-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6 overflow-visible">
-          <div className="relative z-20 min-w-0">
-            <StudentSearchAutocomplete
-              students={students}
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              onSelectStudent={selectStudent}
-              selectedId={selectedId}
-              classFilter={filterClass}
-              sectionFilter={filterSection}
-              statusFilter={filterStatus}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-2 block">Filter by Status</label>
-            <SelectInput
-              value={filterStatus}
-              onChange={(v) => setFilterStatus(v as "all" | "active" | "inactive")}
-              options={statusOptions}
-              bgColor="black"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-2 block">Filter by Class</label>
-            <SelectInput
-              value={filterClass}
-              onChange={setFilterClass}
-              options={classOptions}
-              bgColor="black"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-2 block">Filter by Section</label>
-            <SelectInput
-              value={filterSection}
-              onChange={setFilterSection}
-              options={sectionOptions}
-              bgColor="black"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 mb-2 block">Students List</label>
-            <SelectInput
-              value={selectedId ?? ""}
-              onChange={(value) => {
-                const next = value || null;
-                setSelectedId(next);
-                syncStudentIdInUrl(next);
-              }}
-              options={[{ label: "Select student", value: "" }, ...studentSelectOptions]}
-              bgColor="black"
-            />
-          </div>
-        </div>
-      </div>
+      <StudentSearchFilterBar
+        students={students}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSelectStudent={selectStudent}
+        selectedId={selectedId}
+        onSelectedIdChange={changeSelectedId}
+        filterClass={filterClass}
+        onFilterClassChange={setFilterClass}
+        filterSection={filterSection}
+        onFilterSectionChange={setFilterSection}
+        filterStatus={filterStatus}
+        onFilterStatusChange={setFilterStatus}
+        statusOptions={statusOptions}
+        classOptions={classOptions}
+        sectionOptions={sectionOptions}
+        studentSelectOptions={studentSelectOptions}
+      />
 
       {listLoading && students.length === 0 && (
         <div className="text-center py-8 text-gray-400 text-sm">Loading student list…</div>
