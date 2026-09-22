@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { BookOpen, Calendar, CheckCircle2 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import ParentTimellyLoader from "../ParentTimellyLoader";
+import { fetchExamTerms } from "@/lib/api/examTerms";
 
 // Interfaces to match your API structure
 interface SyllabusUnit {
@@ -50,9 +51,10 @@ export default function ParentExamsTab() {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const res = await fetch("/api/exams/terms");
-        const result = await res.json();
-        const data: TermData[] = Array.isArray(result) ? result : result.terms || [];
+        const { data: result } = await fetchExamTerms();
+        const data: TermData[] = Array.isArray(result)
+          ? result
+          : (result as { terms?: TermData[] })?.terms || [];
         setRawData(data);
         console.log("Fetched exam terms:", data);
 

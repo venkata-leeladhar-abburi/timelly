@@ -14,6 +14,11 @@ import {
 } from "lucide-react";
 import PageHeader from "../../common/PageHeader";
 import ParentTimellyLoader from "../ParentTimellyLoader";
+import {
+  applyStudentLeave,
+  fetchLeaveApprovalAuthority,
+  fetchMyStudentLeaves,
+} from "@/lib/api/studentLeaves";
 
 const LEAVE_TYPE_OPTIONS = [
   { label: "Sick Leave", value: "SICK" },
@@ -76,9 +81,8 @@ export default function ParentLeavesTab() {
 
   const fetchMyLeaves = useCallback(async () => {
     try {
-      const res = await fetch("/api/student-leaves/my");
-      const data = await res.json();
-      if (res.ok && Array.isArray(data)) setMyLeaves(data);
+      const { ok, data } = await fetchMyStudentLeaves();
+      if (ok && Array.isArray(data)) setMyLeaves(data);
       else setMyLeaves([]);
     } catch {
       setMyLeaves([]);
@@ -89,11 +93,8 @@ export default function ParentLeavesTab() {
 
   const fetchApprovalAuthority = useCallback(async () => {
     try {
-      const res = await fetch("/api/student-leaves/approval-authority", {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok && data && (data.teacherId != null || data.teacherName != null)) {
+      const { ok, data } = await fetchLeaveApprovalAuthority();
+      if (ok && data && (data.teacherId != null || data.teacherName != null)) {
         setApprovalAuthority({
           teacherName: data.teacherName ?? "Class Teacher",
           photoUrl: data.photoUrl ?? "",
@@ -126,40 +127,36 @@ export default function ParentLeavesTab() {
     setError(null);
     setSubmitLoading(true);
     try {
-      const res = await fetch("/api/student-leaves/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leaveType: formData.leaveType,
-          fromDate: formData.startDate,
-          toDate: formData.endDate,
-          reason: formData.reason.trim(),
-        }),
+      const { ok, data } = await applyStudentLeave({
+        leaveType: formData.leaveType,
+        fromDate: formData.startDate,
+        toDate: formData.endDate,
+        reason: formData.reason.trim(),
       });
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         setError(data?.message || "Failed to submit leave");
         return;
       }
-      if (data?.leave) {
+      const leave = data?.leave;
+      if (leave) {
         setMyLeaves((prev) => [
           {
-            id: String(data.leave.id ?? ""),
-            leaveType: String(data.leave.leaveType ?? formData.leaveType),
-            reason: data.leave.reason ?? formData.reason.trim(),
+            id: String(leave.id ?? ""),
+            leaveType: String(leave.leaveType ?? formData.leaveType),
+            reason: leave.reason ?? formData.reason.trim(),
             fromDate:
-              typeof data.leave.fromDate === "string"
-                ? data.leave.fromDate
+              typeof leave.fromDate === "string"
+                ? leave.fromDate
                 : formData.startDate,
             toDate:
-              typeof data.leave.toDate === "string"
-                ? data.leave.toDate
+              typeof leave.toDate === "string"
+                ? leave.toDate
                 : formData.endDate,
-            status: String(data.leave.status ?? "PENDING"),
-            remarks: data.leave.remarks ?? null,
+            status: String(leave.status ?? "PENDING"),
+            remarks: leave.remarks ?? null,
             createdAt:
-              typeof data.leave.createdAt === "string"
-                ? data.leave.createdAt
+              typeof leave.createdAt === "string"
+                ? leave.createdAt
                 : new Date().toISOString(),
           },
           ...prev,

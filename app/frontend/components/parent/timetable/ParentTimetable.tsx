@@ -6,6 +6,7 @@ import { BookOpen, CalendarDays, Clock, Coffee, GraduationCap, UserRound } from 
 import PageHeader from "../../common/PageHeader";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import type { TimetableEntry, TimetablePayload } from "../../timetable/TimetableGrid";
+import { fetchMyTimetable } from "@/lib/api/timetable";
 
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const DAY_LABELS: Record<number, string> = {
@@ -44,12 +45,8 @@ export default function ParentTimetableTab() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/timetable", {
-        credentials: "include",
-        cache: "no-store",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || "Failed to load timetable");
+      const { ok, data } = await fetchMyTimetable();
+      if (!ok) throw new Error(data.message || "Failed to load timetable");
       const nextTimetable = (data.timetable ?? null) as TimetablePayload;
       timetableCache.set(studentId, nextTimetable);
       setTimetable(nextTimetable);

@@ -21,6 +21,14 @@ export type FeeSelection = Array<
   | { headType: "EXTRA_FEE"; extraFeeId: string }
 >;
 
+export type VerifyPaymentResponse = {
+  message?: string;
+};
+
+export function verifyHyperpgPayment(payload: { gateway: "HYPERPG"; order_id: string; amount: number }) {
+  return apiPost<VerifyPaymentResponse>("/api/payment/verify", payload);
+}
+
 export async function createPaymentOrder(
   endpoint: string,
   payload: {

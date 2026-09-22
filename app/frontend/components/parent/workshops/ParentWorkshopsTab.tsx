@@ -10,6 +10,8 @@ import EventDetailsModal from "../../schooladmin/workshops/EventDetailsModal";
 import ParentTimellyLoader from "../ParentTimellyLoader";
 import { useSession } from "next-auth/react";
 import { fetchParentEventsList, peekParentPortalAny } from "@/lib/parent/loadParentPortal";
+import { fetchEventDetails } from "@/lib/api/eventDetails";
+import { verifyHyperpgPayment } from "@/lib/api/payment";
 
 /* ================= TYPES ================= */
 
@@ -117,14 +119,9 @@ export default function ParentWorkshopsTab() {
         if (orderId && !Number.isNaN(amount) && amount > 0) {
           verifiedRef.current = true;
           document.cookie = "hyperpg_pending=; path=/; max-age=0";
-          fetch("/api/payment/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ gateway: "HYPERPG", order_id: orderId, amount }),
-          })
-            .then(async (res) => {
-              const d = await res.json();
-              if (!res.ok) alert(d?.message || "Payment verification failed");
+          verifyHyperpgPayment({ gateway: "HYPERPG", order_id: orderId, amount })
+            .then(({ ok, data: d }) => {
+              if (!ok) alert(d?.message || "Payment verification failed");
               else fetchEvents();
             })
             .catch(console.error);
@@ -145,16 +142,12 @@ export default function ParentWorkshopsTab() {
         setDetailsLoading(true);
         setDetailsError(null);
 
-        const res = await fetch(`/api/events/create/${selectedEventId}`, {
-          signal: controller.signal,
-        });
+        const { ok, data } = await fetchEventDetails(selectedEventId, controller.signal);
 
-        const data = await res.json();
-
-        if (!res.ok)
+        if (!ok)
           throw new Error(data?.message || "Failed to load event details");
 
-        setEventDetails(data?.event ?? null);
+        setEventDetails((data?.event as EventItem | undefined) ?? null);
       } catch (err: any) {
         if (err?.name === "AbortError") return;
         setDetailsError(err?.message || "Failed to load event details");
@@ -358,9 +351,8 @@ export default function ParentWorkshopsTab() {
           onEnrollSuccess={() => {
             fetchEvents();
             if (selectedEventId) {
-              fetch(`/api/events/create/${selectedEventId}`, { credentials: "include" })
-                .then((r) => r.json())
-                .then((d) => d?.event && setEventDetails(d.event))
+              fetchEventDetails(selectedEventId)
+                .then(({ data: d }) => d?.event && setEventDetails(d.event as EventItem))
                 .catch(() => {});
             }
           }}

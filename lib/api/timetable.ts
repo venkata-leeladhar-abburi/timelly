@@ -69,6 +69,14 @@ export async function fetchAllTimetables() {
   };
 }
 
+export async function fetchMyTimetable() {
+  const result = await apiGet<TimetableResponse>("/api/timetable", { cache: "no-store" });
+  return {
+    ...result,
+    data: validateApiResponse(TimetableResponseSchema, result.data, "fetchMyTimetable") as TimetableResponse,
+  };
+}
+
 export async function fetchTimetableForClass(classId: string) {
   const result = await apiGet<TimetableResponse>(`/api/timetable?classId=${encodeURIComponent(classId)}`, {
     cache: "no-store",

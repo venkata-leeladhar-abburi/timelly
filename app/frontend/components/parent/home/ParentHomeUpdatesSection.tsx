@@ -5,6 +5,7 @@ import { Calendar, Download, Heart, MessageCircle, MoreHorizontal } from "lucide
 import { downloadImageFromUrl } from "../../../utils/downloadImage";
 import { formatRelativeTime } from "../../../utils/format";
 import { ParentEvent, ParentFeed } from "./types";
+import { toggleNewsfeedLike } from "@/lib/api/newsfeed";
 
 type Props = {
   feeds: ParentFeed[];
@@ -54,12 +55,8 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
     setLikesCount(nextLikes);
 
     try {
-      const res = await fetch(`/api/newsfeed/${latestFeed.id}/like`, {
-        method: "POST",
-        credentials: "include",
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.message || "Failed to update like");
+      const { ok, data: payload } = await toggleNewsfeedLike(latestFeed.id);
+      if (!ok) throw new Error(payload?.message || "Failed to update like");
 
       setLikedByMe(Boolean(payload?.liked));
       setLikesCount(Number(payload?.likes ?? nextLikes));

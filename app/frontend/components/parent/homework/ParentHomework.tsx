@@ -12,6 +12,8 @@ import HomeworkStats from './HomeworkStats';
 import HomeworkFilters from './HomeworkFilters';
 import HomeworkCard from './HomeworkCard';
 import ParentTimellyLoader from '../ParentTimellyLoader';
+import { uploadImage } from '../../../utils/upload';
+import { submitHomework } from '@/lib/api/homeworkSubmit';
 
 interface Homework {
   id: string;
@@ -131,40 +133,11 @@ export default function Page() {
       setUploadingId(homeworkId);
       try {
         // First upload the file
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', 'homework');
-
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        });
-
-        const uploadData = await uploadRes.json().catch(() => ({}));
-        if (!uploadRes.ok) {
-          throw new Error(uploadData.message || 'File upload failed');
-        }
-        const fileUrl = uploadData.url as string | undefined;
-        if (!fileUrl) {
-          throw new Error('File upload succeeded but no URL was returned');
-        }
+        const fileUrl = await uploadImage(file, 'homework');
 
         // Then submit the homework
-        const submitRes = await fetch('/api/homework/submit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            homeworkId,
-            fileUrl,
-          }),
-        });
-
-        const submitData = await submitRes.json().catch(() => ({}));
-        if (!submitRes.ok) {
+        const { ok, data: submitData } = await submitHomework(homeworkId, fileUrl);
+        if (!ok) {
           throw new Error(submitData.message || 'Submission failed');
         }
 
