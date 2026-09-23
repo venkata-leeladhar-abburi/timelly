@@ -24,11 +24,16 @@ jest.mock("@/lib/school/schoolDashboardServerCache", () => ({
   setSchoolDashboardServerCached: (...args: unknown[]) => mockSetCached(...args),
 }));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
-    studentFee: { findMany: (...args: unknown[]) => mockStudentFeeFindMany(...args) },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      studentFee: { findMany: (...args: unknown[]) => mockStudentFeeFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const request = (query = "") => new Request(`http://localhost/api/fees/records${query}`);

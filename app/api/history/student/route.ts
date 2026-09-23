@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -32,12 +32,17 @@ export async function GET(req: Request) {
     if (originalStudentId) {
       where.originalStudentId = originalStudentId;
     }
-    const histories = await prisma.studentHistory.findMany({
-      where,
-      orderBy: {
-        deactivatedAt: "desc",
-      },
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const histories = await withTenantScopedClient(schoolId, (tx) =>
+      tx.studentHistory.findMany({
+        where,
+        orderBy: {
+          deactivatedAt: "desc",
+        },
+      })
+    );
 
     return NextResponse.json({ histories }, { status: 200 });
   } catch (error: unknown) {

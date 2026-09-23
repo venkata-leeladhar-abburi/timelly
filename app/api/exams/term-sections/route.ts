@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
@@ -56,14 +56,19 @@ export async function GET(req: Request) {
       );
     }
 
-    const terms = await prisma.examTerm.findMany({
-      where: { schoolId, classId },
-      select: {
-        id: true,
-        name: true,
-        sections: { orderBy: { order: "asc" } },
-      },
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const terms = await withTenantScopedClient(schoolId, (tx) =>
+      tx.examTerm.findMany({
+        where: { schoolId, classId },
+        select: {
+          id: true,
+          name: true,
+          sections: { orderBy: { order: "asc" } },
+        },
+      })
+    );
 
     const term = terms.find(
       (t) => t.name.trim().toUpperCase() === examType

@@ -12,11 +12,16 @@ jest.mock("next-auth", () => ({
 
 jest.mock("@/lib/auth/authOptions", () => ({}));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
-    leaveRequest: { findMany: (...args: unknown[]) => mockLeaveRequestFindMany(...args) },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      leaveRequest: { findMany: (...args: unknown[]) => mockLeaveRequestFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 describe("GET /api/leaves/all", () => {

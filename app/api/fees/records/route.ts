@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import {
   getSchoolDashboardServerCached,
@@ -42,29 +42,34 @@ export async function GET(req: Request) {
       return NextResponse.json(cached, { status: 200 });
     }
 
-    const rows = await prisma.studentFee.findMany({
-      where: { student: { schoolId } },
-      select: {
-        id: true,
-        studentId: true,
-        totalFee: true,
-        finalFee: true,
-        amountPaid: true,
-        remainingFee: true,
-        discountPercent: true,
-        student: {
-          select: {
-            id: true,
-            status: true,
-            user: { select: { name: true, email: true } },
-            class: { select: { id: true, name: true, section: true } },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { student: { schoolId } }` filter above.
+    const rows = await withTenantScopedClient(schoolId, (tx) =>
+      tx.studentFee.findMany({
+        where: { student: { schoolId } },
+        select: {
+          id: true,
+          studentId: true,
+          totalFee: true,
+          finalFee: true,
+          amountPaid: true,
+          remainingFee: true,
+          discountPercent: true,
+          student: {
+            select: {
+              id: true,
+              status: true,
+              user: { select: { name: true, email: true } },
+              class: { select: { id: true, name: true, section: true } },
+            },
           },
         },
-      },
-      orderBy: [{ updatedAt: "desc" }, { studentId: "desc" }],
-      take: take + 1,
-      ...(cursor ? { cursor: { studentId: cursor }, skip: 1 } : {}),
-    });
+        orderBy: [{ updatedAt: "desc" }, { studentId: "desc" }],
+        take: take + 1,
+        ...(cursor ? { cursor: { studentId: cursor }, skip: 1 } : {}),
+      })
+    );
 
     const hasNext = rows.length > take;
     const page = hasNext ? rows.slice(0, take) : rows;
