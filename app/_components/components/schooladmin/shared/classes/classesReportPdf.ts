@@ -1,9 +1,7 @@
-import type { PDFPage } from "pdf-lib";
+import jsPDF from "jspdf";
 import type { SchoolAdminClassRow } from "@/lib/school/loadSchoolAdminFastTabs";
 
 export async function generateClassesReportPdf(rowsToExport: SchoolAdminClassRow[]) {
-  const { PDFDocument, StandardFonts, rgb } = await import("pdf-lib");
-  const pdfDoc = await PDFDocument.create();
   const pageWidth = 842;
   const pageHeight = 595;
   const marginX = 40;
@@ -15,8 +13,7 @@ export async function generateClassesReportPdf(rowsToExport: SchoolAdminClassRow
   const cellSize = 10;
   const rowHeight = 22;
 
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: [pageWidth, pageHeight] });
 
   const columns = [
     { header: "CLASS NAME", width: 220, key: "name" as const },
@@ -27,84 +24,63 @@ export async function generateClassesReportPdf(rowsToExport: SchoolAdminClassRow
   ];
 
   const truncateText = (value: string, maxWidth: number, useBold = false) => {
-    const currentFont = useBold ? boldFont : font;
+    doc.setFont("helvetica", useBold ? "bold" : "normal");
+    doc.setFontSize(cellSize);
     let text = value ?? "";
-    while (
-      text.length > 0 &&
-      currentFont.widthOfTextAtSize(text, cellSize) > maxWidth
-    ) {
-      text = `${text.slice(0, -1)}`;
+    while (text.length > 0 && doc.getTextWidth(text) > maxWidth) {
+      text = text.slice(0, -1);
     }
     if (text !== value) {
       const dots = "...";
-      while (
-        text.length > 0 &&
-        currentFont.widthOfTextAtSize(`${text}${dots}`, cellSize) > maxWidth
-      ) {
-        text = `${text.slice(0, -1)}`;
+      while (text.length > 0 && doc.getTextWidth(`${text}${dots}`) > maxWidth) {
+        text = text.slice(0, -1);
       }
       return `${text}${dots}`;
     }
     return text;
   };
 
-  const drawHeaderRow = (page: PDFPage, y: number) => {
+  // jsPDF's y grows downward (unlike pdf-lib's bottom-up y), so this draws
+  // text/lines at pageHeight - y to keep the same top-down layout math below.
+  const drawHeaderRow = (y: number) => {
     let x = marginX;
-    page.drawLine({
-      start: { x: marginX, y: y + 5 },
-      end: { x: pageWidth - marginX, y: y + 5 },
-      thickness: 1,
-      color: rgb(0.82, 0.82, 0.82),
-    });
+    doc.setDrawColor(209, 209, 209);
+    doc.setLineWidth(1);
+    doc.line(marginX, pageHeight - (y + 5), pageWidth - marginX, pageHeight - (y + 5));
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(headerSize);
+    doc.setTextColor(38, 38, 38);
     columns.forEach((column) => {
-      page.drawText(column.header, {
-        x: x + 2,
-        y,
-        size: headerSize,
-        font: boldFont,
-        color: rgb(0.15, 0.15, 0.15),
-      });
+      doc.text(column.header, x + 2, pageHeight - y);
       x += column.width;
     });
-    page.drawLine({
-      start: { x: marginX, y: y - 6 },
-      end: { x: pageWidth - marginX, y: y - 6 },
-      thickness: 1,
-      color: rgb(0.82, 0.82, 0.82),
-    });
+    doc.line(marginX, pageHeight - (y - 6), pageWidth - marginX, pageHeight - (y - 6));
   };
 
-  const makePage = () => {
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    page.drawText("Classes Report", {
-      x: marginX,
-      y: pageHeight - topMargin,
-      size: titleSize,
-      font: boldFont,
-      color: rgb(0.05, 0.05, 0.05),
-    });
-    page.drawText(
+  const makePage = (isFirst: boolean) => {
+    if (!isFirst) doc.addPage([pageWidth, pageHeight], "landscape");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(titleSize);
+    doc.setTextColor(13, 13, 13);
+    doc.text("Classes Report", marginX, pageHeight - (pageHeight - topMargin));
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(metaSize);
+    doc.setTextColor(89, 89, 89);
+    doc.text(
       `Generated on ${new Date().toLocaleString()} | Total Classes: ${rowsToExport.length}`,
-      {
-        x: marginX,
-        y: pageHeight - topMargin - 16,
-        size: metaSize,
-        font,
-        color: rgb(0.35, 0.35, 0.35),
-      }
+      marginX,
+      pageHeight - (pageHeight - topMargin - 16)
     );
     const startY = pageHeight - topMargin - 40;
-    drawHeaderRow(page, startY);
-    return { page, y: startY - 18 };
+    drawHeaderRow(startY);
+    return startY - 18;
   };
 
-  let { page, y } = makePage();
+  let y = makePage(true);
 
   rowsToExport.forEach((row) => {
     if (y < bottomMargin + rowHeight) {
-      const next = makePage();
-      page = next.page;
-      y = next.y;
+      y = makePage(false);
     }
 
     let x = marginX;
@@ -116,37 +92,20 @@ export async function generateClassesReportPdf(rowsToExport: SchoolAdminClassRow
       row.subject || "-",
     ];
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(cellSize);
+    doc.setTextColor(26, 26, 26);
     values.forEach((value, idx) => {
-      page.drawText(truncateText(String(value ?? ""), columns[idx].width - 6), {
-        x: x + 2,
-        y,
-        size: cellSize,
-        font,
-        color: rgb(0.1, 0.1, 0.1),
-      });
+      doc.text(truncateText(String(value ?? ""), columns[idx].width - 6), x + 2, pageHeight - y);
       x += columns[idx].width;
     });
 
-    page.drawLine({
-      start: { x: marginX, y: y - 6 },
-      end: { x: pageWidth - marginX, y: y - 6 },
-      thickness: 0.5,
-      color: rgb(0.9, 0.9, 0.9),
-    });
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.5);
+    doc.line(marginX, pageHeight - (y - 6), pageWidth - marginX, pageHeight - (y - 6));
     y -= rowHeight;
   });
 
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([Uint8Array.from(pdfBytes)], {
-    type: "application/pdf",
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
   const date = new Date().toISOString().slice(0, 10);
-  link.href = url;
-  link.download = `classes-report-${date}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  doc.save(`classes-report-${date}.pdf`);
 }
