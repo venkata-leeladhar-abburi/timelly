@@ -12,7 +12,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "prisma:generate": "powershell -ExecutionPolicy Bypass -File ./scripts/prisma-generate.ps1",
-    "backup:db": "node scripts/backup-db.js"
+    "backup:db": "node scripts/backup-db.js",
+    "check:tenant-isolation": "tsx scripts/checkTenantIsolation.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -65,6 +66,7 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

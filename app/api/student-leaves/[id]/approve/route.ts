@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { createNotification } from "@/lib/notificationService";
+import { requireSchoolId } from "@/lib/auth/tenant";
 import { logger } from "@/lib/logger";
 
 export async function PATCH(
@@ -18,9 +19,25 @@ export async function PATCH(
       return NextResponse.json({ message: "Only teachers or school admin can approve" }, { status: 403 });
     }
 
+    const ctx = await requireSchoolId(session);
+    if (!ctx.ok) {
+      return NextResponse.json({ message: ctx.message }, { status: ctx.status });
+    }
+
     const { id } = await params;
+    const existing = await prisma.studentLeaveRequest.findFirst({
+      where: { id, status: "PENDING", schoolId: ctx.schoolId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json(
+        { message: "Leave request not found in your school" },
+        { status: 404 }
+      );
+    }
+
     const leave = await prisma.studentLeaveRequest.update({
-      where: { id, status: "PENDING" },
+      where: { id: existing.id },
       data: { status: "APPROVED", approverId: session.user.id },
       include: { student: { select: { userId: true } } },
     });

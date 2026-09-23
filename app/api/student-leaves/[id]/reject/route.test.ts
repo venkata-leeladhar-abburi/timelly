@@ -4,6 +4,8 @@
 import { PATCH } from "@/app/api/student-leaves/[id]/reject/route";
 
 const mockGetServerSession = jest.fn();
+const mockRequireSchoolId = jest.fn();
+const mockLeaveFindFirst = jest.fn();
 const mockLeaveUpdate = jest.fn();
 const mockCreateNotification = jest.fn();
 
@@ -13,6 +15,10 @@ jest.mock("next-auth", () => ({
 
 jest.mock("@/lib/auth/authOptions", () => ({}));
 
+jest.mock("@/lib/auth/tenant", () => ({
+  requireSchoolId: (...args: unknown[]) => mockRequireSchoolId(...args),
+}));
+
 jest.mock("@/lib/notificationService", () => ({
   createNotification: (...args: unknown[]) => mockCreateNotification(...args),
 }));
@@ -20,7 +26,10 @@ jest.mock("@/lib/notificationService", () => ({
 jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
-    studentLeaveRequest: { update: (...args: unknown[]) => mockLeaveUpdate(...args) },
+    studentLeaveRequest: {
+      findFirst: (...args: unknown[]) => mockLeaveFindFirst(...args),
+      update: (...args: unknown[]) => mockLeaveUpdate(...args),
+    },
   },
 }));
 
@@ -34,6 +43,8 @@ const request = (body: unknown = {}) =>
 describe("PATCH /api/student-leaves/[id]/reject", () => {
   beforeEach(() => {
     mockGetServerSession.mockReset();
+    mockRequireSchoolId.mockReset();
+    mockLeaveFindFirst.mockReset();
     mockLeaveUpdate.mockReset();
     mockCreateNotification.mockReset().mockResolvedValue(undefined);
   });
@@ -50,14 +61,36 @@ describe("PATCH /api/student-leaves/[id]/reject", () => {
     expect(res.status).toBe(403);
   });
 
-  it("rejects the pending leave without remarks and sends a generic notification", async () => {
+  it("returns the requireSchoolId error status when it fails", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "t1", role: "TEACHER" } });
+    mockRequireSchoolId.mockResolvedValue({ ok: false, status: 400, message: "School not found" });
+    const res = await PATCH(request(), ctx);
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when the leave isn't pending or belongs to another school", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "t1", role: "TEACHER" } });
+    mockRequireSchoolId.mockResolvedValue({ ok: true, schoolId: "s1" });
+    mockLeaveFindFirst.mockResolvedValue(null);
+    const res = await PATCH(request(), ctx);
+    expect(res.status).toBe(404);
+    expect(mockLeaveUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects the pending leave scoped to the caller's school without remarks", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "t1", role: "TEACHER" } });
+    mockRequireSchoolId.mockResolvedValue({ ok: true, schoolId: "s1" });
+    mockLeaveFindFirst.mockResolvedValue({ id: "lv1" });
     mockLeaveUpdate.mockResolvedValue({ id: "lv1", status: "REJECTED", student: { userId: "su1" } });
 
     const res = await PATCH(request(), ctx);
     expect(res.status).toBe(200);
+    expect(mockLeaveFindFirst).toHaveBeenCalledWith({
+      where: { id: "lv1", status: "PENDING", schoolId: "s1" },
+      select: { id: true },
+    });
     expect(mockLeaveUpdate).toHaveBeenCalledWith({
-      where: { id: "lv1", status: "PENDING" },
+      where: { id: "lv1" },
       data: { status: "REJECTED", approverId: "t1", remarks: null },
       include: { student: { select: { userId: true } } },
     });
@@ -71,6 +104,8 @@ describe("PATCH /api/student-leaves/[id]/reject", () => {
 
   it("includes remarks in the notification body when provided", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "a1", role: "SCHOOLADMIN" } });
+    mockRequireSchoolId.mockResolvedValue({ ok: true, schoolId: "s1" });
+    mockLeaveFindFirst.mockResolvedValue({ id: "lv1" });
     mockLeaveUpdate.mockResolvedValue({ id: "lv1", status: "REJECTED", student: { userId: "su1" } });
 
     const res = await PATCH(request({ remarks: "Insufficient documentation" }), ctx);
@@ -88,7 +123,9 @@ describe("PATCH /api/student-leaves/[id]/reject", () => {
 
   it("returns 500 when the update throws", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "t1", role: "TEACHER" } });
-    mockLeaveUpdate.mockRejectedValue(new Error("Record to update not found"));
+    mockRequireSchoolId.mockResolvedValue({ ok: true, schoolId: "s1" });
+    mockLeaveFindFirst.mockResolvedValue({ id: "lv1" });
+    mockLeaveUpdate.mockRejectedValue(new Error("DB exploded"));
     const res = await PATCH(request(), ctx);
     expect(res.status).toBe(500);
   });
