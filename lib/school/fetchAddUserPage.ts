@@ -1,4 +1,4 @@
-import type { IUser } from "@/app/frontend/constants/addUserTable";
+import type { IUser } from "@/app/_components/constants/addUserTable";
 import {
   invalidateAddUserPageCache,
   listCacheKey,

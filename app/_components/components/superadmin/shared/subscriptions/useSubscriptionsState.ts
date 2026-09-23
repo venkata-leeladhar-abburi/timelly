@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "@/app/frontend/hooks/useDebounce";
+import { useDebounce } from "@/app/_components/hooks/useDebounce";
 import type { BillingMode, SubscriptionRow } from "../../Subscriptions";
 import { fetchSuperadminSchools, updateSchoolSubscription } from "@/lib/api/superadminSchools";
 

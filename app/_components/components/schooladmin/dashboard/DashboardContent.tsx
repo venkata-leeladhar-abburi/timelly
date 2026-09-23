@@ -4,7 +4,7 @@ import { AttendanceCard } from "./components/AttendanceCard";
 import { SidebarList } from "./components/SidebarList";
 import { DayCollectionByHeadCard } from "./components/DayCollectionByHeadCard";
 import { SchoolDashboardLoader } from "./components/SchoolDashboardLoader";
-import { ROUTES } from "@/app/frontend/constants/routes";
+import { ROUTES } from "@/app/_components/constants/routes";
 import { useSchoolDashboardState } from "./shared";
 import { DashboardStatsHeader } from "./shared";
 import { DashboardNewsSection } from "./shared";

@@ -1,4 +1,4 @@
-import type { Class, ExtraFee, FeeRecord, FeeStructure, FeeSummary, Student } from "@/app/frontend/components/schooladmin/fees/types";
+import type { Class, ExtraFee, FeeRecord, FeeStructure, FeeSummary, Student } from "@/app/_components/components/schooladmin/fees/types";
 
 export type SchoolFeesPageSnapshot = {
   stats: FeeSummary | null;

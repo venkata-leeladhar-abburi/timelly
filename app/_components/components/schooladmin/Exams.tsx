@@ -12,7 +12,7 @@ import {
   EXAM_ACCENT,
   EXAM_TEXT_SECONDARY,
   EXAM_TEXT_MAIN,
-} from "@/app/frontend/constants/colors";
+} from "@/app/_components/constants/colors";
 import ExamTermCard from "./exams/ExamTermCard";
 import GlassCard from "./exams/GlassCard";
 import ExamScheduleTab from "./exams/ExamScheduleTab";

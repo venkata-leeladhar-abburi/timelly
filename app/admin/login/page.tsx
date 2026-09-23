@@ -3,7 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ROUTES } from "@/app/frontend/constants/routes";
+import { ROUTES } from "@/app/_components/constants/routes";
 import LoginForm from "@/components/auth/LoginForm";
 import { shouldForceSuperAdminRelogin } from "@/lib/auth/superAdminBrowserSession";
 export default function LoginPage() {

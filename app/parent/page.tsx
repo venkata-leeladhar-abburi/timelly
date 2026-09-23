@@ -3,25 +3,25 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import RequiredRoles from "@/app/frontend/auth/RequiredRoles";
-import AppLayout from "@/app/frontend/AppLayout";
-import { PARENT_MENU_ITEMS } from "@/app/frontend/constants/sidebar";
-import ParentHomeTab from "@/app/frontend/components/parent/home/ParentHome";
-import ParentProfileTab from "@/app/frontend/components/parent/profile/ParentProfile";
-import ParentAttendanceTab from "@/app/frontend/components/parent/attendance/ParentAttendance";
-import ParentHomeworkTab from "@/app/frontend/components/parent/homework/ParentHomework";
-import ParentTimetableTab from "@/app/frontend/components/parent/timetable/ParentTimetable";
-import ParentMarksTab from "@/app/frontend/components/parent/marks/ParentMarksTab";
-import ParentExamsTab from "@/app/frontend/components/parent/examsSyllabus/ParentExamsTab";
-import ParentFeesTab from "@/app/frontend/components/parent/fees/ParentFeesTab";
-import ParentChatsTab from "@/app/frontend/components/parent/chat/ParentChat";
-import ParentWorkshopsTab from "@/app/frontend/components/parent/workshops/ParentWorkshopsTab";
-import ParentCertificatesTab from "@/app/frontend/components/parent/certificates/ParentCerticates";
-import ParentLeavesTab from "@/app/frontend/components/parent/leaves/LeaveApplications";
-import ParentSettingsTab from "@/app/frontend/components/parent/settings/ParentSettings";
-import ParentAnalyticsTab from "@/app/frontend/components/parent/analytics/ParentAnalyticsTab";
-import ParentTimellyLoader from "@/app/frontend/components/parent/ParentTimellyLoader";
-import ParentSubscriptionTab from "@/app/frontend/components/parent/subscription/ParentSubscriptionTab";
+import RequiredRoles from "@/app/_components/auth/RequiredRoles";
+import AppLayout from "@/app/_components/AppLayout";
+import { PARENT_MENU_ITEMS } from "@/app/_components/constants/sidebar";
+import ParentHomeTab from "@/app/_components/components/parent/home/ParentHome";
+import ParentProfileTab from "@/app/_components/components/parent/profile/ParentProfile";
+import ParentAttendanceTab from "@/app/_components/components/parent/attendance/ParentAttendance";
+import ParentHomeworkTab from "@/app/_components/components/parent/homework/ParentHomework";
+import ParentTimetableTab from "@/app/_components/components/parent/timetable/ParentTimetable";
+import ParentMarksTab from "@/app/_components/components/parent/marks/ParentMarksTab";
+import ParentExamsTab from "@/app/_components/components/parent/examsSyllabus/ParentExamsTab";
+import ParentFeesTab from "@/app/_components/components/parent/fees/ParentFeesTab";
+import ParentChatsTab from "@/app/_components/components/parent/chat/ParentChat";
+import ParentWorkshopsTab from "@/app/_components/components/parent/workshops/ParentWorkshopsTab";
+import ParentCertificatesTab from "@/app/_components/components/parent/certificates/ParentCerticates";
+import ParentLeavesTab from "@/app/_components/components/parent/leaves/LeaveApplications";
+import ParentSettingsTab from "@/app/_components/components/parent/settings/ParentSettings";
+import ParentAnalyticsTab from "@/app/_components/components/parent/analytics/ParentAnalyticsTab";
+import ParentTimellyLoader from "@/app/_components/components/parent/ParentTimellyLoader";
+import ParentSubscriptionTab from "@/app/_components/components/parent/subscription/ParentSubscriptionTab";
 import {
   peekParentDetailsFromBootstrap,
   warmParentPortalBootstrap,

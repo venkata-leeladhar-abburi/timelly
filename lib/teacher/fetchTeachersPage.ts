@@ -1,4 +1,4 @@
-import type { TeacherRow } from "@/app/frontend/components/schooladmin/teachersTab/TeachersList";
+import type { TeacherRow } from "@/app/_components/components/schooladmin/teachersTab/TeachersList";
 import {
   getLastTeachersSchoolId,
   invalidateTeachersPageCache,

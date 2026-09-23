@@ -8,7 +8,7 @@ import {
   EXAM_COMPLETED_LABEL_BG,
   EXAM_TEXT_MAIN,
   EXAM_TEXT_SECONDARY,
-} from "@/app/frontend/constants/colors";
+} from "@/app/_components/constants/colors";
 
 interface ExamTermCardProps {
   term: ExamTermListItem;

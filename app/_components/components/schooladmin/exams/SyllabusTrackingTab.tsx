@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { SyllabusItem } from "@/hooks/useExamTerms";
 import { addSyllabusSubject, addSyllabusUnit } from "@/lib/api/syllabus";
-import Spinner from "@/app/frontend/components/common/Spinner";
+import Spinner from "@/app/_components/components/common/Spinner";
 import {
   EXAM_ACCENT,
   EXAM_TEXT_MAIN,
@@ -14,7 +14,7 @@ import {
   EXAM_PROGRESS_EMPTY,
   EXAM_CARD_TRANSPARENT,
   EXAM_INPUT_BG,
-} from "@/app/frontend/constants/colors";
+} from "@/app/_components/constants/colors";
 
 function getProgressBarColor(percent: number) {
   if (percent >= 100) return EXAM_PROGRESS_GREEN;

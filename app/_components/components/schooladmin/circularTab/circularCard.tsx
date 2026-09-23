@@ -5,7 +5,7 @@ import { Calendar, FileText, ExternalLink } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { CircularRow } from "./types";
 import { getImportanceBorderColor, getInitial } from "./helpers";
-import { CIRCULAR_PUBLISHED_GREEN } from "@/app/frontend/constants/colors";
+import { CIRCULAR_PUBLISHED_GREEN } from "@/app/_components/constants/colors";
 
 export default function CircularCard({ c }: { c: CircularRow }) {
   const [expanded, setExpanded] = useState(false);

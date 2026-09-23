@@ -1,5 +1,5 @@
-import { Permission } from "@/app/frontend/enums/permissions";
-import type { IUser } from "@/app/frontend/constants/addUserTable";
+import { Permission } from "@/app/_components/enums/permissions";
+import type { IUser } from "@/app/_components/constants/addUserTable";
 import type { UserFormData } from "./userFormTypes";
 
 export function toDateInputValue(value: unknown): string {

@@ -1,4 +1,4 @@
-import type { TransactionItem } from "@/app/frontend/components/schooladmin/fees/RefundModal";
+import type { TransactionItem } from "@/app/_components/components/schooladmin/fees/RefundModal";
 import { peekLastFeesSchoolId } from "@/lib/fees/schoolFeesPageClientCache";
 
 const MEMORY_TTL_MS = 60_000;

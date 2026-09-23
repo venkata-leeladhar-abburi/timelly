@@ -1,7 +1,7 @@
 "use client";
 
 import { render, screen, waitFor } from "@testing-library/react";
-import RequireRole from "@/app/frontend/auth/RequiredRoles";
+import RequireRole from "@/app/_components/auth/RequiredRoles";
 
 const mockReplace = jest.fn();
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiGet, apiPost, validateApiResponse } from "./http";
-import type { ClassOption, TeacherOption } from "@/app/frontend/components/schooladmin/shared/timetable/timetableTypes";
-import type { TimetablePayload } from "@/app/frontend/components/timetable/TimetableGrid";
+import type { ClassOption, TeacherOption } from "@/app/_components/components/schooladmin/shared/timetable/timetableTypes";
+import type { TimetablePayload } from "@/app/_components/components/timetable/TimetableGrid";
 
 // These three payload shapes (ClassOption, TeacherOption, TimetablePayload)
 // are owned by their component/feature types and already reasonably typed

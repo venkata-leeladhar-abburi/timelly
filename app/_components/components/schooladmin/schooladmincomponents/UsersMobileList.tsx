@@ -3,8 +3,8 @@
 import { Pencil, Trash2 } from "lucide-react";
 import RoleBadge from "./RoleBadge";
 import StatusBadge from "./StatusBadge";
-import { IUser } from "@/app/frontend/constants/addUserTable";
-import { AVATAR_URL } from "@/app/frontend/constants/images";
+import { IUser } from "@/app/_components/constants/addUserTable";
+import { AVATAR_URL } from "@/app/_components/constants/images";
 
 type Props = {
   users: IUser[];

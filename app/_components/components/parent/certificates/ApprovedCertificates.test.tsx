@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import ApprovedCertificates from "@/app/frontend/components/parent/certificates/ApprovedCertificates";
+import ApprovedCertificates from "@/app/_components/components/parent/certificates/ApprovedCertificates";
 
 const makeCert = (overrides = {}) => ({
   id: "abc123",

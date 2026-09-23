@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
-import type { StudentRow } from "@/app/frontend/components/schooladmin/students/types";
-import { getAge } from "@/app/frontend/components/schooladmin/students/utils";
+import type { StudentRow } from "@/app/_components/components/schooladmin/students/types";
+import { getAge } from "@/app/_components/components/schooladmin/students/utils";
 import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 import { loadSchoolLogoForPdf, type SchoolLogoSource } from "@/lib/school/loadSchoolLogoForPdf";
 

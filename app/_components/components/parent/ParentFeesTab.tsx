@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle } from "lucide-react";
-import PayButton from "@/app/frontend/components/common/PayButton";
+import PayButton from "@/app/_components/components/common/PayButton";
 import { fetchMyFees } from "@/lib/api/parentFees";
 
 interface FeeData {

@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import type { ExamScheduleItem } from "@/hooks/useExamTerms";
 import { addExamSchedule } from "@/lib/api/examSchedule";
 import { fetchExamSubjects } from "@/lib/api/examSubjects";
-import Spinner from "@/app/frontend/components/common/Spinner";
+import Spinner from "@/app/_components/components/common/Spinner";
 import {
   EXAM_ACCENT,
   EXAM_ACCENT_GLOW,
@@ -14,7 +14,7 @@ import {
   EXAM_TEXT_SECONDARY,
   EXAM_CARD_BG_ALT,
   EXAM_INPUT_BG,
-} from "@/app/frontend/constants/colors";
+} from "@/app/_components/constants/colors";
 
 interface ExamScheduleTabProps {
   termId: string;

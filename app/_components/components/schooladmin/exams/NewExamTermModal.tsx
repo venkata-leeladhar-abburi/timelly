@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { EXAM_TERM_STATUS } from "@/lib/constants";
 import type { ClassItem } from "@/hooks/useClasses";
 import { createExamTerm, updateExamTerm } from "@/lib/api/examTerms";
-import Spinner from "@/app/frontend/components/common/Spinner";
+import Spinner from "@/app/_components/components/common/Spinner";
 
 type ExamTermStatus = "UPCOMING" | "COMPLETED";
 

@@ -1,6 +1,6 @@
 import type { RefObject } from "react";
 import { flushSync } from "react-dom";
-import type { MarksReportData } from "@/app/frontend/components/pdf/MarksReportTemplate";
+import type { MarksReportData } from "@/app/_components/components/pdf/MarksReportTemplate";
 import { waitForPdfMountReady } from "@/lib/pdfUtils";
 import { resolveSchoolLogoFetchUrl } from "@/lib/fees/feeDayReportExcel";
 import { fetchReportCard, fetchStudentsForClasses } from "./teacherDownloadReportsFetch";

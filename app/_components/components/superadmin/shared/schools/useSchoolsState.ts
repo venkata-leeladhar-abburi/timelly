@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDebounce } from "@/app/frontend/hooks/useDebounce";
+import { useDebounce } from "@/app/_components/hooks/useDebounce";
 import type { SchoolRow } from "../../Schools";
 import { deleteSchool, fetchSuperadminSchools } from "@/lib/api/superadminSchools";
 

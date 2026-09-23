@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiDelete, apiGet, apiPatch, apiPost, validateApiResponse } from "./http";
-import type { PettyCashExpense } from "@/app/frontend/components/schooladmin/fees/shared/petty-cash/pettyCashTypes";
+import type { PettyCashExpense } from "@/app/_components/components/schooladmin/fees/shared/petty-cash/pettyCashTypes";
 
 // Mirrors PettyCashExpense in pettyCashTypes.ts (the component owns that
 // type; this just validates the network response matches it at runtime).

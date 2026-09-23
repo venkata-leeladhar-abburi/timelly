@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { uploadImage, uploadBlob } from "@/app/frontend/utils/upload";
+import { uploadImage, uploadBlob } from "@/app/_components/utils/upload";
 import {
   generateCertificateWithName,
   type ClickPosition,

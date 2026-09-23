@@ -1,4 +1,4 @@
-import Spinner from "@/app/frontend/components/common/Spinner";
+import Spinner from "@/app/_components/components/common/Spinner";
 import { formatInr, type ComparisonReport } from "./feesComparisonTypes";
 
 export function DateField({

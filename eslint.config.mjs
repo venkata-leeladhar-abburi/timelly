@@ -16,7 +16,11 @@ const eslintConfig = defineConfig([
   },
   {
     // UI components occasionally use `any` for generic table renderers, etc.
-    files: ["app/frontend/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
+    files: [
+      "app/_components/**/*.{ts,tsx}",
+      "components/**/*.{ts,tsx}",
+      "app/{chairman,schooladmin,superadmin,teacher,parent,screen,events,payment-success}/**/*.{ts,tsx}",
+    ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },
@@ -57,7 +61,7 @@ const eslintConfig = defineConfig([
     // single cohesive drawing routine, a large but flat options table —
     // doesn't block a build; CI treats repeated/large overruns as a signal
     // to split the file, not a hard wall.
-    files: ["app/frontend/**/*.{ts,tsx}"],
+    files: ["app/_components/**/*.{ts,tsx}"],
     ignores: ["**/*.{test,spec}.{ts,tsx}"],
     rules: {
       "max-lines": [
@@ -75,7 +79,7 @@ const eslintConfig = defineConfig([
     // anything can dig into. Files inside `shared/**` are exempt so
     // siblings within (or across) a feature folder can still import each
     // other freely.
-    files: ["app/frontend/components/**/*.{ts,tsx}"],
+    files: ["app/_components/components/**/*.{ts,tsx}"],
     ignores: ["**/shared/**"],
     rules: {
       "no-restricted-imports": [
@@ -125,7 +129,7 @@ const eslintConfig = defineConfig([
     // list: those two basenames also exist, unbarreled, in
     // teacher/marks/shared, and blocking them here would wrongly flag that
     // folder's still-legitimate deep imports.
-    files: ["app/frontend/components/**/*.{ts,tsx}"],
+    files: ["app/_components/components/**/*.{ts,tsx}"],
     ignores: ["**/shared/**"],
     rules: {
       "no-restricted-imports": [

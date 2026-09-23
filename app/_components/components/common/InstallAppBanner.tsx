@@ -3,7 +3,7 @@
 import { Download, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { usePwaInstall } from "@/app/frontend/hooks/usePwaInstall";
+import { usePwaInstall } from "@/app/_components/hooks/usePwaInstall";
 
 const DISMISS_KEY = "timelly-pwa-install-dismissed";
 

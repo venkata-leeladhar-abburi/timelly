@@ -4,7 +4,7 @@ import {
   loadTeacherMarksClasses,
   peekTeacherMarksClasses,
 } from "@/lib/teacher/loadTeacherFastTabs";
-import type { MarksReportData } from "@/app/frontend/components/pdf/MarksReportTemplate";
+import type { MarksReportData } from "@/app/_components/components/pdf/MarksReportTemplate";
 import { normalizeExamTypes } from "@/lib/exams/examTypes";
 import { downloadMarksExcel } from "./downloadMarksExcel";
 import { downloadMarksPdf } from "./downloadMarksPdf";

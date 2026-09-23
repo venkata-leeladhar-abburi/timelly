@@ -1,4 +1,4 @@
-import { Column } from "@/app/frontend/types/superadmin";
+import { Column } from "@/app/_components/types/superadmin";
 import type { ExamTypeSectionOption } from "@/lib/exams/examTypes";
 import type { StudentRow } from "./types";
 

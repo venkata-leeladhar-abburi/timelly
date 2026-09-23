@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Pencil, Search, Trash2 } from "lucide-react";
-import { useDebounce } from "@/app/frontend/hooks/useDebounce";
+import { useDebounce } from "@/app/_components/hooks/useDebounce";
 import PageHeader from "../common/PageHeader";
 import DataTable from "../common/TableLayout";
 import PageTabs from "../schooladmin/schooladmincomponents/PageHeaderTabs";
@@ -16,7 +16,7 @@ import RoleBadge from "./schooladmincomponents/RoleBadge";
 import StatusBadge from "./schooladmincomponents/StatusBadge";
 import UsersMobileList from "./schooladmincomponents/UsersMobileList";
 import InlinePagination from "./schooladmincomponents/InlinePagination";
-import { IUser } from "@/app/frontend/constants/addUserTable";
+import { IUser } from "@/app/_components/constants/addUserTable";
 import { deleteUser } from "@/lib/api/user";
 import {
   fetchUserListPage,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { apiGet, validateApiResponse } from "./http";
-import type { ReportPayload } from "@/app/frontend/components/schooladmin/fees/shared/admissionFeeReportTypes";
+import type { ReportPayload } from "@/app/_components/components/schooladmin/fees/shared/admissionFeeReportTypes";
 
 // ReportPayload is a feature-owned type with several nested aggregate
 // shapes; the schema below checks the top-level envelope (an object with a

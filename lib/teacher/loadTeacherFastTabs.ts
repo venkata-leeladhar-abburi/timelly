@@ -1,6 +1,6 @@
-import type { TeacherDashboardData } from "@/app/frontend/components/teacher/dashboard/dashboardComponents/types";
-import type { ClassOption, HomeworkItem } from "@/app/frontend/components/teacher/homework/types";
-import type { TeacherClass, StudentRow } from "@/app/frontend/components/teacher/classes/hooks/useTeacherClasses";
+import type { TeacherDashboardData } from "@/app/_components/components/teacher/dashboard/dashboardComponents/types";
+import type { ClassOption, HomeworkItem } from "@/app/_components/components/teacher/homework/types";
+import type { TeacherClass, StudentRow } from "@/app/_components/components/teacher/classes/hooks/useTeacherClasses";
 import { fetchAllStudents } from "@/lib/students/fetchAllStudents";
 import {
   invalidateTeacherResource,

@@ -9,7 +9,7 @@ import TableLayout from "../common/TableLayout";
 import { Column } from "../../types/superadmin";
 import Spinner from "../common/Spinner";
 import { fetchSuperadminSchools } from "@/lib/api/superadminSchools";
-import { useDebounce } from "@/app/frontend/hooks/useDebounce";
+import { useDebounce } from "@/app/_components/hooks/useDebounce";
 
 interface SchoolTurnover {
   slNo: number;

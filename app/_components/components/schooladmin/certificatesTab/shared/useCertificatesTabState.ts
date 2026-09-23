@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { CertificateRequestListItem } from "../../Certificates";
-import { uploadImage } from "@/app/frontend/utils/upload";
+import { uploadImage } from "@/app/_components/utils/upload";
 import { STATUS_MAP, type TabStatus } from "./certificatesTabHelpers";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 

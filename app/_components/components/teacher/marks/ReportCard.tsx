@@ -2,7 +2,7 @@
 
 import { SelectField } from "./MarksSelectField";
 import { Search, BookOpen, TrendingUp, Award } from "lucide-react";
-import MarksReportTemplate from "@/app/frontend/components/pdf/MarksReportTemplate";
+import MarksReportTemplate from "@/app/_components/components/pdf/MarksReportTemplate";
 import { useReportCardState } from "./shared";
 import { StatCard } from "./shared";
 import { ReportCardStudentList } from "./shared";

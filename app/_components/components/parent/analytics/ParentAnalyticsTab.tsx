@@ -25,7 +25,7 @@ import HomeworkTasks from "./HomeworkTasks";
 import RecentUpdates from "./RecentUpdates";
 import UpcomingWorkshops from "./UpcomingWorkshops";
 import ParentTimellyLoader from "../ParentTimellyLoader";
-import { AVATAR_URL } from "@/app/frontend/constants/images";
+import { AVATAR_URL } from "@/app/_components/constants/images";
 
 type AnalyticsData = ParentAnalyticsPayload;
 

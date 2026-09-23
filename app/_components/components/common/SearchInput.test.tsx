@@ -3,7 +3,7 @@
 /// <reference types="@testing-library/jest-dom" />
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import SearchInput from "@/app/frontend/components/common/SearchInput";
+import SearchInput from "@/app/_components/components/common/SearchInput";
 
 // Mock lucide-react to avoid icon rendering issues
 jest.mock("lucide-react", () => ({

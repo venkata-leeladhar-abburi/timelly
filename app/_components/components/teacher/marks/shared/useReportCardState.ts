@@ -3,7 +3,7 @@ import {
   loadTeacherMarksClasses,
   peekTeacherMarksClasses,
 } from "@/lib/teacher/loadTeacherFastTabs";
-import type { MarksReportData } from "@/app/frontend/components/pdf/MarksReportTemplate";
+import type { MarksReportData } from "@/app/_components/components/pdf/MarksReportTemplate";
 import { generatePDF, waitForPdfMountReady } from "@/lib/pdfUtils";
 import { resolveSchoolLogoFetchUrl } from "@/lib/fees/feeDayReportExcel";
 import { normalizeExamTypes } from "@/lib/exams/examTypes";

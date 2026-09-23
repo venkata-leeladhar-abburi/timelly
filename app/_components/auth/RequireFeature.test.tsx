@@ -1,7 +1,7 @@
 "use client";
 
 import { render, screen } from "@testing-library/react";
-import RequireFeature from "@/app/frontend/auth/RequireFeature";
+import RequireFeature from "@/app/_components/auth/RequireFeature";
 
 const mockReplace = jest.fn();
 

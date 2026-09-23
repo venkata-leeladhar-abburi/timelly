@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
-import PayButton from "@/app/frontend/components/common/PayButton";
+import PayButton from "@/app/_components/components/common/PayButton";
 
 interface StudentFee {
   id: string;

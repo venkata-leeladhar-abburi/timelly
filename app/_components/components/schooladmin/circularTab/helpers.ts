@@ -2,7 +2,7 @@ import {
   CIRCULAR_IMPORTANCE_HIGH,
   CIRCULAR_IMPORTANCE_MEDIUM,
   CIRCULAR_IMPORTANCE_LOW,
-} from "@/app/frontend/constants/colors";
+} from "@/app/_components/constants/colors";
 
 export function getImportanceBorderColor(level: string): string {
   switch (level) {

@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
-import SuperAdminSessionGuard from "@/app/frontend/auth/SuperAdminSessionGuard";
+import SuperAdminSessionGuard from "@/app/_components/auth/SuperAdminSessionGuard";
 
 interface AuthContextType {
   user: Session["user"] | null;
