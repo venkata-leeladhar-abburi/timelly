@@ -19,11 +19,16 @@ jest.mock("@/app/api/admissions/_utils", () => ({
   assertCanManageAdmissions: (...args: unknown[]) => mockAssertCanManageAdmissions(...args),
 }));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
-    studentApplication: { findMany: (...args: unknown[]) => mockApplicationFindMany(...args) },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      studentApplication: { findMany: (...args: unknown[]) => mockApplicationFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const request = (query = "") => new Request(`http://localhost/api/admissions/admission-fee-report${query}`);

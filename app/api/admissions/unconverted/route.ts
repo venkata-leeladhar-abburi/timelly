@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 
 export async function GET(req: Request) {
@@ -29,21 +29,26 @@ export async function GET(req: Request) {
       ];
     }
 
-    const applications = await prisma.studentApplication.findMany({
-      where,
-      take,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        applicationNo: true,
-        firstName: true,
-        middleName: true,
-        lastName: true,
-        parentPhone: true,
-        aadharNo: true,
-        createdAt: true,
-      },
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const applications = await withTenantScopedClient(schoolId, (tx) =>
+      tx.studentApplication.findMany({
+        where,
+        take,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          applicationNo: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          parentPhone: true,
+          aadharNo: true,
+          createdAt: true,
+        },
+      })
+    );
 
     return NextResponse.json({ applications }, { status: 200 });
   } catch (e: unknown) {

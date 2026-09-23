@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { admissionFeeTotalsByChannel } from "@/lib/fees/admissionFeeCollectionChannel";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 import { logger } from "@/lib/logger";
 
@@ -43,28 +43,33 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Invalid date range: from is after to" }, { status: 400 });
     }
 
-    const apps = await prisma.studentApplication.findMany({
-      where: {
-        schoolId,
-        admissionFeePaid: true,
-        admissionFeePaidAt: { not: null, gte: from, lte: to },
-        admissionFee: { gt: 0 },
-      },
-      select: {
-        id: true,
-        applicationNo: true,
-        firstName: true,
-        middleName: true,
-        lastName: true,
-        admissionFee: true,
-        admissionFeePaidAt: true,
-        admissionFeePaymentMode: true,
-        admissionFeePaymentMethod: true,
-        class: { select: { name: true, section: true } },
-        gradeSought: true,
-      },
-      orderBy: { admissionFeePaidAt: "desc" },
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const apps = await withTenantScopedClient(schoolId, (tx) =>
+      tx.studentApplication.findMany({
+        where: {
+          schoolId,
+          admissionFeePaid: true,
+          admissionFeePaidAt: { not: null, gte: from, lte: to },
+          admissionFee: { gt: 0 },
+        },
+        select: {
+          id: true,
+          applicationNo: true,
+          firstName: true,
+          middleName: true,
+          lastName: true,
+          admissionFee: true,
+          admissionFeePaidAt: true,
+          admissionFeePaymentMode: true,
+          admissionFeePaymentMethod: true,
+          class: { select: { name: true, section: true } },
+          gradeSought: true,
+        },
+        orderBy: { admissionFeePaidAt: "desc" },
+      })
+    );
 
     type Row = {
       id: string;
