@@ -56,13 +56,13 @@ describe("GET /api/exams/terms", () => {
   it("returns 401 when unauthenticated", async () => {
     mockGetServerSession.mockResolvedValue(null);
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(401);
+    expect(res!.status).toBe(401);
   });
 
   it("returns 403 for a disallowed role", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "PARENT", schoolId: "s1" } });
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(403);
+    expect(res!.status).toBe(403);
   });
 
   it("flattens terms into exams for a teacher", async () => {
@@ -78,8 +78,8 @@ describe("GET /api/exams/terms", () => {
       },
     ]);
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(200);
-    const json = await res.json();
+    expect(res!.status).toBe(200);
+    const json = await res!.json();
     expect(json.exams).toHaveLength(1);
     expect(json.exams[0].subject).toBe("Math");
   });
@@ -88,7 +88,7 @@ describe("GET /api/exams/terms", () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "STUDENT", schoolId: "s1" } });
     mockStudentFindUnique.mockResolvedValue({ classId: null });
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(400);
+    expect(res!.status).toBe(400);
   });
 
   it("returns terms scoped to the student's class", async () => {
@@ -96,7 +96,7 @@ describe("GET /api/exams/terms", () => {
     mockStudentFindUnique.mockResolvedValue({ classId: "c1" });
     mockExamTermFindMany.mockResolvedValue([{ id: "term1" }]);
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(200);
+    expect(res!.status).toBe(200);
     expect(mockExamTermFindMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ classId: "c1" }) })
     );
@@ -107,8 +107,8 @@ describe("GET /api/exams/terms", () => {
     mockClassFindMany.mockResolvedValue([{ id: "c1", name: "Grade 5", section: "A" }]);
     mockExamTermFindMany.mockResolvedValue([{ id: "term1" }]);
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(200);
-    const json = await res.json();
+    expect(res!.status).toBe(200);
+    const json = await res!.json();
     expect(json.classes).toHaveLength(1);
     expect(json.terms).toHaveLength(1);
   });
@@ -117,7 +117,7 @@ describe("GET /api/exams/terms", () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
     mockClassFindMany.mockRejectedValue(new Error("DB exploded"));
     const res = await GET(makeGetRequest());
-    expect(res.status).toBe(500);
+    expect(res!.status).toBe(500);
   });
 });
 
@@ -130,26 +130,26 @@ describe("POST /api/exams/terms", () => {
   it("returns 403 for a disallowed role", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "STUDENT", schoolId: "s1" } });
     const res = await POST(makePostRequest({ name: "Term 1", classId: "c1" }));
-    expect(res.status).toBe(403);
+    expect(res!.status).toBe(403);
   });
 
   it("returns 400 when name or classId is missing", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
     const res = await POST(makePostRequest({ name: "Term 1" }));
-    expect(res.status).toBe(400);
+    expect(res!.status).toBe(400);
   });
 
   it("creates the exam term", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
     mockExamTermCreate.mockResolvedValue({ id: "term1", name: "Term 1" });
     const res = await POST(makePostRequest({ name: "Term 1", classId: "c1" }));
-    expect(res.status).toBe(201);
+    expect(res!.status).toBe(201);
   });
 
   it("returns 500 when the database throws", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
     mockExamTermCreate.mockRejectedValue(new Error("DB exploded"));
     const res = await POST(makePostRequest({ name: "Term 1", classId: "c1" }));
-    expect(res.status).toBe(500);
+    expect(res!.status).toBe(500);
   });
 });
