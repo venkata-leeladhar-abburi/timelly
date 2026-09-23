@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function PUT(
   req: Request,
@@ -124,10 +125,10 @@ export async function PUT(
       { message: "Event updated successfully", event: updated },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Update event error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -181,10 +182,10 @@ export async function DELETE(
       { message: "Event deleted successfully" },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Delete event error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

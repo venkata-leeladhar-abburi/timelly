@@ -10,6 +10,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
@@ -53,10 +54,10 @@ export async function GET(req: Request) {
       setSchoolDashboardServerCached(`fees:structure:${schoolId}`, payload, 45_000);
     }
     return NextResponse.json(payload);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Fee structure GET error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -108,17 +109,17 @@ export async function PUT(req: Request) {
       });
       await invalidateSchoolFeeReadCaches(schoolId);
       return NextResponse.json({ structure });
-    } catch (applyErr: any) {
-      const msg = String(applyErr?.message || "");
+    } catch (applyErr: unknown) {
+      const msg = String(getErrorMessage(applyErr) || "");
       if (msg.includes("Each component must have name")) {
         return NextResponse.json({ message: msg }, { status: 400 });
       }
       throw applyErr;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Fee structure PUT error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -203,10 +204,10 @@ export async function DELETE(req: Request) {
 
     await invalidateSchoolFeeReadCaches(schoolId);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Fee structure DELETE error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { getErrorCode, getErrorMessage, getErrorMeta, getErrorStack } from "@/lib/errors/errorInfo";
 
 export async function POST(req: Request) {
   try {
@@ -88,24 +89,26 @@ export async function POST(req: Request) {
       { message: "TC request submitted successfully", tc },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = getErrorMessage(error);
+    const errCode = getErrorCode(error);
     logger.error("Apply TC error:", {
-      message: error?.message,
-      code: error?.code,
-      meta: error?.meta,
-      stack: error?.stack,
+      message: errMessage,
+      code: errCode,
+      meta: getErrorMeta(error),
+      stack: getErrorStack(error),
     });
-    
+
     // Provide more specific error messages
     let errorMessage = "Internal server error";
-    if (error?.message) {
-      if (error.message.includes("certificateType") || error.code === "P2022") {
+    if (errMessage) {
+      if (errMessage.includes("certificateType") || errCode === "P2022") {
         errorMessage = "Database schema needs to be updated. Please contact administrator.";
       } else {
-        errorMessage = error.message;
+        errorMessage = errMessage;
       }
-    } else if (error?.code) {
-      switch (error.code) {
+    } else if (errCode) {
+      switch (errCode) {
         case "P2002":
           errorMessage = "A certificate request already exists for this student";
           break;
@@ -116,7 +119,7 @@ export async function POST(req: Request) {
           errorMessage = "Database schema needs to be updated. Please contact administrator.";
           break;
         default:
-          errorMessage = `Database error: ${error.code}`;
+          errorMessage = `Database error: ${errCode}`;
       }
     }
     

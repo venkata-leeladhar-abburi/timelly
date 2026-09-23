@@ -5,6 +5,7 @@ import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function POST(req: NextRequest) {
   try {
@@ -119,10 +120,10 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("User creation error:", error);
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

@@ -5,6 +5,7 @@ import {
   loadTeacherAttendanceClasses,
   peekTeacherAttendanceClasses,
 } from "@/lib/teacher/loadTeacherFastTabs";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { DEFAULT_PERIOD, toClassOptions, type AttendanceStatus, type StudentRow } from "./attendanceHelpers";
 
 export function useAttendanceState() {
@@ -50,9 +51,9 @@ export function useAttendanceState() {
         if (!isActive) return;
         setClassOptions(options);
         setSelectedClass((prev) => prev || options[0]?.value || "");
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (isActive && !peekTeacherAttendanceClasses()?.length) {
-          toast.show(error?.message || "Failed to load classes", "error");
+          toast.show(getErrorMessage(error) || "Failed to load classes", "error");
         }
       } finally {
         if (isActive) setLoadingClasses(false);
@@ -116,9 +117,9 @@ export function useAttendanceState() {
 
         if (!isActive) return;
         setStudents(mappedStudents);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (isActive) {
-          toast.show(error?.message || "Failed to load students", "error");
+          toast.show(getErrorMessage(error) || "Failed to load students", "error");
           setStudents([]);
         }
       } finally {
@@ -177,8 +178,8 @@ export function useAttendanceState() {
         }))
       );
       toast.show("Copied attendance from yesterday", "success");
-    } catch (error: any) {
-      toast.show(error?.message || "Failed to copy from yesterday", "error");
+    } catch (error: unknown) {
+      toast.show(getErrorMessage(error) || "Failed to copy from yesterday", "error");
     } finally {
       setCopyingFromYesterday(false);
     }
@@ -278,8 +279,8 @@ export function useAttendanceState() {
       }
 
       setShowSuccess(true);
-    } catch (error: any) {
-      toast.show(error?.message || "Failed to save attendance", "error");
+    } catch (error: unknown) {
+      toast.show(getErrorMessage(error) || "Failed to save attendance", "error");
     } finally {
       setSavingAttendance(false);
     }

@@ -8,6 +8,7 @@ import { fetchTeacherList } from "@/lib/api/teacher";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 import SuccessPopups from "../../common/SuccessPopUps";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 interface AddSectionPanelProps {
   onCancel: () => void;
@@ -117,8 +118,8 @@ export default function AddSectionPanel({
       setShowSuccess(true);
       setSectionName("");
       setTeacherId("");
-    } catch (err: any) {
-      setError(err?.message || "Failed to save section.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || "Failed to save section.");
     } finally {
       setIsSaving(false);
     }

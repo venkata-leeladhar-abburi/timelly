@@ -7,6 +7,7 @@ import { fetchTeacherList } from "@/lib/api/teacher";
 import SearchInput from "../../common/SearchInput";
 import SelectInput from "../../common/SelectInput";
 import SuccessPopups from "../../common/SuccessPopUps";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 interface AddClassPanelProps {
   onCancel: () => void;
@@ -81,8 +82,8 @@ export default function AddClassPanel({ onCancel, onSuccess }: AddClassPanelProp
       setSection("");
       setTeacherId("");
       setMaxStudents("");
-    } catch (err: any) {
-      setError(err?.message || "Failed to create class.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || "Failed to create class.");
     } finally {
       setIsSaving(false);
     }

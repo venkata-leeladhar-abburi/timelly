@@ -7,6 +7,7 @@ import { Role } from "@prisma/client";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { logger } from "@/lib/logger";
+import { getErrorCode, getErrorMessage, getErrorMetaTarget } from "@/lib/errors/errorInfo";
 
 export async function POST(req: Request) {
   try {
@@ -89,10 +90,12 @@ export async function POST(req: Request) {
       { message: "Teacher created successfully", teacher },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Create teacher error:", error);
 
-    if (error?.code === "P2002" && error?.meta?.target?.includes("email")) {
+    const metaTarget = getErrorMetaTarget(error);
+    const targetIncludesEmail = Array.isArray(metaTarget) && metaTarget.includes("email");
+    if (getErrorCode(error) === "P2002" && targetIncludesEmail) {
       return NextResponse.json(
         { message: "Email already exists" },
         { status: 400 }
@@ -100,7 +103,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

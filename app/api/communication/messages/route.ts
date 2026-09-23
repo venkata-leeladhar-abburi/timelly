@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 // GET messages for an appointment
 export async function GET(req: Request) {
@@ -51,10 +52,10 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ messages });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("List messages error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -121,10 +122,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(message, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Create message error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

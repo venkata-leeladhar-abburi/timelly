@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DollarSign, Tag, AlertCircle } from "lucide-react";
 import { createExtraFee } from "@/lib/api/hostelMessFees";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 type Props = {
   studentId: string;
@@ -46,8 +47,8 @@ export const AddExtraFeeModal = ({ studentId, onClose, onSuccess }: Props) => {
       }
 
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

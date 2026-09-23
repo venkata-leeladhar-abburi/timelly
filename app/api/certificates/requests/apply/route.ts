@@ -6,6 +6,7 @@ import {
   createNotificationsForUserIds,
   getClassStaffNotifyUserIds,
 } from "@/lib/notificationService";
+import { getErrorCode, getErrorMessage, getErrorMeta, getErrorStack } from "@/lib/errors/errorInfo";
 import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
@@ -110,24 +111,26 @@ export async function POST(req: Request) {
       { message: "Certificate request submitted successfully", certificateRequest },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = getErrorMessage(error);
+    const errCode = getErrorCode(error);
     logger.error("Apply certificate request error:", {
-      message: error?.message,
-      code: error?.code,
-      meta: error?.meta,
-      stack: error?.stack,
+      message: errMessage,
+      code: errCode,
+      meta: getErrorMeta(error),
+      stack: getErrorStack(error),
     });
-    
+
     // Provide more specific error messages
     let errorMessage = "Internal server error";
-    if (error?.message) {
-      if (error.message.includes("certificateType") || error.code === "P2022") {
+    if (errMessage) {
+      if (errMessage.includes("certificateType") || errCode === "P2022") {
         errorMessage = "Database schema needs to be updated. Please contact administrator.";
       } else {
-        errorMessage = error.message;
+        errorMessage = errMessage;
       }
-    } else if (error?.code) {
-      switch (error.code) {
+    } else if (errCode) {
+      switch (errCode) {
         case "P2002":
           errorMessage = "Database constraint violation. Please try again.";
           break;
@@ -138,7 +141,7 @@ export async function POST(req: Request) {
           errorMessage = "Database schema needs to be updated. Please contact administrator.";
           break;
         default:
-          errorMessage = `Database error: ${error.code}`;
+          errorMessage = `Database error: ${errCode}`;
       }
     }
     

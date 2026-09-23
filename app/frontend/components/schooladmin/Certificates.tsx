@@ -11,6 +11,7 @@ import {
   peekCertificatesPage,
   setCertificatesPageCache,
 } from "@/lib/school/loadSchoolAdminFastTabs";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export type CertificateRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -55,8 +56,8 @@ export default function SchoolAdminCertificatesTab() {
     try {
       const rows = await loadCertificatesPage({ revalidate });
       setCertificateRequests(rows);
-    } catch (e: any) {
-      setError(e?.message || "Something went wrong");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e) || "Something went wrong");
       if (certificateRequests.length === 0) setCertificateRequests([]);
     } finally {
       setLoading(false);

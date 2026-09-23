@@ -124,8 +124,9 @@ export async function POST(req: Request) {
 
       const normalizedSelectedHeads: SelectedHead[] = Array.isArray(feeSelection)
         ? feeSelection
-            .map((h: any): SelectedHead | null => {
-              if (!h || typeof h !== "object") return null;
+            .map((raw: unknown): SelectedHead | null => {
+              if (!raw || typeof raw !== "object") return null;
+              const h = raw as Record<string, unknown>;
               if (h.headType === "BASE_COMPONENT" && typeof h.componentIndex === "number") {
                 return { headType: "BASE_COMPONENT", componentIndex: h.componentIndex };
               }

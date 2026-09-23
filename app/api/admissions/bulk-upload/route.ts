@@ -11,6 +11,7 @@ import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 import { setApplicationEnrolled } from "@/lib/admission/admissionsListQuery";
 import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { parseDobToDate } from "@/lib/dobCalendar";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 function toStr(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -388,8 +389,8 @@ export async function POST(req: Request) {
         }, { maxWait: 10000, timeout: 120000 });
 
         convertedStudents.push({ row: i + 2, studentId: student.id });
-      } catch (e: any) {
-        failed.push({ row: i + 2, error: e?.message || "Unknown error" });
+      } catch (e: unknown) {
+        failed.push({ row: i + 2, error: getErrorMessage(e) || "Unknown error" });
       }
     }
 
@@ -403,8 +404,8 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
-  } catch (e: any) {
-    return NextResponse.json({ message: e?.message || "Internal server error" }, { status: 500 });
+  } catch (e: unknown) {
+    return NextResponse.json({ message: getErrorMessage(e) || "Internal server error" }, { status: 500 });
   }
 }
 

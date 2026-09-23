@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard, Plus, Check } from "lucide-react";
 import { fetchFeeBreakdown, recordOfflinePayment } from "@/lib/api/offlinePayment";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 type Props = {
     studentId: string;
@@ -81,8 +82,8 @@ export const OfflinePayments = ({ studentId, studentName, remainingFee, onPaymen
               });
             setHeadOptions(opts.filter((x): x is { key: string; label: string; dueBefore: number; head: SelectedHead } => Boolean(x)));
           }
-        } catch (e: any) {
-          if (!cancelled) setBreakdownError(e?.message || "Failed to load fee heads");
+        } catch (e: unknown) {
+          if (!cancelled) setBreakdownError(getErrorMessage(e) || "Failed to load fee heads");
         } finally {
           if (!cancelled) setBreakdownLoading(false);
         }

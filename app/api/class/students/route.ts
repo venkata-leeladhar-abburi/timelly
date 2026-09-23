@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET(req: Request) {
   try {
@@ -82,10 +83,10 @@ export async function GET(req: Request) {
     });
 
     return NextResponse.json({ students }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Get class students error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

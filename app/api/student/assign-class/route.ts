@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function PUT(req: Request) {
   try {
@@ -116,10 +117,10 @@ export async function PUT(req: Request) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Assign student to class error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

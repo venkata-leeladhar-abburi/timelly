@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import { fetchParentEventsList, peekParentPortalAny } from "@/lib/parent/loadParentPortal";
 import { fetchEventDetails } from "@/lib/api/eventDetails";
 import { verifyHyperpgPayment } from "@/lib/api/payment";
+import { getErrorMessage, getErrorName } from "@/lib/errors/errorInfo";
 
 /* ================= TYPES ================= */
 
@@ -148,9 +149,9 @@ export default function ParentWorkshopsTab() {
           throw new Error(data?.message || "Failed to load event details");
 
         setEventDetails((data?.event as EventItem | undefined) ?? null);
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        setDetailsError(err?.message || "Failed to load event details");
+      } catch (err: unknown) {
+        if (getErrorName(err) === "AbortError") return;
+        setDetailsError(getErrorMessage(err) || "Failed to load event details");
       } finally {
         setDetailsLoading(false);
       }

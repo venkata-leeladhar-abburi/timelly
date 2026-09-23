@@ -85,8 +85,9 @@ export async function POST(req: Request) {
 
     const normalizedSelectedHeads: SelectedHead[] = Array.isArray(rawSelectedHeads)
       ? rawSelectedHeads
-          .map((h: any): SelectedHead | null => {
-            if (!h || typeof h !== "object") return null;
+          .map((raw: unknown): SelectedHead | null => {
+            if (!raw || typeof raw !== "object") return null;
+            const h = raw as Record<string, unknown>;
             if (h.headType === "BASE_COMPONENT" && typeof h.componentIndex === "number") {
               return {
                 headType: "BASE_COMPONENT",
@@ -104,10 +105,11 @@ export async function POST(req: Request) {
 
     const normalizedExplicitAllocations = (Array.isArray(rawExplicitAllocations)
       ? rawExplicitAllocations
-          .map((a: any) => {
-            const key = typeof a?.key === "string" ? a.key.trim() : "";
-            const allocAmount = Number(a?.amount);
-            const label = typeof a?.label === "string" ? a.label.trim() : undefined;
+          .map((raw: unknown) => {
+            const a = (raw ?? {}) as Record<string, unknown>;
+            const key = typeof a.key === "string" ? a.key.trim() : "";
+            const allocAmount = Number(a.amount);
+            const label = typeof a.label === "string" ? a.label.trim() : undefined;
             if (!key || !Number.isFinite(allocAmount) || allocAmount <= 0) return null;
             return { key, amount: allocAmount, label };
           })
@@ -494,7 +496,7 @@ export async function POST(req: Request) {
             }
 
             const deltaByKey = new Map(plan.deltas.map((d) => [d.key, d.amount]));
-            const appendRows = paymentAllocationsData.filter((d: { headType: string; componentIndex: number | null; extraFeeId: string | null }) => {
+            const appendRows = paymentAllocationsData.filter((d) => {
               const key =
                 d.headType === "EXTRA_FEE" && d.extraFeeId
                   ? normalizeFeeAllocationKey(`EXTRA:${d.extraFeeId}`)
@@ -505,7 +507,7 @@ export async function POST(req: Request) {
             });
 
             await tx.paymentFeeAllocation.createMany({
-              data: appendRows.map((d: any) => ({
+              data: appendRows.map((d) => ({
                 paymentId: existing.id,
                 studentId: d.studentId,
                 allocationType: d.allocationType,
@@ -557,7 +559,7 @@ export async function POST(req: Request) {
           },
         });
 
-        const allocationsCreateMany = paymentAllocationsData.map((d: any) => ({
+        const allocationsCreateMany = paymentAllocationsData.map((d) => ({
           paymentId: payment.id,
           studentId: d.studentId,
           allocationType: d.allocationType,
@@ -656,10 +658,10 @@ export async function POST(req: Request) {
       },
       { status: paymentAndAllocations.idempotent ? 200 : 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Offline payment error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }

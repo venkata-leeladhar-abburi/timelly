@@ -7,6 +7,7 @@ import {
   parseExtraFeeResidencyScopeBody,
   suggestedResidencyScopeForExtraFeeName,
 } from "@/lib/fees/extraFeeResidencyScope";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { createExtraFeeRows, migrateUnsplitLumpExtraFees, type ExtraFeeCreatePayload } from "@/lib/fees/extraFeeInstallmentDb";
 import { isUnsplitLumpExtraFee } from "@/lib/fees/extraFeeInstallments";
 import {
@@ -113,10 +114,10 @@ export async function GET(req: Request) {
       setSchoolDashboardServerCached(`fees:extra:${schoolId}`, payload, 30_000);
     }
     return NextResponse.json(payload);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Extra fees GET error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -239,10 +240,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ extraFee, extraFeeIds: ids }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Extra fee POST error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

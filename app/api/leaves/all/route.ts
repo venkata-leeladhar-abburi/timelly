@@ -2,6 +2,7 @@ import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET() {
   try {
@@ -20,8 +21,8 @@ const leaves = await prisma.leaveRequest.findMany({
 });
 
     return new Response(JSON.stringify(leaves), { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error("Fetch all leaves error:", err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: getErrorMessage(err) }), { status: 500 });
   }
 }

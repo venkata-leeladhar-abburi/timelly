@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 interface Params {
   id: string;
@@ -122,11 +123,11 @@ export async function PATCH(
       status: 200
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Leave approval failed:", error);
     return new Response(
       JSON.stringify({
-        error: error.message || "Something went wrong"
+        error: getErrorMessage(error) || "Something went wrong"
       }),
       { status: 500 }
     );

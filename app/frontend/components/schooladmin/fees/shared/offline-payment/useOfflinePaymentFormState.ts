@@ -5,6 +5,7 @@ import {
   recordOfflinePayment,
   type SelectedHead,
 } from "@/lib/api/offlinePayment";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export type { SelectedHead };
 
@@ -167,8 +168,8 @@ export function useOfflinePaymentFormState({
           setRemainingFee(Number(data.remainingFee) || 0);
           setDueHeads(Array.isArray(data.dueHeads) ? data.dueHeads : []);
         }
-      } catch (e: any) {
-        if (!cancelled) setBreakdownError(e?.message || "Failed to load due breakdown");
+      } catch (e: unknown) {
+        if (!cancelled) setBreakdownError(getErrorMessage(e) || "Failed to load due breakdown");
       } finally {
         if (!cancelled) setBreakdownLoading(false);
       }

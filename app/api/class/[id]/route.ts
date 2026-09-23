@@ -6,6 +6,7 @@ import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET(
   req: Request,
@@ -65,10 +66,10 @@ export async function GET(
     }
 
     return NextResponse.json({ class: classData }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Get class error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -152,10 +153,10 @@ export async function PUT(
       { message: "Class updated successfully", class: updatedClass },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Update class error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -223,10 +224,10 @@ export async function DELETE(
       { message: "Class deleted successfully" },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Delete class error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

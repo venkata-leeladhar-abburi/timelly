@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { requireSchoolId } from "@/lib/auth/tenant";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 const STAFF_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN", "TEACHER"]);
 
@@ -78,10 +79,10 @@ export async function POST(req: Request) {
       { message: "Class created successfully", class: classData },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Class creation error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

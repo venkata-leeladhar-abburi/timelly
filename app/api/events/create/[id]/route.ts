@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET(
   req: Request,
@@ -105,10 +106,10 @@ export async function GET(
     return NextResponse.json({
       event: { ...event, isRegistered, registration, workshopCertificate },
     }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Get event error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

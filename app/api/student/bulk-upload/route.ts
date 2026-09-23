@@ -9,6 +9,7 @@ import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName 
 import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 function toStr(value: unknown) {
   if (value === null || value === undefined) return "";
@@ -568,16 +569,16 @@ export async function POST(req: Request) {
         });
 
         created.push({ row: rowNumber, name });
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error("[student bulk upload] Failed row", {
           row: rowNumber,
-          error: err?.message || "Unknown error while creating student",
+          error: getErrorMessage(err) || "Unknown error while creating student",
           rawRow: row,
         });
 
         failed.push({
           row: rowNumber,
-          error: err?.message || "Unknown error while creating student",
+          error: getErrorMessage(err) || "Unknown error while creating student",
         });
       }
     }
@@ -590,10 +591,10 @@ export async function POST(req: Request) {
       failed,
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error("Bulk upload error", err);
     return NextResponse.json(
-      { message: err?.message || "Internal server error" },
+      { message: getErrorMessage(err) || "Internal server error" },
       { status: 500 }
     );
   }

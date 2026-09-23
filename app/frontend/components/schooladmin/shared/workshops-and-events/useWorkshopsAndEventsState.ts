@@ -6,6 +6,7 @@ import {
   peekEventsPage,
   setEventsPageCache,
 } from "@/lib/school/loadSchoolAdminFastTabs";
+import { getErrorMessage, getErrorName } from "@/lib/errors/errorInfo";
 import type { EventItem } from "./workshopsAndEventsTypes";
 import { deleteEvent } from "@/lib/api/events";
 
@@ -42,8 +43,8 @@ export function useWorkshopsAndEventsState() {
       setEventsError(null);
       const rows = await loadEventsPage({ revalidate });
       setEvents(rows as EventItem[]);
-    } catch (err: any) {
-      setEventsError(err?.message || "Failed to load events");
+    } catch (err: unknown) {
+      setEventsError(getErrorMessage(err) || "Failed to load events");
     } finally {
       setLoadingEvents(false);
     }
@@ -105,9 +106,9 @@ export function useWorkshopsAndEventsState() {
           signal: controller.signal,
         });
         setEventDetails(data as EventItem);
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        setDetailsError(err?.message || "Failed to load event details");
+      } catch (err: unknown) {
+        if (getErrorName(err) === "AbortError") return;
+        setDetailsError(getErrorMessage(err) || "Failed to load event details");
       } finally {
         setDetailsLoading(false);
       }

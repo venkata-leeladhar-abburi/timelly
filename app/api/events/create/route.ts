@@ -6,6 +6,7 @@ import {
   createNotificationsForUserIds,
   getSchoolUserIds,
 } from "@/lib/notificationService";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
@@ -125,10 +126,10 @@ export async function POST(req: Request) {
       { message: "Event created successfully", event },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Create event error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

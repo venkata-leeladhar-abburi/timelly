@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { CertificateRequestListItem } from "../../Certificates";
 import { uploadImage } from "@/app/frontend/utils/upload";
 import { STATUS_MAP, type TabStatus } from "./certificatesTabHelpers";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export function useCertificatesTabState({
   certificateRequests,
@@ -96,8 +97,8 @@ export function useCertificatesTabState({
         tcDocumentUrl: documentUrl ?? null,
       });
       onRefresh();
-    } catch (e: any) {
-      alert(e?.message || "Failed to approve");
+    } catch (e: unknown) {
+      alert(getErrorMessage(e) || "Failed to approve");
     } finally {
       setActingId(null);
       setApprovingId(null);
@@ -131,8 +132,8 @@ export function useCertificatesTabState({
       if (!res.ok) throw new Error(data?.message || "Reject failed");
       onRequestPatch?.(id, { status: "REJECTED" });
       onRefresh();
-    } catch (e: any) {
-      alert(e?.message || "Failed to reject");
+    } catch (e: unknown) {
+      alert(getErrorMessage(e) || "Failed to reject");
     } finally {
       setActingId(null);
     }

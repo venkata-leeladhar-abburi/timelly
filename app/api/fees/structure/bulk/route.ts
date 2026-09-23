@@ -6,6 +6,7 @@ import prisma from "@/lib/db";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { saveClassFeeStructureAndSyncStudents } from "@/lib/fees/classFeeStructureApply";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 function normHeader(k: string) {
   return k
@@ -157,10 +158,10 @@ export async function POST(req: Request) {
           ? `Class ${cls.name}${cls.section ? `-${cls.section}` : ""}`
           : classId;
         updated.push({ classId, label, components: merged.length });
-      } catch (e: any) {
+      } catch (e: unknown) {
         failed.push({
           row: 0,
-          message: `${classes.find((c) => c.id === classId)?.name ?? classId}: ${e?.message || "Save failed"}`,
+          message: `${classes.find((c) => c.id === classId)?.name ?? classId}: ${getErrorMessage(e) || "Save failed"}`,
         });
       }
     }
@@ -178,10 +179,10 @@ export async function POST(req: Request) {
       updated,
       failed,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Fee structure bulk POST error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

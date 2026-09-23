@@ -4,6 +4,7 @@ import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { uploadClassesCsv } from "@/lib/api/classes";
 import SuccessPopups from "../../common/SuccessPopUps";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 interface UploadCsvPanelProps {
   onCancel: () => void;
@@ -55,8 +56,8 @@ export default function UploadCsvPanel({ onCancel, onSuccess }: UploadCsvPanelPr
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    } catch (err: any) {
-      setError(err?.message || "Upload failed.");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || "Upload failed.");
     } finally {
       setIsUploading(false);
     }

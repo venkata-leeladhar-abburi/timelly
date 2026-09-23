@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useClasses } from "@/hooks/useClasses";
 import { eventTypeOptions, type CreateEventFormProps } from "./createEventFormOptions";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export function useCreateEventFormState({ onCancel, onCreated, initialEvent }: CreateEventFormProps) {
   const [title, setTitle] = useState("");
@@ -159,8 +160,8 @@ export function useCreateEventFormState({ onCancel, onCreated, initialEvent }: C
           : `${normalizedLabel} created successfully`
       );
       setShowSuccess(true);
-    } catch (err: any) {
-      setError(err?.message || "Something went wrong");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || "Something went wrong");
     } finally {
       setSubmitting(false);
     }

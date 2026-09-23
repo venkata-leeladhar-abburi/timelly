@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 type RouteParams =
   | { params: { id: string } }
@@ -38,10 +39,10 @@ export async function GET(_req: Request, context: RouteParams) {
     }
 
     return NextResponse.json({ fee });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Get fee by student error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -246,10 +247,10 @@ export async function PATCH(req: Request, context: RouteParams) {
     await invalidateStudentFeeReadCaches({ studentId: id, schoolId: student?.schoolId ?? null });
 
     return NextResponse.json({ fee: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Update student fee error:", error);
     return NextResponse.json(
-      { message: error?.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }

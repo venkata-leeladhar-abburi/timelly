@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchClassAttendanceView } from "@/lib/api/attendanceView";
 import { fetchClassMarksView } from "@/lib/api/marks";
 import type { StudentRow } from "./useTeacherClasses";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 export type StudentMetrics = {
   attendancePct: number | null;
@@ -118,12 +119,12 @@ export function useClassMetrics(classId: string | null, students: StudentRow[]) 
         });
 
         setState({ byStudentId, loading: false, error: null });
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMounted) return;
         setState({
           byStudentId: {},
           loading: false,
-          error: err?.message ?? "Unable to load class metrics.",
+          error: getErrorMessage(err) ?? "Unable to load class metrics.",
         });
       }
     })();

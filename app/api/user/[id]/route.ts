@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/errors/errorInfo";
 
 type Params = Promise<{ id: string }>;
 
@@ -223,10 +224,10 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
         assignedClassIds: updatedUser.teachingClassIds ?? [],
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("User update error:", error);
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
@@ -289,10 +290,10 @@ export async function DELETE(
     return NextResponse.json({
       message: "User deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("User deletion error:", error);
     return NextResponse.json(
-      { message: error.message || "Internal server error" },
+      { message: getErrorMessage(error) || "Internal server error" },
       { status: 500 }
     );
   }
