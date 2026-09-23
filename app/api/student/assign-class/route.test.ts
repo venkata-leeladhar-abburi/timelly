@@ -82,6 +82,24 @@ describe("PUT /api/student/assign-class", () => {
     expect(res.status).toBe(404);
   });
 
+  it("cross-tenant: a School-A admin cannot move a School-B student into a School-A class", async () => {
+    // Session belongs to school "s1". The student lookup is scoped to the
+    // session's own schoolId (never an attacker-supplied one), so a student
+    // that actually belongs to school "s2" is invisible to this query and
+    // Prisma (correctly mocked here to reflect real `where` scoping) returns
+    // null rather than the mutation silently reassigning another tenant's data.
+    mockGetServerSession.mockResolvedValue(session); // schoolId: "s1"
+    mockStudentFindFirst.mockResolvedValue(null); // stu-from-s2 not found under schoolId: "s1"
+
+    const res = await PUT(request({ studentId: "stu-from-s2", classId: "c1" }));
+
+    expect(res.status).toBe(404);
+    expect(mockStudentFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "stu-from-s2", schoolId: "s1" } })
+    );
+    expect(mockStudentUpdate).not.toHaveBeenCalled();
+  });
+
   it("returns 404 when the given classId is not in the school", async () => {
     mockGetServerSession.mockResolvedValue(session);
     mockStudentFindFirst.mockResolvedValue({ id: "stu1", user: { id: "u2" } });
