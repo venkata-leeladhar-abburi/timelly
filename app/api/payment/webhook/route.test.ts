@@ -27,6 +27,10 @@ const basicAuthHeader = (user: string, pass: string) => ({
   authorization: `Basic ${Buffer.from(`${user}:${pass}`).toString("base64")}`,
 });
 
+/** Every non-auth-focused test needs valid credentials now that auth is mandatory. */
+const authedRequest = (body: unknown, headers: Record<string, string> = {}) =>
+  request(body, { ...basicAuthHeader("whuser", "whpass"), ...headers });
+
 const chargedEvent = {
   id: "evt1",
   event_name: "ORDER_SUCCEEDED",
@@ -46,22 +50,32 @@ describe("POST /api/payment/webhook", () => {
     mockWebhookEventCreate.mockReset().mockResolvedValue({});
     mockPaymentFindFirst.mockReset();
     mockTransaction.mockReset();
-    delete process.env.HYPERPG_WEBHOOK_USERNAME;
-    delete process.env.HYPERPG_WEBHOOK_PASSWORD;
+    process.env.HYPERPG_WEBHOOK_USERNAME = "whuser";
+    process.env.HYPERPG_WEBHOOK_PASSWORD = "whpass";
     delete process.env.HYPERPG_WEBHOOK_HEADER_NAME;
     delete process.env.HYPERPG_WEBHOOK_HEADER_VALUE;
   });
 
+  it("returns 401 when webhook credentials are not configured (fails closed, not open)", async () => {
+    delete process.env.HYPERPG_WEBHOOK_USERNAME;
+    delete process.env.HYPERPG_WEBHOOK_PASSWORD;
+    const res = await POST(request(chargedEvent, basicAuthHeader("whuser", "whpass")));
+    expect(res.status).toBe(401);
+    expect(mockWebhookEventCreate).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 when only the username env var is configured", async () => {
+    delete process.env.HYPERPG_WEBHOOK_PASSWORD;
+    const res = await POST(request(chargedEvent, basicAuthHeader("whuser", "whpass")));
+    expect(res.status).toBe(401);
+  });
+
   it("returns 401 when credentials are configured but no Authorization header is sent", async () => {
-    process.env.HYPERPG_WEBHOOK_USERNAME = "whuser";
-    process.env.HYPERPG_WEBHOOK_PASSWORD = "whpass";
     const res = await POST(request(chargedEvent));
     expect(res.status).toBe(401);
   });
 
   it("returns 401 for incorrect Basic Auth credentials", async () => {
-    process.env.HYPERPG_WEBHOOK_USERNAME = "whuser";
-    process.env.HYPERPG_WEBHOOK_PASSWORD = "whpass";
     const res = await POST(request(chargedEvent, basicAuthHeader("whuser", "wrong")));
     expect(res.status).toBe(401);
   });
@@ -69,17 +83,17 @@ describe("POST /api/payment/webhook", () => {
   it("returns 401 when the configured extra header is missing", async () => {
     process.env.HYPERPG_WEBHOOK_HEADER_NAME = "x-webhook-secret";
     process.env.HYPERPG_WEBHOOK_HEADER_VALUE = "secret123";
-    const res = await POST(request(chargedEvent));
+    const res = await POST(authedRequest(chargedEvent));
     expect(res.status).toBe(401);
   });
 
   it("returns 400 for an invalid JSON body", async () => {
-    const res = await POST(request("not json"));
+    const res = await POST(authedRequest("not json"));
     expect(res.status).toBe(400);
   });
 
   it("acks with ignored=true when the event has no id", async () => {
-    const res = await POST(request({ event_name: "x" }));
+    const res = await POST(authedRequest({ event_name: "x" }));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual({ ok: true, ignored: true, reason: "Missing event id" });
@@ -88,7 +102,7 @@ describe("POST /api/payment/webhook", () => {
 
   it("acks with duplicate=true when the event id was already stored", async () => {
     mockWebhookEventCreate.mockRejectedValue(new Error("Unique constraint failed"));
-    const res = await POST(request(chargedEvent));
+    const res = await POST(authedRequest(chargedEvent));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual({ ok: true, duplicate: true });
@@ -96,7 +110,7 @@ describe("POST /api/payment/webhook", () => {
 
   it("acks without updating when there are no order identifiers", async () => {
     const res = await POST(
-      request({ id: "evt2", event_name: "x", content: { order: { status: "CHARGED" } } })
+      authedRequest({ id: "evt2", event_name: "x", content: { order: { status: "CHARGED" } } })
     );
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -106,7 +120,7 @@ describe("POST /api/payment/webhook", () => {
 
   it("acks without updating when no matching payment is found", async () => {
     mockPaymentFindFirst.mockResolvedValue(null);
-    const res = await POST(request(chargedEvent));
+    const res = await POST(authedRequest(chargedEvent));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual({ ok: true, stored: true, updated: false, reason: "Payment not found" });
@@ -134,7 +148,7 @@ describe("POST /api/payment/webhook", () => {
     };
     mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb(tx));
 
-    const res = await POST(request(chargedEvent));
+    const res = await POST(authedRequest(chargedEvent));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toEqual({ ok: true, stored: true, updated: true });
@@ -164,7 +178,7 @@ describe("POST /api/payment/webhook", () => {
     };
     mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb(tx));
 
-    await POST(request(chargedEvent));
+    await POST(authedRequest(chargedEvent));
     expect(tx.eventRegistration.update).toHaveBeenCalledWith({
       where: { id: "reg1" },
       data: { paymentStatus: "PAID", paymentId: "pay1" },
@@ -192,7 +206,7 @@ describe("POST /api/payment/webhook", () => {
       event_name: "ORDER_FAILED",
       content: { order: { order_id: "order1", status: "AUTHORIZATION_FAILED" } },
     };
-    await POST(request(failedEvent));
+    await POST(authedRequest(failedEvent));
     expect(tx.eventRegistration.update).toHaveBeenCalledWith({
       where: { id: "reg1" },
       data: { paymentStatus: "FAILED" },
@@ -214,20 +228,17 @@ describe("POST /api/payment/webhook", () => {
     };
     mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb(tx));
 
-    await POST(request(chargedEvent));
+    await POST(authedRequest(chargedEvent));
     expect(tx.studentFee.update).not.toHaveBeenCalled();
   });
 
   it("succeeds with correct Basic Auth and extra header when both are configured", async () => {
-    process.env.HYPERPG_WEBHOOK_USERNAME = "whuser";
-    process.env.HYPERPG_WEBHOOK_PASSWORD = "whpass";
     process.env.HYPERPG_WEBHOOK_HEADER_NAME = "x-webhook-secret";
     process.env.HYPERPG_WEBHOOK_HEADER_VALUE = "secret123";
     mockPaymentFindFirst.mockResolvedValue(null);
 
     const res = await POST(
-      request(chargedEvent, {
-        ...basicAuthHeader("whuser", "whpass"),
+      authedRequest(chargedEvent, {
         "x-webhook-secret": "secret123",
       })
     );
