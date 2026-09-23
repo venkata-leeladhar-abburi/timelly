@@ -84,6 +84,7 @@ export default function FeesTab({ section }: FeesTabProps) {
   const [students, setStudents] = useState<Student[] | null>(initialSnap?.students ?? null);
   const [structures, setStructures] = useState<FeeStructure[] | null>(initialSnap?.structures ?? null);
   const [extraFees, setExtraFees] = useState<ExtraFee[] | null>(initialSnap?.extraFees ?? null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const setters = {
     setFees,
@@ -117,8 +118,10 @@ export default function FeesTab({ section }: FeesTabProps) {
           revalidate: options?.revalidate,
         });
         applySnapshot(snap, setters);
+        setLoadError(null);
       } catch (e) {
         console.error(e);
+        setLoadError(e instanceof Error ? e.message : "Failed to load fees data");
       }
     },
     [schoolId, section]
@@ -135,10 +138,14 @@ export default function FeesTab({ section }: FeesTabProps) {
       revalidate: true,
       signal: controller.signal,
     })
-      .then((snap) => applySnapshot(snap, setters))
+      .then((snap) => {
+        applySnapshot(snap, setters);
+        setLoadError(null);
+      })
       .catch((err) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
         console.error(err);
+        setLoadError(err instanceof Error ? err.message : "Failed to load fees data");
       });
     return () => controller.abort();
   }, [schoolId, section, pettyCashOnly]);
@@ -177,6 +184,19 @@ export default function FeesTab({ section }: FeesTabProps) {
         />
 
         <FeesSectionNav schoolId={schoolId} />
+
+        {loadError && (
+          <div className="flex flex-col gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200 sm:flex-row sm:items-center sm:justify-between">
+            <span>Couldn&apos;t load fees data: {loadError}</span>
+            <button
+              type="button"
+              onClick={() => void fetchData({ revalidate: true })}
+              className="self-start rounded-lg border border-red-400/40 px-3 py-1.5 font-medium text-red-100 hover:bg-red-500/20 sm:self-auto"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {(section === undefined || section === "overview") && (
           <div id="fees-section-overview" className="scroll-mt-28 space-y-6">

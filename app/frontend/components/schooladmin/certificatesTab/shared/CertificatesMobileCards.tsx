@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { CheckCircle, Download, Loader2, XCircle } from "lucide-react";
 import type { CertificateRequestListItem } from "../../Certificates";
 import { STATUS_MAP, classNameDisplay, formatDate, getCertificateTypeLabel, type TabStatus } from "./certificatesTabHelpers";
+
+function daysSince(isoDate: string, now: number): number {
+  return Math.floor((now - new Date(isoDate).getTime()) / (1000 * 60 * 60 * 24));
+}
 
 export function CertificatesMobileCards({
   filtered,
@@ -17,6 +22,7 @@ export function CertificatesMobileCards({
   onOpenApproveModal: (id: string) => void;
   onReject: (id: string) => void;
 }) {
+  const [now] = useState(() => Date.now());
   return (
     <div className="md:hidden p-4 space-y-4">
       {filtered.length === 0 ? (
@@ -68,13 +74,13 @@ export function CertificatesMobileCards({
               {row.issuedDate && (
                 <div>
                   <span className="text-white/50">Days Elapsed: </span>
-                  {Math.floor((Date.now() - new Date(row.issuedDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                  {daysSince(row.issuedDate, now)} days
                 </div>
               )}
               {!row.issuedDate && row.status === "PENDING" && (
                 <div>
                   <span className="text-white/50">Days Since Request: </span>
-                  {Math.floor((Date.now() - new Date(row.createdAt).getTime()) / (1000 * 60 * 60 * 24))} days
+                  {daysSince(row.createdAt, now)} days
                 </div>
               )}
               {row.student?.user?.email && (

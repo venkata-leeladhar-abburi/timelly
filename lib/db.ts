@@ -66,7 +66,7 @@ if (connectionString) {
     process.env.PRISMA_CONNECTION_LIMIT ||
     (isPgBouncer
       ? process.env.NODE_ENV === "development"
-        ? "10"
+        ? "20"
         : "5"
       : "5");
   connectionString = withParam(connectionString, "connection_limit", poolLimit);
@@ -94,6 +94,11 @@ type LocalCacheEntry = {
 };
 
 const localQueryCache = new Map<string, LocalCacheEntry>();
+// Concurrent callers requesting the same read (e.g. two Promise.all branches both
+// fetching extraFee.findMany({where:{schoolId}}) at once) would otherwise each open
+// their own connection before either result lands in localQueryCache above.
+// Sharing the in-flight promise collapses them into a single DB round trip.
+const inFlightQueries = new Map<string, Promise<unknown>>();
 
 function isWriteOperation(operation: string) {
   return WRITE_OPERATIONS.has(operation);
@@ -165,13 +170,20 @@ const createPrisma = () => {
         if (cacheKey) {
           const hit = getLocalCachedValue(cacheKey);
           if (hit !== null) return hit;
+
+          const inFlight = inFlightQueries.get(cacheKey);
+          if (inFlight) return inFlight;
         }
 
+        const promise = query(args);
+        if (cacheKey) inFlightQueries.set(cacheKey, promise);
+
         try {
-          const result = await query(args);
+          const result = await promise;
           if (cacheKey) setLocalCachedValue(cacheKey, result);
           return result;
         } finally {
+          if (cacheKey) inFlightQueries.delete(cacheKey);
           const ms = performance.now() - start;
           const slowMs = Number(process.env.PRISMA_SLOW_QUERY_MS || "50");
           if (ms >= slowMs) {

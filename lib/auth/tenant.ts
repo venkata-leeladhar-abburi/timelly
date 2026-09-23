@@ -8,22 +8,30 @@ export type TenantContext =
   | { ok: false; status: number; message: string };
 
 async function resolveSchoolIdFromDb(userId: string): Promise<string | null> {
-  const u = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      schoolId: true,
-      student: { select: { schoolId: true } },
-      adminSchools: { select: { id: true } },
-      teacherSchools: { select: { id: true } },
-    },
-  });
-  return (
-    u?.schoolId ??
-    u?.student?.schoolId ??
-    u?.adminSchools?.[0]?.id ??
-    u?.teacherSchools?.[0]?.id ??
-    null
-  );
+  // A transient DB error here must not throw: callers treat a null return as
+  // "couldn't resolve school" and respond with a normal 400, instead of the
+  // request blowing up with an uncaught 500 on a DB blip.
+  try {
+    const u = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        schoolId: true,
+        student: { select: { schoolId: true } },
+        adminSchools: { select: { id: true } },
+        teacherSchools: { select: { id: true } },
+      },
+    });
+    return (
+      u?.schoolId ??
+      u?.student?.schoolId ??
+      u?.adminSchools?.[0]?.id ??
+      u?.teacherSchools?.[0]?.id ??
+      null
+    );
+  } catch (error) {
+    console.error("resolve_school_id_from_db_failed", error instanceof Error ? error.message : error);
+    return null;
+  }
 }
 
 /**

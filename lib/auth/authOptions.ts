@@ -160,32 +160,41 @@ export const authOptions: NextAuthOptions = {
     })();
 
     if (shouldSyncFromDb && token.id) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: token.id as string },
-        select: {
-          schoolId: true,
-          allowedFeatures: true,
-          photoUrl: true,
-          student: { select: { schoolId: true } },
-          adminSchools: { select: { id: true } },
-          teacherSchools: { select: { id: true } },
-        },
-      });
-      if (dbUser) {
-        if (!token.schoolId) {
-          token.schoolId =
-            dbUser.schoolId ??
-            dbUser.student?.schoolId ??
-            dbUser.adminSchools?.[0]?.id ??
-            dbUser.teacherSchools?.[0]?.id ??
-            null;
+      // A transient DB hiccup (pool timeout, connection reset) must not throw here:
+      // this callback runs on every getServerSession call, so an uncaught error turns
+      // into a JWT_SESSION_ERROR and 401s every route on the request, not just this sync.
+      // Falling back to the existing token lets the app keep working on stale data
+      // until the DB is reachable again; _dbSyncAt is left untouched so it retries soon.
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            schoolId: true,
+            allowedFeatures: true,
+            photoUrl: true,
+            student: { select: { schoolId: true } },
+            adminSchools: { select: { id: true } },
+            teacherSchools: { select: { id: true } },
+          },
+        });
+        if (dbUser) {
+          if (!token.schoolId) {
+            token.schoolId =
+              dbUser.schoolId ??
+              dbUser.student?.schoolId ??
+              dbUser.adminSchools?.[0]?.id ??
+              dbUser.teacherSchools?.[0]?.id ??
+              null;
+          }
+          if (dbUser.allowedFeatures?.length !== undefined) {
+            token.allowedFeatures = dbUser.allowedFeatures;
+          }
+          token.image = dbUser.photoUrl ?? token.image ?? null;
+          token.schoolIsActive = true;
+          token._dbSyncAt = Date.now();
         }
-        if (dbUser.allowedFeatures?.length !== undefined) {
-          token.allowedFeatures = dbUser.allowedFeatures;
-        }
-        token.image = dbUser.photoUrl ?? token.image ?? null;
-        token.schoolIsActive = true;
-        token._dbSyncAt = Date.now();
+      } catch (error) {
+        console.error("jwt_db_sync_failed", error instanceof Error ? error.message : error);
       }
     }
 

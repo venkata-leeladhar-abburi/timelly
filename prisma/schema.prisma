@@ -1145,6 +1145,7 @@ model StudentFee {
   updatedAt DateTime @updatedAt
 
   @@index([studentId])
+  @@index([updatedAt, studentId])
 }
 
 model FeeDiscountApproval {
