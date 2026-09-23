@@ -10,7 +10,7 @@ import {
     Save,
     GraduationCap,
 } from "lucide-react";
-import { useClasses } from "@/hooks/useClasses";
+import { useClasses } from "@/app/_components/hooks/useClasses";
 import { useCircularFormState } from "./shared";
 import { CIRCULAR_RECIPIENTS, IMPORTANCE_LEVELS, PUBLISH_STATUS } from "./shared";
 

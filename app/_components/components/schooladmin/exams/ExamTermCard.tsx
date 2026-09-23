@@ -1,7 +1,7 @@
 "use client";
 
 import { BookOpen, Calendar, LucideSquarePen } from "lucide-react";
-import type { ExamTermListItem } from "@/hooks/useExamTerms";
+import type { ExamTermListItem } from "@/app/_components/hooks/useExamTerms";
 import {
   EXAM_ACCENT,
   EXAM_UPCOMING_LABEL_BG,

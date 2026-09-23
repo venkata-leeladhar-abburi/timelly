@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { EXAM_TERM_STATUS } from "@/lib/constants";
-import type { ClassItem } from "@/hooks/useClasses";
+import type { ClassItem } from "@/app/_components/hooks/useClasses";
 import { createExamTerm, updateExamTerm } from "@/lib/api/examTerms";
 import Spinner from "@/app/_components/components/common/Spinner";
 

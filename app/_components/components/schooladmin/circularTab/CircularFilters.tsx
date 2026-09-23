@@ -2,7 +2,7 @@
 
 import { Search, Users, GraduationCap } from "lucide-react";
 import { IMPORTANCE_LEVELS } from "@/lib/constants";
-import { useClasses } from "@/hooks/useClasses";
+import { useClasses } from "@/app/_components/hooks/useClasses";
 
 const RECIPIENT_OPTIONS = [
   { value: "all", label: "All Recipients" },

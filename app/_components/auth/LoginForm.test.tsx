@@ -2,7 +2,7 @@
 
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import LoginForm from "@/components/auth/LoginForm";
+import LoginForm from "@/app/_components/auth/LoginForm";
 
 const mockSignIn = jest.fn();
 const mockUseSearchParams = jest.fn();

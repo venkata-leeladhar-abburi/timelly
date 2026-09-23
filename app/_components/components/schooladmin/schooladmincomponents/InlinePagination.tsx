@@ -1,6 +1,6 @@
 "use client";
 
-import Pagination from "@/components/ui/Pagination";
+import Pagination from "@/app/_components/components/common/Pagination";
 
 type Props = {
   page: number;
@@ -8,7 +8,7 @@ type Props = {
   onChange: (page: number) => void;
 };
 
-/** Thin alias kept for existing import sites — see components/ui/Pagination. */
+/** Thin alias kept for existing import sites — see app/_components/components/common/Pagination. */
 export default function InlinePagination(props: Props) {
   return <Pagination {...props} />;
 }

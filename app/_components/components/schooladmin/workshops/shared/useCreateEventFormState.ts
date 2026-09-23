@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useClasses } from "@/hooks/useClasses";
+import { useClasses } from "@/app/_components/hooks/useClasses";
 import { eventTypeOptions, type CreateEventFormProps } from "./createEventFormOptions";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 

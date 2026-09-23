@@ -17,8 +17,18 @@ jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
-    studentLeaveRequest: { findMany: (...args: unknown[]) => mockLeaveFindMany(...args) },
   },
+}));
+
+// Reads now go through the app_tenant-connected, RLS-restricted client
+// (docs/SECURITY_REVIEW.md) instead of the app's normal prisma import.
+const mockWithTenantScopedClient = jest.fn(async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+  fn({ studentLeaveRequest: { findMany: (...args: unknown[]) => mockLeaveFindMany(...args) } })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 describe("GET /api/student-leaves/pending", () => {
@@ -26,6 +36,7 @@ describe("GET /api/student-leaves/pending", () => {
     mockGetServerSession.mockReset();
     mockSchoolFindFirst.mockReset();
     mockLeaveFindMany.mockReset();
+    mockWithTenantScopedClient.mockClear();
   });
 
   it("returns 401 when no session", async () => {

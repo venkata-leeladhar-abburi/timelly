@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import TableLayout from "../../common/TableLayout";
-import { useStudents, StudentWithRelations } from "@/hooks/useStudents";
+import { useStudents, StudentWithRelations } from "@/app/_components/hooks/useStudents";
 
 export default function StudentTable() {
   const { students, loading, error, refetch } = useStudents();

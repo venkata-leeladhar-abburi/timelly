@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Inter, Geist, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from "@/app/_components/context/AuthContext";
 import { GlobalBackground } from "./_components/components/common/GlobalBackground";
 import PwaRegister from "./_components/components/common/PwaRegister";
 import InstallAppBanner from "./_components/components/common/InstallAppBanner";

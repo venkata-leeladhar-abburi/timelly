@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Plus } from "lucide-react";
 
-import { useExamTerms, fetchExamTermDetail } from "@/hooks/useExamTerms";
-import { useClasses } from "@/hooks/useClasses";
+import { useExamTerms, fetchExamTermDetail } from "@/app/_components/hooks/useExamTerms";
+import { useClasses } from "@/app/_components/hooks/useClasses";
 
-import type { ExamTermDetail, ExamTermListItem } from "@/hooks/useExamTerms";
+import type { ExamTermDetail, ExamTermListItem } from "@/app/_components/hooks/useExamTerms";
 import {
   EXAM_ACCENT,
   EXAM_TEXT_SECONDARY,

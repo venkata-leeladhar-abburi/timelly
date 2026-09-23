@@ -1,5 +1,5 @@
 import { Users, GraduationCap, Building2, TrendingUp, Download, Trash2 } from "lucide-react";
-import Pagination from "@/components/ui/Pagination";
+import Pagination from "@/app/_components/components/common/Pagination";
 import { formatAmount as fmtAmount } from "../../../../utils/format";
 import { AVATAR_URL } from "../../../../constants/images";
 import type { SchoolRow } from "../../Schools";
@@ -150,7 +150,7 @@ export function SchoolMobileCard({
   );
 }
 
-/** Thin alias kept for existing import sites — see components/ui/Pagination. */
+/** Thin alias kept for existing import sites — see app/_components/components/common/Pagination. */
 export function SchoolsPagination(props: {
   page: number;
   totalPages: number;

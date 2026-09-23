@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Clock, X } from "lucide-react";
 import { createPortal } from "react-dom";
-import type { ExamScheduleItem } from "@/hooks/useExamTerms";
+import type { ExamScheduleItem } from "@/app/_components/hooks/useExamTerms";
 import { addExamSchedule } from "@/lib/api/examSchedule";
 import { fetchExamSubjects } from "@/lib/api/examSubjects";
 import Spinner from "@/app/_components/components/common/Spinner";

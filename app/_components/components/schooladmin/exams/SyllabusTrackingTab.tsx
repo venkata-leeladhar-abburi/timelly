@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import type { SyllabusItem } from "@/hooks/useExamTerms";
+import type { SyllabusItem } from "@/app/_components/hooks/useExamTerms";
 import { addSyllabusSubject, addSyllabusUnit } from "@/lib/api/syllabus";
 import Spinner from "@/app/_components/components/common/Spinner";
 import {

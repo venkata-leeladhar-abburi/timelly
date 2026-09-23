@@ -1,51 +1,54 @@
-import { useCallback, useEffect, useState } from "react";
-import { IStudent } from "../interfaces/student";
+"use client";
 
-export function useStudents(classId: string) {
-  const [students, setStudents] = useState<IStudent[]>([]);
-  const [loading, setLoading] = useState(false);
+import { useState, useEffect, useCallback } from "react";
+import { fetchAllStudents } from "@/lib/students/fetchAllStudents";
 
-  const fetchStudents = useCallback(
-    async (options?: { silent?: boolean }) => {
-      if (!classId) return;
-      if (!options?.silent) setLoading(true);
-      try {
-        const res = await fetch(`/api/class/students?classId=${classId}`, {
-          cache: "no-store",
-          credentials: "include",
-        });
-        const data = await res.json();
-        setStudents(data.students || []);
-      } finally {
-        if (!options?.silent) setLoading(false);
-      }
-    },
-    [classId]
-  );
+export interface StudentWithRelations {
+  id: string;
+  admissionNumber: string;
+  rollNo: string | null;
+  fatherName: string;
+  aadhaarNo: string;
+  phoneNo: string;
+  dob: string;
+  address: string | null;
+  classId: string | null;
+  user: { id: string; name: string | null; email: string | null };
+  class?: { id: string; name: string; section: string | null } | null;
+}
 
-  useEffect(() => {
-    if (classId) void fetchStudents();
-  }, [classId, fetchStudents]);
+interface UseStudentsResult {
+  students: StudentWithRelations[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
 
-  const patchStudent = useCallback(
-    (studentId: string, updater: (row: IStudent) => IStudent) => {
-      setStudents((prev) =>
-        prev.map((s) => (s.id === studentId ? updater(s) : s))
-      );
-    },
-    []
-  );
+export function useStudents(): UseStudentsResult {
+  const [students, setStudents] = useState<StudentWithRelations[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const removeStudent = useCallback((studentId: string) => {
-    setStudents((prev) => prev.filter((s) => s.id !== studentId));
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const rows = await fetchAllStudents<StudentWithRelations>(undefined, {
+        take: 100,
+        maxPages: 50,
+      });
+      setStudents(rows);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to fetch students");
+      setStudents([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return {
-    students,
-    loading,
-    refresh: () => fetchStudents(),
-    refreshSilent: () => fetchStudents({ silent: true }),
-    patchStudent,
-    removeStudent,
-  };
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  return { students, loading, error, refetch };
 }

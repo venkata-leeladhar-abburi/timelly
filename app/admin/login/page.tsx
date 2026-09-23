@@ -4,7 +4,7 @@ import { useEffect, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/app/_components/constants/routes";
-import LoginForm from "@/components/auth/LoginForm";
+import LoginForm from "@/app/_components/auth/LoginForm";
 import { shouldForceSuperAdminRelogin } from "@/lib/auth/superAdminBrowserSession";
 export default function LoginPage() {
   const router = useRouter();
