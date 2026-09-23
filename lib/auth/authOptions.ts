@@ -7,6 +7,13 @@ import { isActiveStudent } from "@/lib/students/studentStatus";
 import bcrypt from "bcryptjs";
 import { logger } from "@/lib/logger";
 
+// Hard ceiling on how long a session can keep running on a cached JWT while the
+// periodic DB re-sync keeps failing (see the jwt callback below). Bounds the
+// fail-open tradeoff: a brief DB blip shouldn't 401 every request, but an
+// extended outage shouldn't let stale role/schoolId/allowedFeatures data be
+// trusted forever either.
+const MAX_STALE_SESSION_MS = 60 * 60 * 1000; // 60 minutes
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma as unknown as PrismaClient),
 
@@ -141,6 +148,7 @@ export const authOptions: NextAuthOptions = {
         token.sessionOnly = true;
       }
       token._dbSyncAt = Date.now();
+      token._lastSuccessfulSyncAt = Date.now();
     }
 
     // Keep schoolId/allowedFeatures/image in sync, but NOT on every request.
@@ -165,10 +173,17 @@ export const authOptions: NextAuthOptions = {
       // into a JWT_SESSION_ERROR and 401s every route on the request, not just this sync.
       // Falling back to the existing token lets the app keep working on stale data
       // until the DB is reachable again; _dbSyncAt is left untouched so it retries soon.
+      //
+      // That fallback is time-boxed: if the DB has been unreachable long enough that
+      // we haven't completed a *successful* sync in MAX_STALE_SESSION_MS, we stop
+      // trusting the cached token and force re-authentication instead of running
+      // indefinitely on stale role/schoolId/allowedFeatures data.
       try {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
           select: {
+            role: true,
+            password: true,
             schoolId: true,
             allowedFeatures: true,
             photoUrl: true,
@@ -178,6 +193,18 @@ export const authOptions: NextAuthOptions = {
           },
         });
         if (dbUser) {
+          // Deactivation (password set to null) must invalidate the session immediately,
+          // not just at next login — otherwise a deactivated user keeps full access for
+          // the rest of their token's lifetime.
+          if (dbUser.password === null) {
+            throw new Error("account_deactivated");
+          }
+
+          // role is only ever set at first login (see the `if (user)` branch above); a
+          // role change/downgrade in the DB must take effect on the next successful sync,
+          // not wait for the user's session to expire.
+          token.role = dbUser.role;
+
           if (!token.schoolId) {
             token.schoolId =
               dbUser.schoolId ??
@@ -192,8 +219,24 @@ export const authOptions: NextAuthOptions = {
           token.image = dbUser.photoUrl ?? token.image ?? null;
           token.schoolIsActive = true;
           token._dbSyncAt = Date.now();
+          token._lastSuccessfulSyncAt = Date.now();
         }
       } catch (error) {
+        if (error instanceof Error && error.message === "account_deactivated") {
+          throw error;
+        }
+
+        const lastSuccess =
+          typeof token._lastSuccessfulSyncAt === "number" ? token._lastSuccessfulSyncAt : 0;
+        const staleSinceLastSuccess = Date.now() - lastSuccess;
+        if (staleSinceLastSuccess > MAX_STALE_SESSION_MS) {
+          console.error(
+            "jwt_db_sync_stale_ceiling_exceeded",
+            `staleMs=${staleSinceLastSuccess}`
+          );
+          throw new Error("session_stale_ceiling_exceeded");
+        }
+
         console.error("jwt_db_sync_failed", error instanceof Error ? error.message : error);
       }
     }
