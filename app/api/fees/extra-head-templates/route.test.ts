@@ -27,10 +27,20 @@ jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
     extraFeeHeadTemplate: {
-      findMany: (...args: unknown[]) => mockTemplateFindMany(...args),
       create: (...args: unknown[]) => mockTemplateCreate(...args),
     },
   },
+}));
+
+// GET's list read now goes through the app_tenant-connected, RLS-restricted
+// client (docs/SECURITY_REVIEW.md) instead of the app's normal prisma import.
+const mockWithTenantScopedClient = jest.fn(async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+  fn({ extraFeeHeadTemplate: { findMany: (...args: unknown[]) => mockTemplateFindMany(...args) } })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const postRequest = (body: unknown) =>
@@ -46,6 +56,7 @@ describe("GET /api/fees/extra-head-templates", () => {
     mockGetServerSession.mockReset();
     mockResolveFeesSchoolIdForSession.mockReset();
     mockTemplateFindMany.mockReset();
+    mockWithTenantScopedClient.mockClear();
   });
 
   it("returns 401 when no session", async () => {

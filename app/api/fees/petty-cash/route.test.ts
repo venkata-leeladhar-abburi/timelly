@@ -23,11 +23,22 @@ jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
     pettyCashExpense: {
-      findMany: (...args: unknown[]) => mockFindMany(...args),
       findFirst: (...args: unknown[]) => mockFindFirst(...args),
       create: (...args: unknown[]) => mockCreate(...args),
     },
   },
+}));
+
+// GET's list read now goes through the app_tenant-connected, RLS-restricted
+// client (docs/SECURITY_REVIEW.md) instead of the app's normal prisma import.
+// POST's create (with its voucher-number retry logic) is unchanged.
+const mockWithTenantScopedClient = jest.fn(async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+  fn({ pettyCashExpense: { findMany: (...args: unknown[]) => mockFindMany(...args) } })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const postRequest = (body: unknown) =>
@@ -54,6 +65,7 @@ describe("GET /api/fees/petty-cash", () => {
     mockFindMany.mockReset();
     mockFindFirst.mockReset();
     mockCreate.mockReset();
+    mockWithTenantScopedClient.mockClear();
   });
 
   it("returns 401 when no session", async () => {

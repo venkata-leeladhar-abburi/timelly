@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
 
@@ -71,10 +72,15 @@ export async function GET() {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
-    const expenses = await prisma.pettyCashExpense.findMany({
-      where: { schoolId },
-      orderBy: [{ expenseDate: "desc" }, { voucherNo: "desc" }],
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go through
+    // the app_tenant connection, restricted by RLS, not just this route's own
+    // `where: { schoolId }` filter.
+    const expenses = await withTenantScopedClient(schoolId, (tx) =>
+      tx.pettyCashExpense.findMany({
+        where: { schoolId },
+        orderBy: [{ expenseDate: "desc" }, { voucherNo: "desc" }],
+      })
+    );
     return NextResponse.json({ expenses });
   } catch (error: unknown) {
     const err = error as { message?: string };

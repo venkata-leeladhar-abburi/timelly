@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { extraHeadTemplatesErrorResponse } from "./mapPrismaError";
 import { resolveFeesSchoolIdForSession } from "./resolveSchoolId";
 import { invalidateAssignCatalogServerCache } from "@/lib/fees/assignCatalogServerCache";
@@ -26,10 +27,15 @@ export async function GET() {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
-    const templates = await prisma.extraFeeHeadTemplate.findMany({
-      where: { schoolId },
-      orderBy: [{ name: "asc" }, { createdAt: "desc" }],
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go through
+    // the app_tenant connection, restricted by RLS, not just this route's own
+    // `where: { schoolId }` filter.
+    const templates = await withTenantScopedClient(schoolId, (tx) =>
+      tx.extraFeeHeadTemplate.findMany({
+        where: { schoolId },
+        orderBy: [{ name: "asc" }, { createdAt: "desc" }],
+      })
+    );
     return NextResponse.json({ templates });
   } catch (error: unknown) {
     return extraHeadTemplatesErrorResponse(error, "extra-head-templates GET");
