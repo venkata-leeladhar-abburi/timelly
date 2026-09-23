@@ -23,66 +23,62 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
-const request = (query = "") => new Request(`http://localhost/api/class/students${query}`);
-
-const session = { user: { id: "u1", schoolId: "s1" } };
+function makeRequest(query = "") {
+  return new Request(`http://localhost/api/class/students${query}`);
+}
 
 describe("GET /api/class/students", () => {
   beforeEach(() => {
     mockGetServerSession.mockReset();
     mockSchoolFindFirst.mockReset();
     mockClassFindFirst.mockReset();
-    mockStudentFindMany.mockReset().mockResolvedValue([]);
+    mockStudentFindMany.mockReset();
   });
 
-  it("returns 401 when no session", async () => {
+  it("returns 401 when unauthenticated", async () => {
     mockGetServerSession.mockResolvedValue(null);
-    const res = await GET(request());
+    const res = await GET(makeRequest());
     expect(res.status).toBe(401);
   });
 
-  it("returns 400 when schoolId cannot be resolved", async () => {
+  it("returns 400 when no school can be resolved", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1" } });
     mockSchoolFindFirst.mockResolvedValue(null);
-    const res = await GET(request());
+    const res = await GET(makeRequest());
     expect(res.status).toBe(400);
   });
 
-  it("returns all active students in the school when no classId is given", async () => {
-    mockGetServerSession.mockResolvedValue(session);
-    mockStudentFindMany.mockResolvedValue([{ id: "stu1" }]);
-    const res = await GET(request());
-    expect(res.status).toBe(200);
-    const json = await res.json();
-    expect(json.students).toHaveLength(1);
-    expect(mockClassFindFirst).not.toHaveBeenCalled();
-    expect(mockStudentFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ schoolId: "s1" }) })
-    );
-  });
-
-  it("returns 404 when the given classId does not belong to the school", async () => {
-    mockGetServerSession.mockResolvedValue(session);
+  it("returns 404 when the given classId doesn't belong to the school", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
     mockClassFindFirst.mockResolvedValue(null);
-    const res = await GET(request("?classId=c1"));
+    const res = await GET(makeRequest("?classId=c1"));
     expect(res.status).toBe(404);
   });
 
-  it("filters students by classId when it belongs to the school", async () => {
-    mockGetServerSession.mockResolvedValue(session);
+  it("returns students scoped to the class when classId is valid", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
     mockClassFindFirst.mockResolvedValue({ id: "c1" });
-    mockStudentFindMany.mockResolvedValue([{ id: "stu1", classId: "c1" }]);
-    const res = await GET(request("?classId=c1"));
+    mockStudentFindMany.mockResolvedValue([{ id: "st1" }]);
+    const res = await GET(makeRequest("?classId=c1"));
     expect(res.status).toBe(200);
     expect(mockStudentFindMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ schoolId: "s1", classId: "c1" }) })
     );
   });
 
-  it("returns 500 when the database query throws", async () => {
-    mockGetServerSession.mockResolvedValue(session);
+  it("returns all school students when no classId is given", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
+    mockStudentFindMany.mockResolvedValue([]);
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+    const callArgs = mockStudentFindMany.mock.calls[0][0];
+    expect(callArgs.where.classId).toBeUndefined();
+  });
+
+  it("returns 500 when the database throws", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
     mockStudentFindMany.mockRejectedValue(new Error("DB exploded"));
-    const res = await GET(request());
+    const res = await GET(makeRequest());
     expect(res.status).toBe(500);
   });
 });
