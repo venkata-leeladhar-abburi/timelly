@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
@@ -45,26 +46,31 @@ export async function GET(req: Request) {
     }
     if (andClauses.length > 0) where.AND = andClauses;
 
-    const circulars = await prisma.circular.findMany({
-      where,
-      include: { issuedBy: { select: { id: true, name: true } } },
-      orderBy: { date: "desc" },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go through
+    // the app_tenant connection, restricted by RLS policies, not just this
+    // route's own `where: { schoolId }` filter above.
+    const enriched = await withTenantScopedClient(schoolId!, async (tx) => {
+      const circulars = await tx.circular.findMany({
+        where,
+        include: { issuedBy: { select: { id: true, name: true } } },
+        orderBy: { date: "desc" },
+      });
+
+      const allClassIds = [...new Set(circulars.map((c) => c.classId).filter((id): id is string => !!id))];
+      const classes =
+        allClassIds.length > 0
+          ? await tx.class.findMany({
+              where: { id: { in: allClassIds } },
+              select: { id: true, name: true, section: true },
+            })
+          : [];
+      const classMap = Object.fromEntries(classes.map((cls) => [cls.id, cls]));
+
+      return circulars.map((c) => ({
+        ...c,
+        targetClass: c.classId ? classMap[c.classId] ?? null : null,
+      }));
     });
-
-    const allClassIds = [...new Set(circulars.map((c) => c.classId).filter((id): id is string => !!id))];
-    const classes =
-      allClassIds.length > 0
-        ? await prisma.class.findMany({
-            where: { id: { in: allClassIds } },
-            select: { id: true, name: true, section: true },
-          })
-        : [];
-    const classMap = Object.fromEntries(classes.map((cls) => [cls.id, cls]));
-
-    const enriched = circulars.map((c) => ({
-      ...c,
-      targetClass: c.classId ? classMap[c.classId] ?? null : null,
-    }));
 
     return NextResponse.json({ circulars: enriched }, { status: 200 });
   } catch (e: unknown) {

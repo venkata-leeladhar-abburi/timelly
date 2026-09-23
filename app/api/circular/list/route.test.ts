@@ -20,9 +20,25 @@ jest.mock("@/lib/db", () => ({
   default: {
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
     user: { update: (...args: unknown[]) => mockUserUpdate(...args) },
-    circular: { findMany: (...args: unknown[]) => mockCircularFindMany(...args) },
-    class: { findMany: (...args: unknown[]) => mockClassFindMany(...args) },
   },
+}));
+
+// The route now reads circulars/classes through the app_tenant-connected,
+// RLS-restricted client (docs/SECURITY_REVIEW.md) instead of the app's
+// normal prisma import - simulate that transaction wrapper here, backed by
+// the same mocks, so these tests still exercise the route's query-building
+// logic without needing a real database connection.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      circular: { findMany: (...args: unknown[]) => mockCircularFindMany(...args) },
+      class: { findMany: (...args: unknown[]) => mockClassFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 function makeRequest(query = "") {
@@ -36,8 +52,16 @@ describe("GET /api/circular/list", () => {
     mockUserUpdate.mockReset();
     mockCircularFindMany.mockReset();
     mockClassFindMany.mockReset();
+    mockWithTenantScopedClient.mockClear();
     mockCircularFindMany.mockResolvedValue([]);
     mockClassFindMany.mockResolvedValue([]);
+  });
+
+  it("reads through the RLS-restricted app_tenant client, scoped to the session's own schoolId", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+    expect(mockWithTenantScopedClient).toHaveBeenCalledWith("s1", expect.any(Function));
   });
 
   it("returns 401 when unauthenticated", async () => {
