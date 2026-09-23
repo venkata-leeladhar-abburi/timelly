@@ -69,15 +69,15 @@ describe("GET /api/chairman/dashboard", () => {
     mockQueryRaw.mockResolvedValue([
       {
         schoolName: "Greenwood",
-        totalStudents: 100n,
-        activeStudents: 90n,
-        totalClasses: 10n,
-        totalTeachers: 15n,
+        totalStudents: BigInt(100),
+        activeStudents: BigInt(90),
+        totalClasses: BigInt(10),
+        totalTeachers: BigInt(15),
         todayCollection: 500,
         totalCollection: 7000,
-        pendingDiscounts: 2n,
-        approvedDiscounts: 5n,
-        rejectedDiscounts: 1n,
+        pendingDiscounts: BigInt(2),
+        approvedDiscounts: BigInt(5),
+        rejectedDiscounts: BigInt(1),
       },
     ]);
     const res = await GET(makeRequest("?date=2026-01-10"));
@@ -90,7 +90,7 @@ describe("GET /api/chairman/dashboard", () => {
 
   it("returns a cached summary on a second call for the same day", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "CHAIRMAN", schoolId: "s1" } });
-    mockQueryRaw.mockResolvedValue([{ schoolName: "Greenwood", totalStudents: 1n, activeStudents: 1n, totalClasses: 1n, totalTeachers: 1n, todayCollection: 0, totalCollection: 0, pendingDiscounts: 0n, approvedDiscounts: 0n, rejectedDiscounts: 0n }]);
+    mockQueryRaw.mockResolvedValue([{ schoolName: "Greenwood", totalStudents: BigInt(1), activeStudents: BigInt(1), totalClasses: BigInt(1), totalTeachers: BigInt(1), todayCollection: 0, totalCollection: 0, pendingDiscounts: BigInt(0), approvedDiscounts: BigInt(0), rejectedDiscounts: BigInt(0) }]);
     await GET(makeRequest("?date=2026-05-05"));
     mockQueryRaw.mockClear();
     const res = await GET(makeRequest("?date=2026-05-05"));
