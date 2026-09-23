@@ -22,7 +22,7 @@ const glass =
 export default function UpcomingWorkshops({ workshops }: UpcomingWorkshopsProps) {
   const router = useRouter();
   const openWorkshopsTab = () => {
-    router.push("/frontend/pages/parent?tab=workshops");
+    router.push("/parent?tab=workshops");
   };
 
   return (

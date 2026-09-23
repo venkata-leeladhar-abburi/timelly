@@ -15,7 +15,7 @@ function buildStudentDetailsFeesUrl(basePath: string, studentId: string) {
 
 /** School admin: open Student Details for a student and scroll to the fees block. */
 export function schoolAdminStudentDetailsFeesUrl(studentId: string) {
-  return buildStudentDetailsFeesUrl("/frontend/pages/schooladmin", studentId);
+  return buildStudentDetailsFeesUrl("/schooladmin", studentId);
 }
 
 export function warmSchoolAdminStudentDetails(studentId: string) {
@@ -24,7 +24,7 @@ export function warmSchoolAdminStudentDetails(studentId: string) {
 
 /** Teacher portal: same student profile + fees focus. */
 export function teacherStudentDetailsFeesUrl(studentId: string) {
-  return buildStudentDetailsFeesUrl("/frontend/pages/teacher", studentId);
+  return buildStudentDetailsFeesUrl("/teacher", studentId);
 }
 
 /**
@@ -41,11 +41,11 @@ export function studentDetailsFeesUrlForPathname(pathname: string | null, studen
 
 /** Open Student Details tab for a student (no fees focus). */
 export function schoolAdminStudentDetailsUrl(studentId: string) {
-  return buildStudentDetailsUrl("/frontend/pages/schooladmin", studentId);
+  return buildStudentDetailsUrl("/schooladmin", studentId);
 }
 
 export function teacherStudentDetailsUrl(studentId: string) {
-  return buildStudentDetailsUrl("/frontend/pages/teacher", studentId);
+  return buildStudentDetailsUrl("/teacher", studentId);
 }
 
 export function studentDetailsUrlForPathname(pathname: string | null, studentId: string): string {

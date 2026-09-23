@@ -130,7 +130,7 @@ export default function AppHeader({ title, profile, hideSearchAndNotifications =
       {/* PANELS */}
       {showNotifications && (
         <NotificationPanel
-          parentPortal={Boolean(pathname?.includes("/frontend/pages/parent"))}
+          parentPortal={Boolean(pathname?.includes("/parent"))}
           onSnapshot={onNotificationSnapshot}
           onClose={() => {
             setShowNotifications(false);

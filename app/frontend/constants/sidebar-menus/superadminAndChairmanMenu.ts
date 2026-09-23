@@ -17,7 +17,7 @@ import { Permission } from "../../enums/permissions";
 export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     {
         label: "Dashboard",
-        href: "/frontend/pages/superadmin",
+        href: "/superadmin",
         tab: "dashboard",
         icon: Home,
         permission: Permission.DASHBOARD,
@@ -25,14 +25,14 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     {
         label: "Add School",
         mobileLabel: "Add",
-        href: "/frontend/pages/superadmin?tab=addschool",
+        href: "/superadmin?tab=addschool",
         tab: "addschool",
         icon: Plus,
         permission: Permission.ADD_SCHOOL,
     },
     {
         label: "Schools",
-        href: "/frontend/pages/superadmin?tab=schools",
+        href: "/superadmin?tab=schools",
         tab: "schools",
         icon: Users,
         permission: Permission.SCHOOLS,
@@ -40,7 +40,7 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     {
         label: "Add Chairman",
         mobileLabel: "Chairman",
-        href: "/frontend/pages/superadmin?tab=addchairman",
+        href: "/superadmin?tab=addchairman",
         tab: "addchairman",
         icon: UserCheck,
         permission: Permission.SCHOOLS,
@@ -48,14 +48,14 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     {
         label: "Remove schools",
         mobileLabel: "Remove",
-        href: "/frontend/pages/superadmin?tab=removeschools",
+        href: "/superadmin?tab=removeschools",
         tab: "removeschools",
         icon: Trash2,
         permission: Permission.SCHOOLS,
     },
     {
         label: "Subscriptions",
-        href: "/frontend/pages/superadmin?tab=subscriptions",
+        href: "/superadmin?tab=subscriptions",
         tab: "subscriptions",
         icon: Settings2,
         permission: Permission.SCHOOLS,
@@ -63,7 +63,7 @@ export const SUPERADMIN_SIDEBAR_ITEMS: SidebarItem[] = [
     {
         label: "Fees Transactions",
         mobileLabel: "Fees",
-        href: "/frontend/pages/superadmin?tab=transactions",
+        href: "/superadmin?tab=transactions",
         tab: "transactions",
         icon: CreditCard,
         permission: Permission.FEES_TRANSACTIONS,
@@ -79,21 +79,21 @@ export const CHAIRMAN_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Dashboard",
         tab: "dashboard",
-        href: "/frontend/pages/chairman?tab=dashboard",
+        href: "/chairman?tab=dashboard",
         icon: LayoutDashboard,
         permission: Permission.DASHBOARD,
     },
     {
         label: "Discount Approvals",
         tab: "discount-approvals",
-        href: "/frontend/pages/chairman?tab=discount-approvals",
+        href: "/chairman?tab=discount-approvals",
         icon: DollarSign,
         permission: Permission.FEES,
     },
     {
         label: "Settings",
         tab: "settings",
-        href: "/frontend/pages/chairman?tab=settings",
+        href: "/chairman?tab=settings",
         icon: Settings,
         permission: Permission.SETTINGS,
     },

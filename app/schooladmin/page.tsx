@@ -3,27 +3,27 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import AppLayout from "../../AppLayout";
-import { SCHOOLADMIN_MENU_ITEMS, SCHOOLADMIN_TAB_TITLES } from "../../constants/sidebar";
-import RequiredRoles from "../../auth/RequiredRoles";
-import SchoolAdminStudentsTab from "../../components/schooladmin/Students";
-import SchoolAdminClassesTab from "../../components/schooladmin/Classes";
-import SchoolTeacherLeavesTab from "../../components/schooladmin/TeacherLeaves";
-import NewsFeed from "../../components/schooladmin/Newsfeed";
-import WorkshopsAndEventsTab from "../../components/schooladmin/workshopsandevents";
-import TeacherAuditTab from "../../components/schooladmin/TeacherAudit";
-import AddUser from "../../components/schooladmin/AddUser";
-import SchoolAdminDashboard from "../../components/schooladmin/dashboard/page";
-import StudentDetails from "../../components/schooladmin/StudentDetails";
-import Certificates from "../../components/schooladmin/Certificates";
-//import { ExamsPageInner } from "../../components/schooladmin/Exams";
-import ExamsPage from "../../components/schooladmin/exams/exams";
-import SchoolAdminMarksTab from "../../components/schooladmin/marks/Marks";
-import SchoolAdminSettingsTab from "../../components/schooladmin/Settings";
-import SchoolAdminTeacherTab from "../../components/schooladmin/TeachersTab";
-import SchoolAdminCircularsTab from "../../components/schooladmin/circularTab";
-import SchoolAdminTimetableTab from "../../components/schooladmin/Timetable";
-import AdmissionTab from "../../components/teacher/admission/Admission";
+import AppLayout from "@/app/frontend/AppLayout";
+import { SCHOOLADMIN_MENU_ITEMS, SCHOOLADMIN_TAB_TITLES } from "@/app/frontend/constants/sidebar";
+import RequiredRoles from "@/app/frontend/auth/RequiredRoles";
+import SchoolAdminStudentsTab from "@/app/frontend/components/schooladmin/Students";
+import SchoolAdminClassesTab from "@/app/frontend/components/schooladmin/Classes";
+import SchoolTeacherLeavesTab from "@/app/frontend/components/schooladmin/TeacherLeaves";
+import NewsFeed from "@/app/frontend/components/schooladmin/Newsfeed";
+import WorkshopsAndEventsTab from "@/app/frontend/components/schooladmin/workshopsandevents";
+import TeacherAuditTab from "@/app/frontend/components/schooladmin/TeacherAudit";
+import AddUser from "@/app/frontend/components/schooladmin/AddUser";
+import SchoolAdminDashboard from "@/app/frontend/components/schooladmin/dashboard/DashboardContent";
+import StudentDetails from "@/app/frontend/components/schooladmin/StudentDetails";
+import Certificates from "@/app/frontend/components/schooladmin/Certificates";
+//import { ExamsPageInner } from "@/app/frontend/components/schooladmin/Exams";
+import ExamsPage from "@/app/frontend/components/schooladmin/exams/exams";
+import SchoolAdminMarksTab from "@/app/frontend/components/schooladmin/marks/Marks";
+import SchoolAdminSettingsTab from "@/app/frontend/components/schooladmin/Settings";
+import SchoolAdminTeacherTab from "@/app/frontend/components/schooladmin/TeachersTab";
+import SchoolAdminCircularsTab from "@/app/frontend/components/schooladmin/circularTab";
+import SchoolAdminTimetableTab from "@/app/frontend/components/schooladmin/Timetable";
+import AdmissionTab from "@/app/frontend/components/teacher/admission/Admission";
 import { fetchSchoolDashboardFast } from "@/lib/school/loadSchoolDashboard";
 import { warmSchoolDashboardCollectionHeads } from "@/lib/school/loadSchoolDashboardCollection";
 import { warmSchoolAnalysisPage } from "@/lib/school/loadSchoolAnalysis";
@@ -32,7 +32,7 @@ import { warmAddUserPage } from "@/lib/school/fetchAddUserPage";
 import { warmTeachersPage } from "@/lib/teacher/fetchTeachersPage";
 import { warmSchoolAdminFastTabs, warmSchoolAdminTab } from "@/lib/school/loadSchoolAdminFastTabs";
 import { todayYmdLocal } from "@/lib/school/schoolDashboardCollection";
-import TimellyLoader from "../../components/common/TimellyLoader";
+import TimellyLoader from "@/app/frontend/components/common/TimellyLoader";
 
 function SchoolAdminContent() {
   const { data: session } = useSession();
@@ -105,10 +105,10 @@ function SchoolAdminContent() {
 
   useEffect(() => {
     if (tab === "fees") {
-      router.replace("/frontend/pages/schooladmin/fees");
+      router.replace("/schooladmin/fees");
     }
     if (tab === "analysis") {
-      router.replace("/frontend/pages/schooladmin/analysis");
+      router.replace("/schooladmin/analysis");
     }
   }, [router, tab]);
 

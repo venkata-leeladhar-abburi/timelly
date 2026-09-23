@@ -179,7 +179,7 @@ export function EventDetailsSidebar({
                 <p className="text-sm text-white/70">Complete payment to confirm enrollment</p>
                 <PayButton
                   amount={eventAmount}
-                  returnPath="/frontend/pages/parent?tab=workshops"
+                  returnPath="/parent?tab=workshops"
                   eventRegistrationId={registrationId}
                   onSuccess={onEnrollSuccess}
                 />

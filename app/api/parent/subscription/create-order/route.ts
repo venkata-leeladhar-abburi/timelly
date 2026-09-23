@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const requestedAmount = typeof body.amount === "number" ? body.amount : undefined;
-    const returnPath = (body.return_path as string) || "/frontend/pages/parent?tab=profile";
+    const returnPath = (body.return_path as string) || "/parent?tab=profile";
 
     const student = await prisma.student.findUnique({
       where: { id: session.user.studentId },
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
       process.env.NEXTAUTH_URL ||
       "http://localhost:3000";
     const path = returnPath.startsWith("/") ? returnPath : `/${returnPath}`;
-    const pathOnly = path.split("?")[0].replace(/\/$/, "") || "/frontend/pages/parent?tab=profile";
+    const pathOnly = path.split("?")[0].replace(/\/$/, "") || "/parent?tab=profile";
     const returnUrl = `${baseUrl.replace(/\/$/, "")}${pathOnly}`;
 
     const nameParts = (student.user?.name || student.fatherName || "Parent")

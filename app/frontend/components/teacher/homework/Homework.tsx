@@ -19,11 +19,11 @@ export default function TeacherHomeworkTab() {
   const homeworkId = searchParams.get("id");
 
   const handleBackFromSubmissions = () => {
-    router.push("/frontend/pages/teacher?tab=homework");
+    router.push("/teacher?tab=homework");
   };
 
   const handleViewSubmissions = (id: string) => {
-    router.push(`/frontend/pages/teacher?tab=homework&view=submissions&id=${id}`);
+    router.push(`/teacher?tab=homework&view=submissions&id=${id}`);
   };
   
 

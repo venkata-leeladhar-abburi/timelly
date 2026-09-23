@@ -23,7 +23,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
         label: "Analytics",
         description: "Performance Insights",
         tab: "analytics",
-        href: "/frontend/pages/parent?tab=analytics",
+        href: "/parent?tab=analytics",
         icon: ChartColumn,
         permission: Permission.ANALYTICS,
     requiresSubscription: true,
@@ -31,7 +31,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Home",
         tab: "dashboard",
-        href: "/frontend/pages/parent?tab=dashboard",
+        href: "/parent?tab=dashboard",
         icon: House,
         permission: Permission.HOME,
     requiresSubscription: true,
@@ -39,7 +39,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Profile",
         tab: "profile",
-        href: "/frontend/pages/parent?tab=profile",
+        href: "/parent?tab=profile",
         icon: User,
         permission: Permission.PROFILE,
         requiresSubscription: false,
@@ -47,7 +47,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Homework",
         tab: "homework",
-        href: "/frontend/pages/parent?tab=homework",
+        href: "/parent?tab=homework",
         icon: BookOpen,
         permission: Permission.HOMEWORK,
     requiresSubscription: true,
@@ -55,7 +55,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Timetable",
         tab: "timetable",
-        href: "/frontend/pages/parent?tab=timetable",
+        href: "/parent?tab=timetable",
         icon: CalendarDays,
         permission: Permission.TIMETABLE,
     requiresSubscription: true,
@@ -63,7 +63,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Attendance",
         tab: "attendance",
-        href: "/frontend/pages/parent?tab=attendance",
+        href: "/parent?tab=attendance",
         icon: Calendar,
         permission: Permission.ATTENDANCE,
     requiresSubscription: true,
@@ -71,7 +71,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Marks",
         tab: "marks",
-        href: "/frontend/pages/parent?tab=marks",
+        href: "/parent?tab=marks",
         icon: Award,
         permission: Permission.MARKS,
     requiresSubscription: true,
@@ -79,7 +79,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Exams & Syllabus",
         tab: "exams",
-        href: "/frontend/pages/parent?tab=exams",
+        href: "/parent?tab=exams",
         icon: ClipboardList,
         permission: Permission.EXAMS,
     requiresSubscription: true,
@@ -87,7 +87,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Chat",
         tab: "chat",
-        href: "/frontend/pages/parent?tab=chat",
+        href: "/parent?tab=chat",
         icon: MessageCircle,
         permission: Permission.CHAT,
     requiresSubscription: true,
@@ -95,7 +95,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Workshops",
         tab: "workshops",
-        href: "/frontend/pages/parent?tab=workshops",
+        href: "/parent?tab=workshops",
         icon: Briefcase,
         permission: Permission.WORKSHOPS,
     requiresSubscription: true,
@@ -103,7 +103,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Certificates",
         tab: "certificates",
-        href: "/frontend/pages/parent?tab=certificates",
+        href: "/parent?tab=certificates",
         icon: FileText,
         permission: Permission.CERTIFICATES,
     requiresSubscription: true,
@@ -111,7 +111,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Fees",
         tab: "fees",
-        href: "/frontend/pages/parent?tab=fees",
+        href: "/parent?tab=fees",
         icon: CreditCard,
         permission: Permission.FEES,
         requiresSubscription: false,
@@ -119,7 +119,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Leave Application",
         tab: "leave",
-        href: "/frontend/pages/parent?tab=leave",
+        href: "/parent?tab=leave",
         icon: CalendarClock,
         permission: Permission.STUDENT_LEAVE,
     requiresSubscription: true,
@@ -127,7 +127,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Settings",
         tab: "settings",
-        href: "/frontend/pages/parent?tab=settings",
+        href: "/parent?tab=settings",
         icon: Settings,
         permission: Permission.SETTINGS,
         requiresSubscription: false,
@@ -135,7 +135,7 @@ export const PARENT_MENU_ITEMS: SidebarItem[] = [
     {
         label: "Subscription",
         tab: "subscription",
-        href: "/frontend/pages/parent?tab=subscription",
+        href: "/parent?tab=subscription",
         icon: CreditCard,
         permission: Permission.FEES,
         requiresSubscription: false,

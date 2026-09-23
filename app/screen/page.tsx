@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ROUTES } from "../constants/routes";
+import { ROUTES } from "@/app/frontend/constants/routes";
 
 export default function ScreenPage() {
     const router = useRouter();

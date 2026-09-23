@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import RequiredRoles from "../../../auth/RequiredRoles";
-import AppLayout from "../../../AppLayout";
-import { SCHOOLADMIN_MENU_ITEMS } from "../../../constants/sidebar";
-import AnalysisDashboard, { type AnalysisSection } from "../../../components/schooladmin/Analysis";
+import RequiredRoles from "@/app/frontend/auth/RequiredRoles";
+import AppLayout from "@/app/frontend/AppLayout";
+import { SCHOOLADMIN_MENU_ITEMS } from "@/app/frontend/constants/sidebar";
+import AnalysisDashboard, { type AnalysisSection } from "@/app/frontend/components/schooladmin/Analysis";
 
 type Props = {
   section: AnalysisSection;

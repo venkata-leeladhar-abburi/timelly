@@ -255,7 +255,7 @@ export default function StudentsSection({
                 type="button"
                 className="mt-auto w-full rounded-full border border-lime-400/30
                 bg-lime-400/15 px-4 py-2 text-sm font-semibold text-lime-300 hover:bg-lime-400/25 transition"
-                onClick={()=>{router.push("/frontend/pages/teacher?tab=chat")}}
+                onClick={()=>{router.push("/teacher?tab=chat")}}
               >
                 Message Parent
               </button>

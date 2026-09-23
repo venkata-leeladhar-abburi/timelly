@@ -3,13 +3,13 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import AppLayout from "../../AppLayout";
-import RequiredRoles from "../../auth/RequiredRoles";
-import { CHAIRMAN_MENU_ITEMS } from "../../constants/sidebar";
-import ChairmanDashboard, { warmChairmanDashboard } from "../../components/chairman/ChairmanDashboard";
-import DiscountApprovals, { warmDiscountApprovals } from "../../components/chairman/DiscountApprovals";
-import ChairmanSettings from "../../components/chairman/ChairmanSettings";
-import TimellyLoader from "../../components/common/TimellyLoader";
+import AppLayout from "@/app/frontend/AppLayout";
+import RequiredRoles from "@/app/frontend/auth/RequiredRoles";
+import { CHAIRMAN_MENU_ITEMS } from "@/app/frontend/constants/sidebar";
+import ChairmanDashboard, { warmChairmanDashboard } from "@/app/frontend/components/chairman/ChairmanDashboard";
+import DiscountApprovals, { warmDiscountApprovals } from "@/app/frontend/components/chairman/DiscountApprovals";
+import ChairmanSettings from "@/app/frontend/components/chairman/ChairmanSettings";
+import TimellyLoader from "@/app/frontend/components/common/TimellyLoader";
 
 const CHAIRMAN_TITLES: Record<string, string> = {
   dashboard: "Dashboard",

@@ -99,7 +99,7 @@ export default function ParentDashboardClient() {
     // If locked and current tab is not allowed, redirect to subscription tab
     if (!["profile", "subscription", "fees", "settings"].includes(rawTab)) {
       // Use replace so back button does not go to locked tab again
-      router.replace("/frontend/pages/parent?tab=subscription");
+      router.replace("/parent?tab=subscription");
       return "subscription";
     }
     return rawTab;

@@ -105,7 +105,7 @@ export default function ParentFeesTab() {
             <PayButton
               amount={payable}
               onSuccess={fetchFee}
-              returnPath="/frontend/pages/parent?tab=fees"
+              returnPath="/parent?tab=fees"
             />
           </div>
           <p className="text-xs text-gray-500 mt-3">

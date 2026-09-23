@@ -3,15 +3,15 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import AppLayout from "../../AppLayout";
-import { SUPERADMIN_SIDEBAR_ITEMS } from "../../constants/sidebar";
-import Dashboard from "../../components/superadmin/Dashboard";
-import AddSchool from "../../components/superadmin/AddSchool";
-import AddChairman from "../../components/superadmin/AddChairman";
-import Schools from "../../components/superadmin/Schools";
-import Transactions from "../../components/superadmin/Transactions";
-import Subscriptions from "../../components/superadmin/Subscriptions";
-import RequiredRoles from "../../auth/RequiredRoles";
+import AppLayout from "@/app/frontend/AppLayout";
+import { SUPERADMIN_SIDEBAR_ITEMS } from "@/app/frontend/constants/sidebar";
+import Dashboard from "@/app/frontend/components/superadmin/Dashboard";
+import AddSchool from "@/app/frontend/components/superadmin/AddSchool";
+import AddChairman from "@/app/frontend/components/superadmin/AddChairman";
+import Schools from "@/app/frontend/components/superadmin/Schools";
+import Transactions from "@/app/frontend/components/superadmin/Transactions";
+import Subscriptions from "@/app/frontend/components/superadmin/Subscriptions";
+import RequiredRoles from "@/app/frontend/auth/RequiredRoles";
 
 const SUPERADMIN_TAB_TITLES: Record<string, string> = {
   dashboard: "Dashboard",

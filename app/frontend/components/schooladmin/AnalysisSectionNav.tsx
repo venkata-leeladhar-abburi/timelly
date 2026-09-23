@@ -4,7 +4,7 @@ import { BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
 
-const BASE = "/frontend/pages/schooladmin/analysis";
+const BASE = "/schooladmin/analysis";
 
 const SECTIONS: { slug: string; label: string }[] = [
   { slug: "", label: "Overview & charts" },

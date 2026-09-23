@@ -26,7 +26,7 @@ export default function FeesSectionNav({ schoolId }: FeesSectionNavProps) {
   const pathname = usePathname();
 
   const goTo = (slug: string) => {
-    const target = slug ? `/frontend/pages/schooladmin/fees/${slug}` : "/frontend/pages/schooladmin/fees";
+    const target = slug ? `/schooladmin/fees/${slug}` : "/schooladmin/fees";
     if (pathname !== target) router.push(target);
   };
 
@@ -74,7 +74,7 @@ export default function FeesSectionNav({ schoolId }: FeesSectionNavProps) {
               whileHover={{ y: -2, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`group relative shrink-0 snap-start overflow-hidden whitespace-nowrap rounded-xl border px-3 py-2 text-center text-[11px] font-semibold shadow-[0_6px_16px_-10px_rgba(132,204,22,0.8)] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:px-3.5 sm:py-2.5 sm:text-xs ${
-                pathname === (slug ? `/frontend/pages/schooladmin/fees/${slug}` : "/frontend/pages/schooladmin/fees")
+                pathname === (slug ? `/schooladmin/fees/${slug}` : "/schooladmin/fees")
                   ? "border-lime-400/60 bg-gradient-to-r from-lime-500/35 via-lime-400/20 to-emerald-400/20 text-lime-50"
                   : "border-white/10 bg-white/[0.04] text-white/90 hover:border-lime-500/45 hover:bg-gradient-to-r hover:from-lime-500/[0.2] hover:via-lime-400/[0.12] hover:to-emerald-400/[0.12] hover:text-lime-50"
               }`}

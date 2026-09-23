@@ -100,8 +100,8 @@ export default function TeacherDashboard() {
       {data && (
         <TeacherDashboardContent
           data={data}
-          onManageClasses={() => router.push("/frontend/pages/teacher?tab=classes")}
-          onOpenChat={() => router.push("/frontend/pages/teacher?tab=chat")}
+          onManageClasses={() => router.push("/teacher?tab=classes")}
+          onOpenChat={() => router.push("/teacher?tab=chat")}
         />
       )}
     </div>

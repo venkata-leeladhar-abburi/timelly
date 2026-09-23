@@ -21,7 +21,10 @@ export default function SectionHeader({ title }: { title: string }) {
     };
 
     const portalRoute = portalRoutes[role];
-    if (portalRoute && pathname?.startsWith("/frontend/pages/")) {
+    const isPortalPath = ["/parent", "/teacher", "/schooladmin", "/superadmin", "/chairman"].some(
+      (prefix) => pathname?.startsWith(prefix)
+    );
+    if (portalRoute && isPortalPath) {
       // Redirect to portal dashboard
       router.push(portalRoute + "?tab=dashboard");
     }

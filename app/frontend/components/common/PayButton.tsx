@@ -8,7 +8,7 @@ import { createPaymentOrder } from "@/lib/api/payment";
 interface PayButtonProps {
   amount: number;
   onSuccess?: () => void;
-  /** When paying from parent fees, pass "/frontend/pages/parent?tab=fees" so redirect returns here */
+  /** When paying from parent fees, pass "/parent?tab=fees" so redirect returns here */
   returnPath?: string;
   /** For workshop payments, pass event registration id so enrollment is updated on success */
   eventRegistrationId?: string;

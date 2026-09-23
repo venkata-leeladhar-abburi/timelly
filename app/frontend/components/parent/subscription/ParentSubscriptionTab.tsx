@@ -153,9 +153,9 @@ export default function ParentSubscriptionTab() {
               <PayButton
                 amount={status.amount > 0 ? status.amount : 1}
                 endpoint="/api/parent/subscription/create-order"
-                returnPath="/frontend/pages/parent?tab=subscription"
+                returnPath="/parent?tab=subscription"
                 onSuccess={() => {
-                  window.location.href = "/frontend/pages/parent?tab=subscription";
+                  window.location.href = "/parent?tab=subscription";
                 }}
               />
               <p className="mt-2 text-[11px] text-white/50 flex items-center gap-1">

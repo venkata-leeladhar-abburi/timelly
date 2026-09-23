@@ -29,7 +29,7 @@ export function useAppHeaderState({
   const [liveProfile, setLiveProfile] = useState<HeaderProfile | null>(null);
 
   const { data: session } = useSession();
-  const isSuperAdminPanel = pathname?.startsWith("/frontend/pages/superadmin");
+  const isSuperAdminPanel = pathname?.startsWith("/superadmin");
   const baseProfile = useMemo(
     () => ({
       name: profile?.name?.trim() ? profile.name : session?.user?.name ?? "User",
@@ -191,7 +191,10 @@ export function useAppHeaderState({
   }, [refreshLiveProfile]);
 
   const openSettings = () => {
-    if (pathname?.startsWith("/frontend/pages/")) {
+    const isPortalPath = ["/parent", "/teacher", "/schooladmin", "/superadmin", "/chairman"].some(
+      (prefix) => pathname?.startsWith(prefix)
+    );
+    if (isPortalPath) {
       const params = new URLSearchParams(searchParams?.toString() ?? "");
       params.set("tab", "settings");
       router.push(`${pathname}?${params.toString()}`);
@@ -211,12 +214,12 @@ export function useAppHeaderState({
     const currentPath = pathname || "";
 
     // Navigate based on current path
-    if (currentPath.startsWith("/frontend/pages/parent")) {
-      router.push(`/frontend/pages/parent?tab=dashboard&search=${encodeURIComponent(query)}`);
-    } else if (currentPath.startsWith("/frontend/pages/teacher")) {
-      router.push(`/frontend/pages/teacher?tab=dashboard&search=${encodeURIComponent(query)}`);
-    } else if (currentPath.startsWith("/frontend/pages/schooladmin")) {
-      router.push(`/frontend/pages/schooladmin?tab=students&search=${encodeURIComponent(query)}`);
+    if (currentPath.startsWith("/parent")) {
+      router.push(`/parent?tab=dashboard&search=${encodeURIComponent(query)}`);
+    } else if (currentPath.startsWith("/teacher")) {
+      router.push(`/teacher?tab=dashboard&search=${encodeURIComponent(query)}`);
+    } else if (currentPath.startsWith("/schooladmin")) {
+      router.push(`/schooladmin?tab=students&search=${encodeURIComponent(query)}`);
     } else {
       // Default: navigate to current page with search query
       const params = new URLSearchParams(searchParams?.toString() ?? "");

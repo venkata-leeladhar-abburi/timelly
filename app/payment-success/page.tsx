@@ -81,7 +81,7 @@ function PaymentSuccessContent() {
         <div className="max-w-md w-full bg-[#1a1a1a] border border-[#333] rounded-2xl p-8 text-center">
           <p className="text-red-400 font-medium mb-4">{error || "Receipt not found"}</p>
           <Link
-            href="/frontend/pages/parent?tab=fees"
+            href="/parent?tab=fees"
             className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -159,7 +159,7 @@ function PaymentSuccessContent() {
         {/* Actions */}
         <div className="p-6 pt-0 flex flex-col gap-3">
           <Link
-            href="/frontend/pages/parent?tab=fees"
+            href="/parent?tab=fees"
             className="w-full py-3 px-4 rounded-xl font-semibold text-center text-black bg-lime-500 hover:bg-lime-400 transition flex items-center justify-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
