@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import type { Payment } from "@prisma/client";
 import { generateReceiptPDFServer } from "@/lib/fees/receiptGeneratorServer";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation, schoolIdViaTeacherClass, schoolIdViaTeacherRelation } from "@/lib/auth/tenant";
@@ -64,7 +65,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Student not found" }, { status: 404 });
         }
 
-        let payment: any = null;
+        type SyntheticPayment = {
+            id: string;
+            studentId: string;
+            amount: number;
+            status: string;
+            gateway: string;
+            method: string;
+            transactionId: string;
+            createdAt: Date;
+            feeTypeName: string;
+        };
+        let payment: SyntheticPayment | Payment | null = null;
 
         if (paymentId === "admission-fee") {
             payment = {
@@ -158,7 +170,7 @@ export async function GET(request: NextRequest) {
                   }))
                 : [
                       {
-                          feeType: payment.feeTypeName || "Fee Payment",
+                          feeType: ("feeTypeName" in payment && payment.feeTypeName) || "Fee Payment",
                           amount: Number(payment.amount) || 0,
                       },
                   ];

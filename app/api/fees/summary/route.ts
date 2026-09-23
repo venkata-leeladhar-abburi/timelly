@@ -78,7 +78,7 @@ export async function GET(req: Request) {
         const cached = await swrGet<{ fees: unknown[]; stats: unknown; nextCursor: string | null }>(cacheKey);
         const now = Date.now();
         if (cached && now < cached.freshUntil) {
-          return NextResponse.json({ ...(cached.value as any), cache: "fresh" }, { status: 200 });
+          return NextResponse.json({ ...cached.value, cache: "fresh" }, { status: 200 });
         }
 
         const payload = await loadFeeSummaryPage(schoolId, take, cursor);

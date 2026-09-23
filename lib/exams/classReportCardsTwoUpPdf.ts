@@ -2,6 +2,7 @@
  * A4 class report cards — 2 students per page, B&W formal layout,
  * school logo in header + centered logo watermark (fee-receipt style).
  */
+import type jsPDF from "jspdf";
 import { buildLogoWatermarkPng, loadSchoolLogoForPdf } from "@/lib/school/loadSchoolLogoForPdf";
 
 export type ClassReportCardMark = {
@@ -35,8 +36,7 @@ export type ClassReportCardsPdfInput = {
 };
 
 function drawHalfWatermark(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  doc: any,
+  doc: jsPDF,
   watermarkPng: string | null,
   y0: number,
   halfH: number,
@@ -59,8 +59,7 @@ function drawHalfWatermark(
 }
 
 function drawHalfCard(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  doc: any,
+  doc: jsPDF,
   student: ClassReportCardStudent,
   schoolName: string,
   schoolAddress: string | undefined,
@@ -122,7 +121,7 @@ function drawHalfCard(
   y = Math.max(y, y0 + (hasLogo ? 6.5 + logoSize : 14)) + 2;
 
   // Title band
-  doc.setFillColor(0);
+  doc.setFillColor(0, 0, 0);
   doc.rect(margin + 2, y, contentW - 4, 6.5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
@@ -176,7 +175,7 @@ function drawHalfCard(
     grade: margin + 165,
   };
 
-  doc.setFillColor(235);
+  doc.setFillColor(235, 235, 235);
   doc.rect(margin + 2, y - 3.2, contentW - 4, 5.2, "F");
   doc.setDrawColor(0);
   doc.setLineWidth(0.2);
@@ -200,7 +199,7 @@ function drawHalfCard(
 
   rows.forEach((m, idx) => {
     if (idx % 2 === 1) {
-      doc.setFillColor(248);
+      doc.setFillColor(248, 248, 248);
       doc.rect(margin + 2, y - 2.8, contentW - 4, 4, "F");
     }
     const pct = m.totalMarks > 0 ? (m.marks / m.totalMarks) * 100 : 0;
@@ -232,7 +231,7 @@ function drawHalfCard(
   doc.line(innerLeft, y, innerRight, y);
   y += 3.8;
 
-  doc.setFillColor(0);
+  doc.setFillColor(0, 0, 0);
   doc.rect(margin + 2, y - 3, contentW - 4, 5.5, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
