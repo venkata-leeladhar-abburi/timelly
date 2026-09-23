@@ -19,8 +19,18 @@ jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
     student: { findUnique: (...args: unknown[]) => mockStudentFindUnique(...args) },
-    attendance: { findMany: (...args: unknown[]) => mockAttendanceFindMany(...args) },
   },
+}));
+
+// Attendance reads now go through the app_tenant-connected, RLS-restricted
+// client (docs/SECURITY_REVIEW.md) instead of the app's normal prisma import.
+const mockWithTenantScopedClient = jest.fn(async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+  fn({ attendance: { findMany: (...args: unknown[]) => mockAttendanceFindMany(...args) } })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 jest.mock("@/lib/parent/parentPortalSwr", () => ({
@@ -40,8 +50,17 @@ describe("GET /api/attendance/view", () => {
     mockAttendanceFindMany.mockReset();
     mockSwrRead.mockReset();
     mockSwrWrite.mockReset();
+    mockWithTenantScopedClient.mockClear();
     mockSwrRead.mockResolvedValue({ value: null });
     mockSwrWrite.mockResolvedValue(undefined);
+  });
+
+  it("reads through the RLS-restricted app_tenant client, scoped to the resolved schoolId", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "t1", schoolId: "s1" } });
+    mockAttendanceFindMany.mockResolvedValue([]);
+    const res = await GET(makeRequest());
+    expect(res.status).toBe(200);
+    expect(mockWithTenantScopedClient).toHaveBeenCalledWith("s1", expect.any(Function));
   });
 
   it("returns 401 when unauthenticated", async () => {

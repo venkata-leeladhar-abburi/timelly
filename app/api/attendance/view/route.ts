@@ -2,25 +2,21 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
   PARENT_LIST_TTL,
 } from "@/lib/parent/parentPortalSwr";
 import { logger } from "@/lib/logger";
+import { schoolIdViaStudentId } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; studentId?: string | null };
 }): Promise<string | null> {
-  let schoolId = session.user.schoolId ?? null;
-  if (!schoolId && session.user.studentId) {
-    const st = await prisma.student.findUnique({
-      where: { id: session.user.studentId },
-      select: { schoolId: true },
-    });
-    schoolId = st?.schoolId ?? null;
-  }
-  return schoolId;
+  if (session.user.schoolId) return session.user.schoolId;
+  if (session.user.studentId) return schoolIdViaStudentId(session.user.studentId);
+  return null;
 }
 
 export async function GET(req: Request) {
@@ -96,21 +92,27 @@ export async function GET(req: Request) {
       }
     }
 
-    const attendances = await prisma.attendance.findMany({
-      where,
-      include: {
-        student: session.user.studentId
-          ? undefined
-          : {
-              include: {
-                user: { select: { id: true, name: true, email: true } },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go through
+    // the app_tenant connection, restricted by the Attendance table's RLS policy
+    // (a subquery via studentId -> Student.schoolId), not just this route's own
+    // `where: { class: { schoolId } } ` filter above.
+    const attendances = await withTenantScopedClient(schoolId, (tx) =>
+      tx.attendance.findMany({
+        where,
+        include: {
+          student: session.user.studentId
+            ? undefined
+            : {
+                include: {
+                  user: { select: { id: true, name: true, email: true } },
+                },
               },
-            },
-        class: { select: { id: true, name: true, section: true } },
-        teacher: { select: { id: true, name: true, email: true } },
-      },
-      orderBy: [{ date: "desc" }, { period: "asc" }],
-    });
+          class: { select: { id: true, name: true, section: true } },
+          teacher: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: [{ date: "desc" }, { period: "asc" }],
+      })
+    );
 
     const payload = { attendances };
 
