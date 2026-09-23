@@ -24,6 +24,7 @@ export async function GET(_req: Request, context: RouteParams) {
     const fee = await prisma.studentFee.findUnique({
       where: { studentId: id },
       include: {
+        student: { select: { schoolId: true } },
         discountApprovals: {
           orderBy: { createdAt: "desc" },
           take: 10,
@@ -36,6 +37,18 @@ export async function GET(_req: Request, context: RouteParams) {
         { message: "Fee details not found for this student" },
         { status: 404 }
       );
+    }
+
+    const sessionSchoolId =
+      typeof session.user.schoolId === "string" && session.user.schoolId.trim()
+        ? session.user.schoolId
+        : null;
+    if (
+      session.user.role !== "SUPERADMIN" &&
+      sessionSchoolId &&
+      sessionSchoolId !== fee.student.schoolId
+    ) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json({ fee });

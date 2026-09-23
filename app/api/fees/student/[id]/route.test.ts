@@ -81,11 +81,37 @@ describe("GET /api/fees/student/[id]", () => {
 
   it("returns the fee with its recent discount approvals", async () => {
     mockGetServerSession.mockResolvedValue(adminSession);
-    mockStudentFeeFindUnique.mockResolvedValue({ id: "sf1", discountApprovals: [{ id: "app1" }] });
+    mockStudentFeeFindUnique.mockResolvedValue({
+      id: "sf1",
+      student: { schoolId: "s1" },
+      discountApprovals: [{ id: "app1" }],
+    });
     const res = await GET(getRequest(), ctx);
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.fee.discountApprovals).toHaveLength(1);
+  });
+
+  it("returns 403 when a school-scoped user reads another school's fee record (cross-tenant)", async () => {
+    mockGetServerSession.mockResolvedValue(adminSession); // session.user.schoolId = "s1"
+    mockStudentFeeFindUnique.mockResolvedValue({
+      id: "sf1",
+      student: { schoolId: "s2" }, // belongs to a different school
+      discountApprovals: [],
+    });
+    const res = await GET(getRequest(), ctx);
+    expect(res.status).toBe(403);
+  });
+
+  it("allows a SUPERADMIN to read fee records across schools", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SUPERADMIN", schoolId: null } });
+    mockStudentFeeFindUnique.mockResolvedValue({
+      id: "sf1",
+      student: { schoolId: "s2" },
+      discountApprovals: [],
+    });
+    const res = await GET(getRequest(), ctx);
+    expect(res.status).toBe(200);
   });
 });
 
