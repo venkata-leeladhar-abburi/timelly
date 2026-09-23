@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import * as XLSX from "xlsx";
+import { readFirstSheetRows, excelSerialToYmd } from "@/lib/excel/readWorkbookRows";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
@@ -29,7 +29,7 @@ function normalizeAadhaar(value: unknown) {
 function parseDob(rawDob: any): Date {
   if (!rawDob) throw new Error("Date of birth (dob) is required");
   if (typeof rawDob === "number") {
-    const d = XLSX.SSF.parse_date_code(rawDob);
+    const d = excelSerialToYmd(rawDob);
     const parsed = parseDobToDate(
       `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`
     );
@@ -89,9 +89,7 @@ export async function POST(req: Request) {
     if (!file) return NextResponse.json({ message: "Excel file required" }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+    const rows = await readFirstSheetRows(buffer);
     if (!rows.length) return NextResponse.json({ message: "Excel empty" }, { status: 400 });
 
     const classes = await prisma.class.findMany({

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
-import * as XLSX from "xlsx";
+import { readFirstSheetRows, excelSerialToYmd } from "@/lib/excel/readWorkbookRows";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
 import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
@@ -58,7 +58,7 @@ function parseDob(rawDob: unknown): Date {
   }
 
   if (typeof rawDob === "number") {
-    const d = XLSX.SSF.parse_date_code(rawDob);
+    const d = excelSerialToYmd(rawDob);
     const parsed = parseDobToDate(`${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`);
     if (!parsed) throw new Error("Invalid date of birth");
     return parsed;
@@ -174,9 +174,7 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+    const rows = await readFirstSheetRows(buffer);
 
     if (!rows.length) {
       return NextResponse.json({ message: "Excel empty" }, { status: 400 });

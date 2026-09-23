@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
+import { readFirstSheetRows } from "@/lib/excel/readWorkbookRows";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
@@ -84,16 +84,7 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const firstName = workbook.SheetNames[0];
-    if (!firstName) {
-      return NextResponse.json({ message: "Excel workbook has no sheets" }, { status: 400 });
-    }
-    const sheet = workbook.Sheets[firstName];
-    if (!sheet) {
-      return NextResponse.json({ message: "Could not read the first worksheet" }, { status: 400 });
-    }
-    const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet);
+    const rows = await readFirstSheetRows(buffer);
     if (!rows.length) {
       return NextResponse.json({ message: "Excel sheet is empty" }, { status: 400 });
     }

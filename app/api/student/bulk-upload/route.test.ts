@@ -13,7 +13,7 @@ const mockStudentFindFirst = jest.fn();
 const mockBcryptHash = jest.fn();
 const mockTransaction = jest.fn();
 const mockUpsertStudentFeeFromStructure = jest.fn();
-const mockSheetToJson = jest.fn();
+const mockReadFirstSheetRows = jest.fn();
 
 jest.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
@@ -29,10 +29,9 @@ jest.mock("@/lib/fees/studentTuitionFromStructure", () => ({
   upsertStudentFeeFromStructure: (...args: unknown[]) => mockUpsertStudentFeeFromStructure(...args),
 }));
 
-jest.mock("xlsx", () => ({
-  read: jest.fn(() => ({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } })),
-  utils: { sheet_to_json: (...args: unknown[]) => mockSheetToJson(...args) },
-  SSF: { parse_date_code: jest.fn() },
+jest.mock("@/lib/excel/readWorkbookRows", () => ({
+  readFirstSheetRows: (...args: unknown[]) => mockReadFirstSheetRows(...args),
+  excelSerialToYmd: jest.fn(),
 }));
 
 jest.mock("@/lib/db", () => ({
@@ -82,7 +81,7 @@ describe("POST /api/student/bulk-upload", () => {
     mockBcryptHash.mockReset();
     mockTransaction.mockReset();
     mockUpsertStudentFeeFromStructure.mockReset();
-    mockSheetToJson.mockReset();
+    mockReadFirstSheetRows.mockReset();
 
     mockClassFindMany.mockResolvedValue([]);
     mockSchoolFindUnique.mockResolvedValue({ name: "Greenwood" });
@@ -112,14 +111,14 @@ describe("POST /api/student/bulk-upload", () => {
 
   it("returns 400 when the sheet has no rows", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([]);
+    mockReadFirstSheetRows.mockResolvedValue([]);
     const res = await POST(makeRequest(makeFile()));
     expect(res.status).toBe(400);
   });
 
   it("records a failed row when required fields are missing", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([{ name: "Alice" }]);
+    mockReadFirstSheetRows.mockResolvedValue([{ name: "Alice" }]);
     const res = await POST(makeRequest(makeFile()));
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -129,7 +128,7 @@ describe("POST /api/student/bulk-upload", () => {
 
   it("creates a new student for a valid row", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([validRow]);
+    mockReadFirstSheetRows.mockResolvedValue([validRow]);
     mockTransaction.mockImplementation(async (fn) =>
       fn({
         user: {
@@ -160,7 +159,7 @@ describe("POST /api/student/bulk-upload", () => {
 
   it("records a failed row when the transaction throws", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([validRow]);
+    mockReadFirstSheetRows.mockResolvedValue([validRow]);
     mockTransaction.mockRejectedValue(new Error("Timelly number already used"));
     const res = await POST(makeRequest(makeFile()));
     expect(res.status).toBe(200);

@@ -15,7 +15,7 @@ const mockBcryptHash = jest.fn();
 const mockTransaction = jest.fn();
 const mockUpsertStudentFeeFromStructure = jest.fn();
 const mockSetApplicationEnrolled = jest.fn();
-const mockSheetToJson = jest.fn();
+const mockReadFirstSheetRows = jest.fn();
 
 jest.mock("next-auth", () => ({
   getServerSession: (...args: unknown[]) => mockGetServerSession(...args),
@@ -35,10 +35,9 @@ jest.mock("@/lib/admission/admissionsListQuery", () => ({
   setApplicationEnrolled: (...args: unknown[]) => mockSetApplicationEnrolled(...args),
 }));
 
-jest.mock("xlsx", () => ({
-  read: jest.fn(() => ({ SheetNames: ["Sheet1"], Sheets: { Sheet1: {} } })),
-  utils: { sheet_to_json: (...args: unknown[]) => mockSheetToJson(...args) },
-  SSF: { parse_date_code: jest.fn() },
+jest.mock("@/lib/excel/readWorkbookRows", () => ({
+  readFirstSheetRows: (...args: unknown[]) => mockReadFirstSheetRows(...args),
+  excelSerialToYmd: jest.fn(),
 }));
 
 jest.mock("@/lib/db", () => ({
@@ -92,7 +91,7 @@ describe("POST /api/admissions/bulk-upload", () => {
     mockTransaction.mockReset();
     mockUpsertStudentFeeFromStructure.mockReset();
     mockSetApplicationEnrolled.mockReset();
-    mockSheetToJson.mockReset();
+    mockReadFirstSheetRows.mockReset();
 
     mockClassFindMany.mockResolvedValue([]);
     mockSchoolFindUnique.mockResolvedValue({ name: "Greenwood" });
@@ -123,14 +122,14 @@ describe("POST /api/admissions/bulk-upload", () => {
 
   it("returns 400 when the sheet is empty", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([]);
+    mockReadFirstSheetRows.mockResolvedValue([]);
     const res = await POST(makeRequest(makeFile()));
     expect(res.status).toBe(400);
   });
 
   it("records a failed row when required fields are invalid", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([{ name: "Alice", phoneNo: "123" }]);
+    mockReadFirstSheetRows.mockResolvedValue([{ name: "Alice", phoneNo: "123" }]);
     const res = await POST(makeRequest(makeFile()));
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -139,7 +138,7 @@ describe("POST /api/admissions/bulk-upload", () => {
 
   it("creates the application and converts it to a student by default", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([validRow]);
+    mockReadFirstSheetRows.mockResolvedValue([validRow]);
     mockStudentApplicationCreate.mockResolvedValue({ id: "app1", studentId: null });
     mockTransaction.mockImplementation(async (fn) =>
       fn({
@@ -166,7 +165,7 @@ describe("POST /api/admissions/bulk-upload", () => {
 
   it("only creates the application when createStudents=false", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([validRow]);
+    mockReadFirstSheetRows.mockResolvedValue([validRow]);
     mockStudentApplicationCreate.mockResolvedValue({ id: "app1", studentId: null });
     const res = await POST(makeRequest(makeFile(), "?createStudents=false"));
     expect(res.status).toBe(200);
@@ -178,7 +177,7 @@ describe("POST /api/admissions/bulk-upload", () => {
 
   it("skips conversion when the application was already converted", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } });
-    mockSheetToJson.mockReturnValue([validRow]);
+    mockReadFirstSheetRows.mockResolvedValue([validRow]);
     mockStudentApplicationFindFirst.mockResolvedValue({ id: "app1", studentId: "st1" });
     mockStudentApplicationUpdate.mockResolvedValue({ id: "app1", studentId: "st1" });
     const res = await POST(makeRequest(makeFile()));
