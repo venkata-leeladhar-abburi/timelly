@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+import { schoolIdViaAdminRelation, schoolIdViaStudentId } from "@/lib/auth/tenant";
 
 type Params = Promise<{ id: string }>;
 
@@ -13,21 +14,12 @@ const resolveSchoolId = async (session: {
   let schoolId = session.user.schoolId ?? null;
 
   if (!schoolId) {
-    // Try school from admin relation
-    const adminSchool = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = adminSchool?.id ?? null;
+    schoolId = await schoolIdViaAdminRelation(session.user.id);
 
     // For students: get school from student record
     const studentId = (session.user as { studentId?: string }).studentId;
     if (!schoolId && studentId) {
-      const student = await prisma.student.findUnique({
-        where: { id: studentId },
-        select: { schoolId: true },
-      });
-      schoolId = student?.schoolId ?? null;
+      schoolId = await schoolIdViaStudentId(studentId);
     }
 
     if (schoolId) {

@@ -4,37 +4,27 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+import {
+  schoolIdViaStudentId,
+  schoolIdViaTeacherClass,
+  schoolIdViaTeacherRelation,
+  schoolIdViaAdminRelation,
+} from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string; studentId?: string | null } }) {
   if (session.user.schoolId) return session.user.schoolId;
 
   if (session.user.role === "STUDENT" && session.user.studentId) {
-    const student = await prisma.student.findUnique({
-      where: { id: session.user.studentId },
-      select: { schoolId: true },
-    });
-    return student?.schoolId ?? null;
+    return schoolIdViaStudentId(session.user.studentId);
   }
 
   if (session.user.role === "TEACHER") {
-    const teacherClass = await prisma.class.findFirst({
-      where: { teacherId: session.user.id },
-      select: { schoolId: true },
-    });
-    if (teacherClass?.schoolId) return teacherClass.schoolId;
-
-    const teacherSchool = await prisma.school.findFirst({
-      where: { teachers: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    return teacherSchool?.id ?? null;
+    const viaClass = await schoolIdViaTeacherClass(session.user.id);
+    if (viaClass) return viaClass;
+    return schoolIdViaTeacherRelation(session.user.id);
   }
 
-  const adminSchool = await prisma.school.findFirst({
-    where: { admins: { some: { id: session.user.id } } },
-    select: { id: true },
-  });
-  return adminSchool?.id ?? null;
+  return schoolIdViaAdminRelation(session.user.id);
 }
 
 // GET: list appointments for current user (student or teacher)

@@ -4,24 +4,17 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation, schoolIdViaTeacherClass } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
 }): Promise<string | null> {
   let schoolId = session.user.schoolId ?? null;
   if (!schoolId) {
-    const school = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = school?.id ?? null;
+    schoolId = await schoolIdViaAdminRelation(session.user.id);
   }
   if (!schoolId && session.user.role === "TEACHER") {
-    const teacherClass = await prisma.class.findFirst({
-      where: { teacherId: session.user.id },
-      select: { schoolId: true },
-    });
-    schoolId = teacherClass?.schoolId ?? null;
+    schoolId = await schoolIdViaTeacherClass(session.user.id);
   }
   return schoolId;
 }

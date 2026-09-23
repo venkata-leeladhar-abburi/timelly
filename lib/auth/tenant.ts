@@ -62,3 +62,36 @@ export async function requireSession() {
   return { ok: true as const, session };
 }
 
+/**
+ * Shared fallback primitives for routes with their own bespoke `resolveSchoolId`
+ * (looser than {@link requireSchoolId}: callers decide which fallbacks apply and
+ * in what order, and may tolerate a null result). Extracted only to remove
+ * duplicated Prisma calls — each route still composes its own fallback chain,
+ * so behavior per route is unchanged.
+ */
+export async function schoolIdViaStudentId(studentId: string): Promise<string | null> {
+  const st = await prisma.student.findUnique({ where: { id: studentId }, select: { schoolId: true } });
+  return st?.schoolId ?? null;
+}
+
+export async function schoolIdViaTeacherClass(teacherId: string): Promise<string | null> {
+  const teacherClass = await prisma.class.findFirst({ where: { teacherId }, select: { schoolId: true } });
+  return teacherClass?.schoolId ?? null;
+}
+
+export async function schoolIdViaTeacherRelation(teacherId: string): Promise<string | null> {
+  const teacherSchool = await prisma.school.findFirst({
+    where: { teachers: { some: { id: teacherId } } },
+    select: { id: true },
+  });
+  return teacherSchool?.id ?? null;
+}
+
+export async function schoolIdViaAdminRelation(adminId: string): Promise<string | null> {
+  const adminSchool = await prisma.school.findFirst({
+    where: { admins: { some: { id: adminId } } },
+    select: { id: true },
+  });
+  return adminSchool?.id ?? null;
+}
+

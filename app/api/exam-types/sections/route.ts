@@ -4,19 +4,12 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
 }) {
-  let schoolId = session.user.schoolId;
-  if (!schoolId) {
-    const school = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = school?.id ?? null;
-  }
-  return schoolId;
+  return session.user.schoolId ?? (await schoolIdViaAdminRelation(session.user.id));
 }
 
 /** Replace subsections for an exam type. Empty array = single score (no subsections). */

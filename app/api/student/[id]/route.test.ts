@@ -37,6 +37,7 @@ jest.mock("next-auth", () => ({
 jest.mock("@/lib/auth/authOptions", () => ({}));
 
 jest.mock("@/lib/auth/tenant", () => ({
+  ...jest.requireActual("@/lib/auth/tenant"),
   requireSchoolId: (...args: unknown[]) => mockRequireSchoolId(...args),
 }));
 

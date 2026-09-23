@@ -4,29 +4,18 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { generateReceiptPDFServer } from "@/lib/fees/receiptGeneratorServer";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation, schoolIdViaTeacherClass, schoolIdViaTeacherRelation } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role?: string } }) {
     let schoolId = session.user.schoolId;
     if (!schoolId && (session.user.role === "SCHOOLADMIN" || session.user.role === "SUPERADMIN")) {
-        const adminSchool = await prisma.school.findFirst({
-            where: { admins: { some: { id: session.user.id } } },
-            select: { id: true },
-        });
-        schoolId = adminSchool?.id ?? null;
+        schoolId = await schoolIdViaAdminRelation(session.user.id);
     }
     if (!schoolId && session.user.role === "TEACHER") {
-        const teacherClass = await prisma.class.findFirst({
-            where: { teacherId: session.user.id },
-            select: { schoolId: true },
-        });
-        schoolId = teacherClass?.schoolId ?? null;
+        schoolId = await schoolIdViaTeacherClass(session.user.id);
     }
     if (!schoolId && session.user.role === "TEACHER") {
-        const teacherSchool = await prisma.school.findFirst({
-            where: { teachers: { some: { id: session.user.id } } },
-            select: { id: true },
-        });
-        schoolId = teacherSchool?.id ?? null;
+        schoolId = await schoolIdViaTeacherRelation(session.user.id);
     }
     return schoolId;
 }

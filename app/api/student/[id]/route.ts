@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
-import { requireSchoolId } from "@/lib/auth/tenant";
+import { requireSchoolId, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 import { withRequestTiming } from "@/lib/cache/requestTiming";
 import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
 import {
@@ -406,15 +406,7 @@ export async function GET(_req: Request, context: RouteParams) {
 }
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
-  let schoolId = session.user.schoolId;
-  if (!schoolId) {
-    const adminSchool = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = adminSchool?.id ?? null;
-  }
-  return schoolId;
+  return session.user.schoolId ?? (await schoolIdViaAdminRelation(session.user.id));
 }
 
 export async function PUT(req: Request, context: RouteParams) {

@@ -8,19 +8,14 @@ import {
   PARENT_LIST_TTL,
 } from "@/lib/parent/parentPortalSwr";
 import { logger } from "@/lib/logger";
+import { schoolIdViaStudentId } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; studentId?: string | null };
 }): Promise<string | null> {
-  let schoolId = session.user.schoolId ?? null;
-  if (!schoolId && session.user.studentId) {
-    const st = await prisma.student.findUnique({
-      where: { id: session.user.studentId },
-      select: { schoolId: true },
-    });
-    schoolId = st?.schoolId ?? null;
-  }
-  return schoolId;
+  if (session.user.schoolId) return session.user.schoolId;
+  if (session.user.studentId) return schoolIdViaStudentId(session.user.studentId);
+  return null;
 }
 
 export async function GET(req: Request) {

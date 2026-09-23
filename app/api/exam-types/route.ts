@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
+import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 const DEFAULT_EXAM_TYPES = ["TERM 1", "TERM 2", "FINAL"];
 
@@ -27,27 +28,14 @@ async function resolveSchoolId(session: {
 
   if (!schoolId) {
     if (session.user.role === "TEACHER") {
-      const teacherClass = await prisma.class.findFirst({
-        where: { teacherId: session.user.id },
-        select: { schoolId: true },
-      });
-      schoolId = teacherClass?.schoolId ?? null;
-
+      schoolId = await schoolIdViaTeacherClass(session.user.id);
       if (!schoolId) {
-        const teacherSchool = await prisma.school.findFirst({
-          where: { teachers: { some: { id: session.user.id } } },
-          select: { id: true },
-        });
-        schoolId = teacherSchool?.id ?? null;
+        schoolId = await schoolIdViaTeacherRelation(session.user.id);
       }
     }
 
     if (!schoolId) {
-      const school = await prisma.school.findFirst({
-        where: { admins: { some: { id: session.user.id } } },
-        select: { id: true },
-      });
-      schoolId = school?.id ?? null;
+      schoolId = await schoolIdViaAdminRelation(session.user.id);
     }
   }
 

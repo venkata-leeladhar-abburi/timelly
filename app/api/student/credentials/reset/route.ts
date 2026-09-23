@@ -6,21 +6,14 @@ import prisma from "@/lib/db";
 import { hashStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
 import { invalidateTenant } from "@/lib/cache/tenantCache";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 const MAX_RESET = 5000;
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null };
 }): Promise<string | null> {
-  let schoolId = session.user.schoolId ?? null;
-  if (!schoolId) {
-    const adminSchool = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = adminSchool?.id ?? null;
-  }
-  return schoolId;
+  return session.user.schoolId ?? (await schoolIdViaAdminRelation(session.user.id));
 }
 
 function buildWhere(

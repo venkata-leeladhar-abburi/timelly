@@ -9,15 +9,12 @@ import {
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
+import { schoolIdViaTeacherClass, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
   if (!schoolId && session.user.role === "TEACHER") {
-    const teacherClass = await prisma.class.findFirst({
-      where: { teacherId: session.user.id },
-      select: { schoolId: true },
-    });
-    schoolId = teacherClass?.schoolId ?? null;
+    schoolId = await schoolIdViaTeacherClass(session.user.id);
     if (!schoolId) {
       const teacherSchool = await prisma.user.findUnique({
         where: { id: session.user.id },
@@ -27,11 +24,7 @@ async function resolveSchoolId(session: { user: { id: string; schoolId?: string 
     }
   }
   if (!schoolId) {
-    const school = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = school?.id ?? null;
+    schoolId = await schoolIdViaAdminRelation(session.user.id);
   }
   return schoolId;
 }

@@ -14,19 +14,12 @@ import {
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null };
 }): Promise<string | null> {
-  let schoolId = session.user.schoolId ?? null;
-  if (!schoolId) {
-    const adminSchool = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = adminSchool?.id ?? null;
-  }
-  return schoolId;
+  return session.user.schoolId ?? (await schoolIdViaAdminRelation(session.user.id));
 }
 
 async function assertAdminSession() {

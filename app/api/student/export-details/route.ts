@@ -10,6 +10,7 @@ import {
 } from "@/lib/students/studentDetailsExport";
 import { resolveStudentDisplayClass } from "@/lib/students/resolveStudentDisplayClass";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 const MAX_EXPORT = 5000;
 
@@ -18,11 +19,7 @@ async function resolveSchoolId(session: {
 }): Promise<string | null> {
   let schoolId = session.user.schoolId ?? null;
   if (!schoolId) {
-    const adminSchool = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = adminSchool?.id ?? null;
+    schoolId = await schoolIdViaAdminRelation(session.user.id);
     if (schoolId) {
       await prisma.user.update({
         where: { id: session.user.id },

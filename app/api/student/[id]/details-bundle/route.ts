@@ -16,6 +16,7 @@ import {
   setShellCached,
 } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 type RouteParams =
   | { params: { id: string } }
@@ -26,11 +27,7 @@ async function resolveSchoolId(session: {
 }) {
   let schoolId = session.user.schoolId;
   if (!schoolId && (session.user.role === "SCHOOLADMIN" || session.user.role === "SUPERADMIN")) {
-    const adminSchool = await prisma.school.findFirst({
-      where: { admins: { some: { id: session.user.id } } },
-      select: { id: true },
-    });
-    schoolId = adminSchool?.id ?? null;
+    schoolId = await schoolIdViaAdminRelation(session.user.id);
   }
   return schoolId;
 }

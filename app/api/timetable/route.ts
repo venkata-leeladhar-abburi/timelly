@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { schoolIdViaStudentId, schoolIdViaTeacherClass } from "@/lib/auth/tenant";
 
 const DAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const WRITABLE_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN"]);
@@ -26,19 +27,11 @@ async function resolveSchoolId(session: { user: { id: string; role?: string | nu
   let schoolId = session.user.schoolId ?? null;
 
   if (!schoolId && session.user.studentId) {
-    const student = await prisma.student.findUnique({
-      where: { id: session.user.studentId },
-      select: { schoolId: true },
-    });
-    schoolId = student?.schoolId ?? null;
+    schoolId = await schoolIdViaStudentId(session.user.studentId);
   }
 
   if (!schoolId && session.user.role === "TEACHER") {
-    const teacherClass = await prisma.class.findFirst({
-      where: { teacherId: session.user.id },
-      select: { schoolId: true },
-    });
-    schoolId = teacherClass?.schoolId ?? null;
+    schoolId = await schoolIdViaTeacherClass(session.user.id);
   }
 
   if (!schoolId) {

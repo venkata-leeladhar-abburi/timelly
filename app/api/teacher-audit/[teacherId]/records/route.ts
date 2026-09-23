@@ -4,18 +4,14 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { TeacherAuditCategory } from "@prisma/client";
 import { logger } from "@/lib/logger";
+import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
 /* ================= HELPERS ================= */
 const SCORE_BASELINE = 50;
 const clampScore = (value: number) => Math.max(0, Math.min(100, value));
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
-  if (session.user.schoolId) return session.user.schoolId;
-  const adminSchool = await prisma.school.findFirst({
-    where: { admins: { some: { id: session.user.id } } },
-    select: { id: true },
-  });
-  return adminSchool?.id ?? null;
+  return session.user.schoolId ?? (await schoolIdViaAdminRelation(session.user.id));
 }
 
 function academicYearRange(academicYear: string): { start: Date; end: Date } | null {
