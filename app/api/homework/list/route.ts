@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
@@ -86,35 +87,41 @@ export async function GET(req: Request) {
       where.subject = subject;
     }
 
-    const homeworks = await prisma.homework.findMany({
-      where,
-      include: {
-        class: {
-          select: {
-            id: true,
-            name: true,
-            section: true,
-            _count: { select: { students: true } },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go through
+    // the app_tenant connection, restricted by RLS (Homework directly, and its
+    // nested `submissions` via HomeworkSubmission's own studentId -> Student
+    // subquery policy), not just this route's own `where: { schoolId }` filter.
+    const homeworks = await withTenantScopedClient(schoolId, (tx) =>
+      tx.homework.findMany({
+        where,
+        include: {
+          class: {
+            select: {
+              id: true,
+              name: true,
+              section: true,
+              _count: { select: { students: true } },
+            },
           },
+          teacher: {
+            select: { id: true, name: true, email: true },
+          },
+          _count: {
+            select: { submissions: true },
+          },
+          ...(session.user.studentId
+            ? {
+                submissions: {
+                  where: { studentId: session.user.studentId },
+                  take: 1,
+                },
+              }
+            : {}),
         },
-        teacher: {
-          select: { id: true, name: true, email: true },
-        },
-        _count: {
-          select: { submissions: true },
-        },
-        ...(session.user.studentId
-          ? {
-              submissions: {
-                where: { studentId: session.user.studentId },
-                take: 1,
-              },
-            }
-          : {}),
-      },
-      orderBy: { createdAt: "desc" },
-      take: session.user.studentId ? 100 : undefined,
-    });
+        orderBy: { createdAt: "desc" },
+        take: session.user.studentId ? 100 : undefined,
+      })
+    );
 
     if (session.user.studentId) {
       const homeworksWithSubmission = homeworks.map((homework) => {

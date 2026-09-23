@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -28,22 +29,27 @@ export async function GET(req: Request) {
       );
     }
 
-    const templates = await prisma.certificateTemplate.findMany({
-      where: {
-        schoolId: schoolId,
-      },
-      include: {
-        createdBy: {
-          select: { id: true, name: true, email: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go through
+    // the app_tenant connection, restricted by RLS, not just this route's own
+    // `where: { schoolId }` filter.
+    const templates = await withTenantScopedClient(schoolId, (tx) =>
+      tx.certificateTemplate.findMany({
+        where: {
+          schoolId: schoolId,
         },
-        _count: {
-          select: { certificates: true },
+        include: {
+          createdBy: {
+            select: { id: true, name: true, email: true },
+          },
+          _count: {
+            select: { certificates: true },
+          },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      })
+    );
 
     return NextResponse.json({ templates }, { status: 200 });
   } catch (error: unknown) {

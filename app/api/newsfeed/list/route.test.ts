@@ -24,10 +24,23 @@ jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
+  },
+}));
+
+// News feed reads (both the normal and raw-SQL-fallback paths) now go through
+// the app_tenant-connected, RLS-restricted client (docs/SECURITY_REVIEW.md)
+// instead of the app's normal prisma import.
+const mockWithTenantScopedClient = jest.fn(async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+  fn({
     newsFeed: { findMany: (...args: unknown[]) => mockNewsFeedFindMany(...args) },
     newsFeedLike: { findMany: (...args: unknown[]) => mockNewsFeedLikeFindMany(...args) },
     $queryRawUnsafe: (...args: unknown[]) => mockQueryRawUnsafe(...args),
-  },
+  })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const session = { user: { id: "u1", schoolId: "s1" } };
@@ -54,6 +67,7 @@ describe("GET /api/newsfeed/list", () => {
     mockNewsFeedLikeFindMany.mockReset().mockResolvedValue([]);
     mockQueryRawUnsafe.mockReset();
     mockPurgeExpiredNewsFeeds.mockReset().mockResolvedValue(undefined);
+    mockWithTenantScopedClient.mockClear();
   });
 
   it("returns 401 when no session", async () => {

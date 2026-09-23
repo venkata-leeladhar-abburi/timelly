@@ -23,10 +23,23 @@ jest.mock("@/lib/db", () => ({
   default: {
     student: { findUnique: (...args: unknown[]) => mockStudentFindUnique(...args) },
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
+  },
+}));
+
+// Event/registration/certificate reads now go through the app_tenant-connected,
+// RLS-restricted client (docs/SECURITY_REVIEW.md) instead of the app's normal
+// prisma import.
+const mockWithTenantScopedClient = jest.fn(async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+  fn({
     event: { findMany: (...args: unknown[]) => mockEventFindMany(...args) },
     eventRegistration: { findMany: (...args: unknown[]) => mockRegistrationFindMany(...args) },
     certificate: { findMany: (...args: unknown[]) => mockCertificateFindMany(...args) },
-  },
+  })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 jest.mock("@/lib/parent/parentPortalSwr", () => ({
@@ -51,6 +64,7 @@ describe("GET /api/events/list", () => {
     mockSwrWrite.mockReset();
     mockSwrRead.mockResolvedValue({ value: null });
     mockSwrWrite.mockResolvedValue(undefined);
+    mockWithTenantScopedClient.mockClear();
   });
 
   it("returns 401 when unauthenticated", async () => {
