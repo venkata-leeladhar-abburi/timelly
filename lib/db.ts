@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { PrismaClient } from "@prisma/client";
 import { bumpTenantCacheVersion } from "@/lib/cache/redis";
+import { logger } from "@/lib/logger";
 
 /** Bulk writes (e.g. recalculate all fees) bump Redis once at the end, not per row. */
 const deferredInvalidation = new AsyncLocalStorage<{ active: boolean }>();
@@ -187,7 +188,7 @@ const createPrisma = () => {
           const ms = performance.now() - start;
           const slowMs = Number(process.env.PRISMA_SLOW_QUERY_MS || "50");
           if (ms >= slowMs) {
-            console.warn("prisma_slow_query", {
+            logger.warn("prisma_slow_query", {
               model,
               operation,
               ms: Math.round(ms),

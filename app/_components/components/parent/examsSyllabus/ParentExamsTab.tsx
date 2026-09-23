@@ -56,7 +56,6 @@ export default function ParentExamsTab() {
           ? result
           : (result as { terms?: TermData[] })?.terms || [];
         setRawData(data);
-        console.log("Fetched exam terms:", data);
 
         if (data.length > 0) {
           const firstUpcoming = data.find((t) => t.status === "UPCOMING");
