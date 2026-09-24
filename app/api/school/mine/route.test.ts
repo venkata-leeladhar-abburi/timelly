@@ -12,13 +12,16 @@ jest.mock("next-auth", () => ({
 
 jest.mock("@/lib/auth/authOptions", () => ({}));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
-    school: {
-      findUnique: (...args: unknown[]) => mockFindUnique(...args),
-    },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      school: { findUnique: (...args: unknown[]) => mockFindUnique(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 jest.mock("@/lib/cache/tenantCache", () => ({
