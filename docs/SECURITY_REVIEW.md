@@ -268,3 +268,19 @@ was skipped. What was done instead:
   `lib/db/superadminRoutes.test.ts` fails if any handler under `app/api/superadmin/**` does not
   itself authorize SUPERADMIN (directly or via an authorizing helper in the same file), so the
   RLS-free connection cannot quietly serve a non-superadmin.
+
+### 3.3 Connection strings: set `connect_timeout` and `pool_timeout`
+
+Prisma's default connect timeout is 5 seconds. On a slow or distant link the TLS and login handshake
+to the Supabase pooler can take longer, which surfaces as `P1001: Can't reach database server` even
+though the port is open (every failure in the logs lands at ~5.1s). Measured on the dev machine: with
+the default, 2 of 10 parallel tenant transactions connected; with `connect_timeout=30` all 10 did, on
+both port 5432 and port 6543. Add `connect_timeout=30&pool_timeout=30` to **all three** URLs, locally
+and in the deployment environment:
+
+    DATABASE_URL        ...:6543/postgres?pgbouncer=true&connect_timeout=30&pool_timeout=30
+    DIRECT_URL          ...:5432/postgres?sslmode=require&connect_timeout=30&pool_timeout=30
+    DATABASE_URL_TENANT ...:5432/postgres?sslmode=require&connect_timeout=30&pool_timeout=30
+
+Restart the server after changing them. In a deployment region close to the database the handshake is
+much faster, so this is a safety margin there rather than a fix.
