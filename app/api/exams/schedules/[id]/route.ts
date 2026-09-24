@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
@@ -53,15 +54,27 @@ export async function GET(
 
     const { id } = await params;
 
-    const schedule = await prisma.examSchedule.findUnique({
-      where: { id },
-      include: {
-        term: {
-          include: {
-            class: { select: { id: true, name: true, section: true } },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // post-fetch `schedule.term.schoolId !== schoolId` check below.
+    const { schedule, tracking } = await withTenantScopedClient(schoolId, async (tx) => {
+      const sch = await tx.examSchedule.findUnique({
+        where: { id },
+        include: {
+          term: {
+            include: {
+              class: { select: { id: true, name: true, section: true } },
+            },
           },
         },
-      },
+      });
+      if (!sch || !sch.term) return { schedule: sch, tracking: null };
+
+      const trk = await tx.syllabusTracking.findFirst({
+        where: { termId: sch.term.id, subject: sch.subject },
+        include: { units: { orderBy: { order: "asc" } } },
+      });
+      return { schedule: sch, tracking: trk };
     });
 
     if (!schedule || !schedule.term || schedule.term.schoolId !== schoolId) {
@@ -69,10 +82,6 @@ export async function GET(
     }
 
     const term = schedule.term;
-    const tracking = await prisma.syllabusTracking.findFirst({
-      where: { termId: term.id, subject: schedule.subject },
-      include: { units: { orderBy: { order: "asc" } } },
-    });
 
     const syllabusList = tracking
       ? tracking.units.map((u) => ({
