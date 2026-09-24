@@ -23,6 +23,22 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+// When the caller has a schoolId, reads go through the app_tenant-connected,
+// RLS-restricted client (docs/SECURITY_REVIEW.md), backed by the same mocks.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      homework: { findUnique: (...args: unknown[]) => mockHomeworkFindUnique(...args) },
+      class: { findFirst: (...args: unknown[]) => mockClassFindFirst(...args) },
+      homeworkSubmission: { findMany: (...args: unknown[]) => mockSubmissionFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest() {
   return new Request("http://localhost/api/homework/hw1/submissions");
 }
