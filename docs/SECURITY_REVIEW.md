@@ -28,6 +28,8 @@
 `}
 ````
 `
+`**Status (2026-09-24): both gaps below are now closed in `lib/auth/authOptions.ts`.** The sync refreshes `role`, throws `account_deactivated` when `password` is null, and fails closed with `session_stale_ceiling_exceeded` after `MAX_STALE_SESSION_MS` (60 min) without a successful sync (covered by `lib/auth/authOptions.test.ts`). The analysis below is the original finding, kept for context.
+`
 `**What's stale, and for how long**:
 `- `schoolId`, `allowedFeatures`, `photoUrl` can lag the DB by up to 5
 `  minutes under normal conditions, and by the full duration of a DB
@@ -259,11 +261,9 @@ was skipped. What was done instead:
 - **`auth/[...nextauth]`**: runs before any session or school exists; nothing to scope by.
 - **`upload`**: no database access at all (object storage under `schools/<schoolId>/` taken from the
   session); nothing to migrate.
-- **`school/create`**: creates the tenant itself. **Open authorization gap (not changed here, needs a
-  product decision):** it requires only *a* session, with no role check, and the "already has a
-  school" guard is commented out, so any signed-in user (including a STUDENT) can create a school and
-  attach themselves as its admin. Restrict it to the onboarding role(s) (e.g. SCHOOLADMIN) or to
-  SUPERADMIN.
+- **`school/create`**: creates the tenant itself. **Authorization gap closed:** the handler now
+  returns 403 unless the session role is SCHOOLADMIN or SUPERADMIN (covered by `route.test.ts`). The
+  "already has a school" guard is re-enabled for SCHOOLADMIN (409); SUPERADMIN can create many.
 - **`superadmin/*`**: cross-tenant by design (decision in section 3). Compensating control added:
   `lib/db/superadminRoutes.test.ts` fails if any handler under `app/api/superadmin/**` does not
   itself authorize SUPERADMIN (directly or via an authorizing helper in the same file), so the

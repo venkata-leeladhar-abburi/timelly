@@ -26,7 +26,7 @@ export function AppointTeacherMobileList({
           >
             <div className="flex items-start gap-3">
               <img
-                src={item.avatar}
+                src={item.avatar} alt={item.teacherName}
                 className="h-9 w-9 rounded-full"
                 onError={(e) => {
                   e.currentTarget.src = DEFAULT_AVATAR;

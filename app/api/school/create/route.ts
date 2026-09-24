@@ -12,6 +12,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    // Only onboarding school admins (or the platform operator) may create a tenant.
+    const role = session.user.role;
+    if (role !== "SCHOOLADMIN" && role !== "SUPERADMIN") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const { name, address, location } = await req.json();
 
     if (!name || !address || !location) {
@@ -21,25 +27,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔹 Check if admin already has a school
-    // const existingSchool = await prisma.school.findFirst({
-    //   where: {
-    //     admins: {
-    //       some: { id: session.user.id },
-    //     },
-    //   },
-    // });
-
-    // if (existingSchool) {
-    //   return NextResponse.json(
-    //     {
-    //       message:
-    //         "You already created a school. You can only update it, not create a new one.",
-    //       school: existingSchool,
-    //     },
-    //     { status: 400 }
-    //   );
-    // }
+    // A school admin may own only one school; SUPERADMIN can onboard many.
+    if (role === "SCHOOLADMIN") {
+      const existingSchool = await prisma.school.findFirst({
+        where: { admins: { some: { id: session.user.id } } },
+        select: { id: true },
+      });
+      if (existingSchool) {
+        return NextResponse.json(
+          { message: "You already have a school. You can only update it, not create a new one." },
+          { status: 409 }
+        );
+      }
+    }
 
     // 🔹 Create school
     const school = await prisma.school.create({

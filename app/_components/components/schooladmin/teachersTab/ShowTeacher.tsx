@@ -84,7 +84,7 @@ const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
                     {/* Top Profile */}
                     <div className="flex items-center gap-6">
                         <img
-                            src={teacher.avatar}
+                            src={teacher.avatar} alt={teacher.name ?? "Teacher"}
                             className="w-20 h-20 rounded-2xl object-cover border border-white/10"
                         />
 

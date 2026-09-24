@@ -43,10 +43,8 @@ Admins, Teachers, and Parents/Students, each with their own portal.
   `core/`, `errors/`) and top-level utils (`logger.ts`, `features.ts`,
   `notificationService.ts`, `pdfUtils.ts`).
 - `prisma/` — `schema.prisma` + timestamped `migrations/`.
-- `components/`, `context/AuthContext.tsx`, `hooks/` (repo root) — an
-  older, smaller set of auth/data helpers that predates `app/_components`.
-  Treat as legacy; new work should live under `app/_components` or `lib/`.
-  Consolidating these is a known cleanup item, not yet done.
+- The old repo-root `components/`, `hooks/` and `context/` folders no
+  longer exist; all shared frontend code lives under `app/_components`.
 - `socket-server/index.ts` — standalone realtime/socket server, run and
   deployed separately from the Next.js app.
 - `scripts/` — one-off/operational scripts (backups, reconciliation),
@@ -61,15 +59,14 @@ Admins, Teachers, and Parents/Students, each with their own portal.
 - **JWT session strategy** (not DB sessions). Token carries `id, role,
   schoolId, mobile, studentId, allowedFeatures[], image, _dbSyncAt`.
 - Roles: `SUPERADMIN | SCHOOLADMIN | CHAIRMAN | TEACHER | STUDENT`.
-- `role` is set once at login and **never re-synced** from the DB on
-  subsequent requests — a role change in the DB takes effect only on the
-  user's next login or JWT expiry, not immediately.
-- `schoolId` / `allowedFeatures` / `photoUrl` are re-synced from Postgres
-  in the `jwt` callback, but only when the token is >5 minutes old or
-  missing those fields — not on every request. See the fail-open tradeoff
+- `role`, `schoolId`, `allowedFeatures` and `photoUrl` are re-synced from
+  Postgres in the `jwt` callback, but only when the token is >5 minutes
+  old or missing those fields — not on every request. A role change
+  therefore takes effect within ~5 minutes. See the fail-open tradeoff
   below for what happens when that sync fails.
-- There is no re-check of account "active" status per request; a
-  deactivated user's existing session keeps working until it expires.
+- Deactivation (`password = null`) is checked on each sync: the callback
+  throws `account_deactivated` and the session is invalidated (within ~5
+  minutes), not just at next login.
 
 ## Tenant scoping — application-level, not DB-level
 
@@ -103,9 +100,9 @@ In `lib/auth/authOptions.ts`'s `jwt` callback, if the periodic DB re-sync
 throws (DB outage, pool exhaustion), the error is caught and the **old,
 cached token is returned unchanged** rather than failing the request. This
 is deliberate — the alternative is every session check 401-ing during any
-DB hiccup. Tradeoff: `schoolId`/`allowedFeatures` can stay stale for the
-full duration of a DB outage (unbounded, not capped at 5 minutes, since
-`_dbSyncAt` isn't advanced on failure). See
+DB hiccup. The fallback is time-boxed: once no sync has succeeded for
+`MAX_STALE_SESSION_MS` (60 minutes, tracked by `_lastSuccessfulSyncAt`)
+the callback throws `session_stale_ceiling_exceeded` and forces re-login. See
 [`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) for the risk
 assessment.
 

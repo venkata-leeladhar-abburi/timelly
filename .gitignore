@@ -46,3 +46,5 @@ next-env.d.ts
 /app/generated/prisma
 
 .early.coverage
+# python
+__pycache__/

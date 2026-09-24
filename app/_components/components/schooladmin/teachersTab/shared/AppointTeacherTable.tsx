@@ -32,7 +32,7 @@ export function AppointTeacherTable({
 
                 <td className="py-3 flex items-center gap-2">
                   <img
-                    src={item.avatar}
+                    src={item.avatar} alt={item.teacherName}
                     className="w-7 h-7 rounded-full"
                     onError={(e) => {
                       e.currentTarget.src = DEFAULT_AVATAR;
