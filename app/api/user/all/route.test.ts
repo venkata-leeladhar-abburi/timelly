@@ -22,14 +22,19 @@ jest.mock("@/lib/school/userListServerCache", () => ({
   userListCacheKey: (...args: unknown[]) => mockUserListCacheKey(...args),
 }));
 
-jest.mock("../../../../lib/db", () => ({
-  __esModule: true,
-  default: {
-    user: {
-      findMany: (...args: unknown[]) => mockUserFindMany(...args),
-      count: (...args: unknown[]) => mockUserCount(...args),
-    },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      user: {
+        findMany: (...args: unknown[]) => mockUserFindMany(...args),
+        count: (...args: unknown[]) => mockUserCount(...args),
+      },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const request = (query = "") => new Request(`http://localhost/api/user/all${query}`);

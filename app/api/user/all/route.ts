@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { Role, type Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "../../../../lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import {
   getUserListCached,
   setUserListCached,
@@ -57,25 +57,30 @@ export async function GET(req: Request) {
       ];
     }
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          createdAt: true,
-          photoUrl: true,
-          subject: true,
-          allowedFeatures: true,
-        },
-      }),
-      prisma.user.count({ where }),
-    ]);
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const [users, total] = await withTenantScopedClient(schoolId, (tx) =>
+      Promise.all([
+        tx.user.findMany({
+          where,
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            createdAt: true,
+            photoUrl: true,
+            subject: true,
+            allowedFeatures: true,
+          },
+        }),
+        tx.user.count({ where }),
+      ])
+    );
 
     const payload = {
       users,

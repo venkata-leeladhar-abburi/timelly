@@ -18,12 +18,23 @@ jest.mock("@/lib/db", () => ({
   __esModule: true,
   default: {
     user: {
-      findMany: (...args: unknown[]) => mockFindMany(...args),
       update: (...args: unknown[]) => mockUpdate(...args),
     },
     school: { findFirst: (...args: unknown[]) => mockFindFirst(...args) },
     student: { findUnique: jest.fn() },
   },
+}));
+
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      user: { findMany: (...args: unknown[]) => mockFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 describe("GET /api/teacher/list", () => {
