@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { readFirstSheetRows, excelSerialToYmd } from "@/lib/excel/readWorkbookRows";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
@@ -92,10 +92,10 @@ export async function POST(req: Request) {
     const rows = await readFirstSheetRows(buffer);
     if (!rows.length) return NextResponse.json({ message: "Excel empty" }, { status: 400 });
 
-    const classes = await prisma.class.findMany({
+    const classes = await runInTenantScope(schoolId, () => prisma.class.findMany({
       where: { schoolId },
       select: { id: true, name: true, section: true },
-    });
+    }));
     const [school, settings] = await Promise.all([
       prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } }),
       prisma.schoolSettings.findUnique({ where: { schoolId }, select: { emailDomain: true } }),
@@ -177,10 +177,10 @@ export async function POST(req: Request) {
         const applicationNo = `APP/${year}/${randomUUID().slice(0, 8).toUpperCase()}`;
         const gender = genderRaw.toLowerCase().startsWith("f") ? "FEMALE" : "MALE";
 
-        const existingApp = await prisma.studentApplication.findFirst({
+        const existingApp = await runInTenantScope(schoolId, () => prisma.studentApplication.findFirst({
           where: { schoolId, aadharNo: aadhaarNo },
           select: { id: true, studentId: true },
-        });
+        }));
 
         const commonUpdate = {
           classId,
@@ -199,12 +199,12 @@ export async function POST(req: Request) {
         };
 
         const app = existingApp
-          ? await prisma.studentApplication.update({
+          ? await runInTenantScope(schoolId, () => prisma.studentApplication.update({
               where: { id: existingApp.id },
               data: commonUpdate,
               select: { id: true, studentId: true },
-            })
-          : await prisma.studentApplication.create({
+            }))
+          : await runInTenantScope(schoolId, () => prisma.studentApplication.create({
               data: {
                 schoolId,
                 classId,
@@ -249,7 +249,7 @@ export async function POST(req: Request) {
                 emergencyGuardianNo: phoneNo,
               },
               select: { id: true, studentId: true },
-            });
+            }));
 
         createdApplications.push({ row: i + 2, applicationId: app.id, aadhaarNo });
 
@@ -260,7 +260,7 @@ export async function POST(req: Request) {
         const password = dobDate.toISOString().split("T")[0].replace(/-/g, "");
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const student = await prisma.$transaction(async (tx) => {
+        const student = await runInTenantScope(schoolId, () => prisma.$transaction(async (tx) => {
           // admission number counter
           let settings = await tx.schoolSettings.findUnique({ where: { schoolId } });
           if (!settings) {
@@ -384,7 +384,7 @@ export async function POST(req: Request) {
 
           await setApplicationEnrolled(tx, app.id, studentRecord.id, schoolId);
           return studentRecord;
-        }, { maxWait: 10000, timeout: 120000 });
+        }, { maxWait: 10000, timeout: 120000 }));
 
         convertedStudents.push({ row: i + 2, studentId: student.id });
       } catch (e: unknown) {

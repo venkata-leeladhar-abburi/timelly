@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+import { runInOptionalTenantScope } from "@/lib/db/tenantContext";
 
 const VALID_ROLES: readonly Role[] = ["SUPERADMIN", "SCHOOLADMIN", "TEACHER", "STUDENT"];
 
@@ -105,9 +106,9 @@ export async function POST(req: NextRequest) {
 
         // Check if email already exists
         const bulkSchoolId = session.user.schoolId as string;
-        const existingUser = await prisma.user.findUnique({
+        const existingUser = await runInOptionalTenantScope(session.user.schoolId, () => prisma.user.findUnique({
           where: { schoolId_email: { schoolId: bulkSchoolId, email } },
-        });
+        }));
 
         if (existingUser) {
           errors.push(`Row ${rowNum}: Email already exists`);
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create user
-        await prisma.user.create({
+        await runInOptionalTenantScope(session.user.schoolId, () => prisma.user.create({
           data: {
             name,
             email,
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
             ...(designation && { subject: designation }),
             allowedFeatures: [],
           },
-        });
+        }));
 
         successful++;
       } catch (error: unknown) {

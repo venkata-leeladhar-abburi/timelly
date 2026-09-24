@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import ownerPrisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { readFirstSheetRows, excelSerialToYmd } from "@/lib/excel/readWorkbookRows";
@@ -184,10 +185,10 @@ export async function POST(req: Request) {
     const failed: Array<{ row: number; error: string }> = [];
 
     // Preload classes once so we can map Class + Section -> classId
-    const classes = await prisma.class.findMany({
+    const classes = await runInTenantScope(schoolId, () => prisma.class.findMany({
       where: { schoolId },
       select: { id: true, name: true, section: true },
-    });
+    }));
 
     const [school, settings] = await Promise.all([
       prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } }),
@@ -260,7 +261,9 @@ export async function POST(req: Request) {
         const apaarId = extractApaarId(row) || null;
         const normalizedName = normalizeStudentName(name);
 
-        const existingStudent = await prisma.student.findFirst({
+        // Deliberately NOT tenant-scoped: Aadhaar must be unique across ALL schools, and RLS would
+        // hide other schools' students and silently disable this check.
+        const existingStudent = await ownerPrisma.student.findFirst({
           where: { aadhaarNo },
           select: { id: true, userId: true, schoolId: true },
         });
@@ -270,10 +273,10 @@ export async function POST(req: Request) {
         }
 
         if (timellyId) {
-          const existingByRoll = await prisma.student.findFirst({
+          const existingByRoll = await runInTenantScope(schoolId, () => prisma.student.findFirst({
             where: { schoolId, rollNo: timellyId },
             select: { id: true, user: { select: { name: true } } },
-          });
+          }));
           if (existingByRoll && existingByRoll.id !== existingStudent?.id) {
             const existingName = normalizeStudentName(existingByRoll.user?.name ?? "");
             if (existingName && existingName === normalizedName) {
@@ -313,7 +316,7 @@ export async function POST(req: Request) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Each student is created in its own short transaction
-        await prisma.$transaction(
+        await runInTenantScope(schoolId, () => prisma.$transaction(
           async (tx) => {
             const nameLocalPart = emailLocalPartFromFullName(name);
             // Student login email is always name@schoolDomain — CSV/row "email" is parent contact only, not User.email.
@@ -559,7 +562,7 @@ export async function POST(req: Request) {
             maxWait: 10000,
             timeout: 120000,
           }
-        );
+        ));
 
         logger.info("[student bulk upload] Created student successfully", {
           row: rowNumber,

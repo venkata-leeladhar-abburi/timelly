@@ -1,5 +1,4 @@
 [
-  "app/api/admissions/bulk-upload/route.ts",
   "app/api/attendance/view/route.ts",
   "app/api/certificates/list/route.ts",
   "app/api/certificates/requests/list/route.ts",
@@ -32,7 +31,6 @@
   "app/api/student-leaves/approval-authority/route.ts",
   "app/api/student-leaves/my/route.ts",
   "app/api/student-leaves/pending/route.ts",
-  "app/api/student/bulk-upload/route.ts",
   "app/api/student/dashboard/route.ts",
   "app/api/student/offline-payment/route.ts",
   "app/api/superadmin/backup-schedule/route.ts",

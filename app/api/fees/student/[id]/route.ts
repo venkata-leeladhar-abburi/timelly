@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
+import { tenantDb as prisma, runInOptionalTenantScope, runInTenantScope } from "@/lib/db/tenantContext";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
@@ -114,6 +114,9 @@ export async function PATCH(req: Request, context: RouteParams) {
       );
     }
 
+    // The initial lookup above is deliberately cross-tenant (it discovers the student's school).
+    // Everything after the authorization check acts on that ONE school, RLS-scoped.
+    return await runInTenantScope(schoolId, async () => {
     const body = await req.json();
     const {
       totalFee,
@@ -265,6 +268,7 @@ export async function PATCH(req: Request, context: RouteParams) {
     await invalidateStudentFeeReadCaches({ studentId: id, schoolId: student?.schoolId ?? null });
 
     return NextResponse.json({ fee: updated });
+    });
   } catch (error: unknown) {
     logger.error("Update student fee error:", error);
     return NextResponse.json(

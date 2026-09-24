@@ -194,29 +194,40 @@
 `plan. Scopes slower than half the timeout log \`tenant_scope_slow\`; a timeout logs
 `\`tenant_scope_timeout (P2028)\` with the school and duration.
 
-### 3.1 Write handlers deliberately left on the owner connection
+### 3.1 Write handlers and the owner connection (final state)
 
-Wrapping a write handler in one scope makes it a single transaction, which is wrong when the
-handler (a) catches a DB error and carries on (a failed statement aborts the whole Postgres
-transaction, so the final COMMIT would fail and everything would be lost), (b) runs before any
-tenant exists, or (c) must commit independently of a caller or gateway. Fire-and-forget helpers
-also matter: `lib/notificationService.ts` and `lib/newsfeedRetention.ts` were moved back to the
-owner client because a `createNotification(...).catch(() => {})` started inside a scope would
-otherwise run on a transaction that has already closed and silently drop the notification.
+Wrapping a whole write handler in one scope makes it a single transaction. That is wrong when
+the handler (a) recovers from a DB error and carries on (a failed statement aborts the whole
+Postgres transaction, so the final COMMIT would fail and everything be lost), (b) runs before a
+tenant exists, (c) must commit independently of a gateway or caller, or (d) starts work that
+outlives the request. Techniques used instead of leaving a handler unscoped:
 
-| Group | Routes | Why it stays on the owner connection |
+- **Per-call scopes** where recovery is per statement: each `runInTenantScope(...)` is its own
+  transaction, so a failed attempt rolls back and the fallback starts fresh (`newsfeed/create`,
+  `newsfeed/[id]` PUT/DELETE Prisma-then-raw-SQL fallbacks, `fees/structure/bulk` per-class saves,
+  `teacher/attendance` POST after its DDL self-heal check, per-row saves in the three bulk imports).
+- **Owner-client helpers for fire-and-forget work**: `lib/notificationService.ts` and
+  `lib/newsfeedRetention.ts` use the owner client, so a `createNotification(...).catch(() => {})`
+  started inside a scope cannot run on an already-closed transaction and silently vanish.
+- **Optional scope** (`runInOptionalTenantScope(session.user.schoolId, ...)`) for self/participant-
+  scoped writes (notifications, leaves, marks, appointments, messages, homework submit, profile,
+  password change): scoped when the session has a school, otherwise unchanged.
+- **Deliberate cross-tenant reads stay on the owner client**: the "Aadhaar must be unique across
+  ALL schools" check in `student/bulk-upload` (RLS would hide other schools' students and silently
+  disable it), and the initial student lookup in `fees/student/[id]` PATCH (it discovers the
+  student's school before scoping to it).
+
+**Still on the owner connection, and why**
+
+| Group | Handlers | Reason |
 |---|---|---|
 | No tenant context yet | `auth/[...nextauth]`, `school/create` | Login and school creation happen before a school exists |
-| Payments / gateway | `payment/create-order`, `verify`, `refund`, `webhook`; `parent/subscription/create-order`, `verify`; `fees/offline-payment`; `student/offline-payment` | Webhooks have no session or tenant; multi-step external gateway calls with `$transaction`; SUPERADMIN paths; must commit independent of the HTTP response |
-| Bulk imports | `admissions/bulk-upload`, `student/bulk-upload`, `user/bulk-import` | Long-running, per-row error handling (unique violations) that continues after a failed row |
-| Catch-and-continue writes | `newsfeed/create`, `newsfeed/[id]` PUT/DELETE (Prisma failure falls back to raw SQL), `fees/structure/bulk` (per-class try/catch continues), `teacher/attendance` POST (self-heals a missing table via DDL), `student/[id]` PUT (background `void` tasks would outlive the transaction; reactivation catch) | Inner `catch` around DB work whose recovery needs a usable connection, or work that outlives the request |
-| Mixed SUPERADMIN / tenant | `fees/student/[id]` PATCH, `fees/discount-approvals/[id]` | Superadmin acts across tenants; scoping needs a per-caller split |
-| Self / participant scoped | `user/change-password`, `user/me`, `notifications*`, `communication/*`, `homework/submit`, `leaves/[id]` PUT/DELETE, `leaves/[id]/approve`, `leaves/[id]/reject`, `marks/[id]` DELETE, `newsfeed/[id]/like`, `student/parent-details`, `upload` | Ownership is enforced by the caller's own id (`userId`/`studentId`/`teacherId`) or an explicit school check, not a tenant filter |
+| Payments / gateway | `payment/create-order`, `verify`, `refund`, `webhook`; `parent/subscription/create-order`, `verify`; `fees/offline-payment`; `student/offline-payment` | Webhooks have no session or tenant; multi-step external gateway calls with `$transaction`; SUPERADMIN paths; they must commit independently of the HTTP response. Money paths are the last place to change transaction semantics without a dedicated test plan |
+| Mixed SUPERADMIN / tenant | `fees/discount-approvals/[id]` (POST/PATCH, delegating handler) | Superadmin acts across tenants; needs a per-caller split |
+| Background work | `student/[id]` PUT | Starts `void` background tasks that outlive the request, and a reactivation `catch` that returns after a partial commit on purpose |
+| Not tenant data | `upload` | Object storage only |
+| Cross-tenant by design | `superadmin/*` | See the superadmin decision above |
 
-Migrated (no DB-work inside an inner catch, clear school guard): `class/create`, `exams/units/[id]`
-PATCH, `student-leaves/[id]/approve|reject`, `student-leaves/apply`, `student/bulk-assign-class`,
-`school/update`, `user/create`, `user/[id]` PUT/DELETE, `student/[id]` DELETE, `circular/create`,
-`events/create`, `fees/structure` PUT, `exam-types` POST/PATCH, `certificates/requests/apply`,
-`tc/apply`. Their inner catches only cover request parsing or the notification helpers, which
-use the owner client (independent of the scope), so a caught error cannot poison the transaction.
-`marks/[id]` PUT stays with the self-scoped group (teacher-owned rows checked by `teacherId`).
+Everything else that writes is inside a tenant scope. `lib/db/ownerConnectionRoutes.json` is the
+baseline of route files that still import the owner client (reads and writes); the test in
+`lib/db/ownerConnectionRoutes.test.ts` keeps it honest.
