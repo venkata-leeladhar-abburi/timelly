@@ -67,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
       assignedClassIds,
       assignedClasses,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("User fetch error:", error);
     return NextResponse.json(
       { message: "Internal server error" },

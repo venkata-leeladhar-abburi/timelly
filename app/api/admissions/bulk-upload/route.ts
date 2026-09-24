@@ -26,7 +26,7 @@ function normalizeAadhaar(value: unknown) {
   return toStr(value).replace(/[\s-]/g, "");
 }
 
-function parseDob(rawDob: any): Date {
+function parseDob(rawDob: unknown): Date {
   if (!rawDob) throw new Error("Date of birth (dob) is required");
   if (typeof rawDob === "number") {
     const d = excelSerialToYmd(rawDob);
@@ -104,9 +104,9 @@ export async function POST(req: Request) {
       normalizeEmailDomain(settings?.emailDomain) ?? schoolDomainFromName(school?.name ?? "school");
     const year = new Date().getFullYear();
 
-    const createdApplications: any[] = [];
-    const convertedStudents: any[] = [];
-    const failed: any[] = [];
+    const createdApplications: Array<{ row: number; applicationId: string; aadhaarNo: string }> = [];
+    const convertedStudents: Array<{ row: number; studentId: string }> = [];
+    const failed: Array<{ row: number; error: string }> = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
@@ -270,7 +270,7 @@ export async function POST(req: Request) {
           }
 
           let nextNum = 0;
-          let updated: any = null;
+          let updated: { admissionPrefix: string; rollNoPrefix: string; admissionCounter: number } | null = null;
           let admissionNumber = "";
           const timellyId = rollNo || null;
           if (timellyId) {

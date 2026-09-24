@@ -180,8 +180,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Excel empty" }, { status: 400 });
     }
 
-    const created: any[] = [];
-    const failed: any[] = [];
+    const created: Array<{ row: number; name: string }> = [];
+    const failed: Array<{ row: number; error: string }> = [];
 
     // Preload classes once so we can map Class + Section -> classId
     const classes = await prisma.class.findMany({
@@ -414,7 +414,7 @@ export async function POST(req: Request) {
 
             const rowTimellyId = timellyId;
             let nextNum = 0;
-            let updatedSettings: any = null;
+            let updatedSettings: { admissionPrefix: string; rollNoPrefix: string; admissionCounter: number } | null = null;
             let admissionNumber = "";
 
             if (rowTimellyId) {

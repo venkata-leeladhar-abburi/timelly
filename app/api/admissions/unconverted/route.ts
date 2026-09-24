@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
+import type { Prisma } from "@prisma/client";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 
 export async function GET(req: Request) {
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
     const take = Math.min(100, Number(searchParams.get("take") ?? 50) || 50);
     const search = (searchParams.get("search") ?? "").trim();
 
-    const where: any = { schoolId, studentId: null };
+    const where: Prisma.StudentApplicationWhereInput = { schoolId, studentId: null };
     if (search) {
       where.OR = [
         { applicationNo: { contains: search, mode: "insensitive" } },

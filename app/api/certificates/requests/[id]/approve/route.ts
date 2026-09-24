@@ -139,7 +139,7 @@ export async function POST(
 
     // Check if this is a Transfer Certificate
     // certificateType field may not exist in schema yet, so we check safely
-    const certificateType = (certificateRequest as any).certificateType;
+    const certificateType = (certificateRequest as { certificateType?: string | null }).certificateType;
     const isTransferCertificate = certificateType === "TRANSFER" || certificateType === null || certificateType === undefined;
 
     // Use transaction to approve certificate request
@@ -158,6 +158,8 @@ export async function POST(
       // Only perform TC-specific actions (remove from class, save to history) for Transfer Certificates
       if (isTransferCertificate) {
         // Save student data to history
+        // Json columns need JSON-serializable values - dates become ISO strings
+        // rather than Date instances (Prisma.InputJsonValue excludes Date).
         const studentData = {
           id: certificateRequest.student.id,
           userId: certificateRequest.student.userId,
@@ -167,9 +169,9 @@ export async function POST(
           aadhaarNo: certificateRequest.student.aadhaarNo,
           phoneNo: certificateRequest.student.phoneNo,
           rollNo: certificateRequest.student.rollNo,
-          dob: certificateRequest.student.dob,
+          dob: certificateRequest.student.dob ? certificateRequest.student.dob.toISOString() : null,
           address: certificateRequest.student.address,
-          createdAt: certificateRequest.student.createdAt,
+          createdAt: certificateRequest.student.createdAt.toISOString(),
         };
 
         await tx.studentHistory.upsert({
@@ -177,12 +179,12 @@ export async function POST(
           create: {
             originalStudentId: certificateRequest.student.id,
             schoolId: schoolId,
-            studentData: studentData as any,
+            studentData,
             deactivatedBy: session.user.id,
             reason: `Transfer Certificate approved - ${certificateRequest.reason || "No reason provided"}`,
           },
           update: {
-            studentData: studentData as any,
+            studentData,
             deactivatedBy: session.user.id,
             reason: `Transfer Certificate approved - ${certificateRequest.reason || "No reason provided"}`,
           },

@@ -80,7 +80,18 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
       });
 
-      const exams: any[] = [];
+      const exams: Array<{
+        id: string;
+        termId: string;
+        name: string;
+        status: ExamTermStatus;
+        subject: string;
+        class: { id: string; name: string; section: string };
+        date: string;
+        time: string;
+        duration: string;
+        syllabus: Array<{ completedPercent: number }>;
+      }> = [];
 
       for (const term of terms) {
         const classInfo = term.class
@@ -88,10 +99,10 @@ export async function GET(req: Request) {
           : { id: "", name: "", section: "" };
 
         for (const s of term.schedules) {
-          const tracking = term.syllabus.find((sy: { subject: any; }) => sy.subject === s.subject);
+          const tracking = term.syllabus.find((sy) => sy.subject === s.subject);
           const syllabus = tracking
             ? tracking.units.length > 0
-              ? tracking.units.map((u: { completedPercent: any; }) => ({ completedPercent: u.completedPercent }))
+              ? tracking.units.map((u) => ({ completedPercent: u.completedPercent }))
               : [{ completedPercent: tracking.completedPercent }]
             : [];
 

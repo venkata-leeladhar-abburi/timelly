@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
+import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 import {
@@ -43,7 +45,7 @@ export async function GET() {
       return NextResponse.json({ message: "School not found in session" }, { status: 400 });
     }
 
-    let where: any = {};
+    let where: Prisma.AppointmentWhereInput = {};
 
   if (role === "STUDENT") {
     if (!session.user.studentId) {

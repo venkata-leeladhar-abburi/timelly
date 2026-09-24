@@ -93,7 +93,9 @@ export async function POST(
         },
       });
 
-      // Save student data to history
+      // Save student data to history. Json columns need JSON-serializable
+      // values - dates become ISO strings rather than Date instances
+      // (Prisma.InputJsonValue excludes Date).
       const studentData = {
         id: tc.student.id,
         userId: tc.student.userId,
@@ -103,16 +105,16 @@ export async function POST(
         aadhaarNo: tc.student.aadhaarNo,
         phoneNo: tc.student.phoneNo,
         rollNo: tc.student.rollNo,
-        dob: tc.student.dob,
+        dob: tc.student.dob ? tc.student.dob.toISOString() : null,
         address: tc.student.address,
-        createdAt: tc.student.createdAt,
+        createdAt: tc.student.createdAt.toISOString(),
       };
 
       await tx.studentHistory.create({
         data: {
           originalStudentId: tc.student.id,
           schoolId: schoolId,
-          studentData: studentData as any,
+          studentData,
           deactivatedBy: session.user.id,
           reason: `Transfer Certificate approved - ${tc.reason || "No reason provided"}`,
         },

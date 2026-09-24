@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const normalizedType = VALID_LEAVE_TYPES.includes(leaveType as any)
+    const normalizedType = (VALID_LEAVE_TYPES as readonly string[]).includes(leaveType)
       ? (leaveType as (typeof VALID_LEAVE_TYPES)[number])
       : "CASUAL";
     const reasonStr = typeof reason === "string" ? reason.trim() : "";

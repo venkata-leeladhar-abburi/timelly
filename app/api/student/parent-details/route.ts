@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 
 export async function GET() {
@@ -79,7 +80,7 @@ export async function PUT(req: Request) {
       fatherPhone,
     } = body;
 
-    const updateData: any = {};
+    const updateData: Prisma.StudentUpdateInput = {};
     if (address !== undefined) updateData.address = address || null;
     if (fatherName !== undefined) updateData.fatherName = fatherName || null;
     if (motherName !== undefined) updateData.motherName = motherName || null;

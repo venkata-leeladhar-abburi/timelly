@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { getApplicationGateRow } from "@/lib/admission/admissionsListQuery";
 import { studentApplicationDetailSelect } from "@/lib/admission/studentApplicationSafeSelect";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
+import { HttpError, getErrorMessage, getErrorCode, getErrorMeta, getErrorStatusCode } from "@/lib/errors/errorInfo";
 
 function optionalString(value: unknown) {
   if (value === null || value === undefined) return null;
@@ -15,9 +16,7 @@ function optionalString(value: unknown) {
 
 function requiredString(value: unknown, field: string) {
   if (typeof value !== "string" || !value.trim()) {
-    const err = new Error(`${field} is required`);
-    (err as any).statusCode = 400;
-    throw err;
+    throw new HttpError(`${field} is required`, 400);
   }
   return value.trim();
 }
@@ -70,8 +69,7 @@ export async function GET(_: Request, ctx: { params: Promise<{ id: string }> }) 
       { status: 200 }
     );
   } catch (e: unknown) {
-    const err = e as { message?: string; statusCode?: number };
-    return NextResponse.json({ message: err?.message ?? "Internal server error" }, { status: err?.statusCode ?? 500 });
+    return NextResponse.json({ message: getErrorMessage(e) ?? "Internal server error" }, { status: getErrorStatusCode(e) ?? 500 });
   }
 }
 
@@ -223,12 +221,13 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
 
     return NextResponse.json({ message: "Updated", id: updated.id }, { status: 200 });
   } catch (e: unknown) {
-    const err = e as { message?: string; code?: string; meta?: any; statusCode?: number };
-    if (err?.code === "P2002") {
-      const field = Array.isArray(err?.meta?.target) ? err.meta.target[0] : undefined;
+    if (getErrorCode(e) === "P2002") {
+      const meta = getErrorMeta(e);
+      const target = meta && typeof meta === "object" && "target" in meta ? (meta as { target?: unknown }).target : undefined;
+      const field = Array.isArray(target) ? target[0] : undefined;
       return NextResponse.json({ message: `Duplicate value for ${field ?? "a unique field"}` }, { status: 400 });
     }
-    return NextResponse.json({ message: err?.message ?? "Internal server error" }, { status: err?.statusCode ?? 500 });
+    return NextResponse.json({ message: getErrorMessage(e) ?? "Internal server error" }, { status: getErrorStatusCode(e) ?? 500 });
   }
 }
 
@@ -257,8 +256,7 @@ export async function DELETE(_: Request, ctx: { params: Promise<{ id: string }> 
     await prisma.studentApplication.delete({ where: { id } });
     return NextResponse.json({ message: "Deleted" }, { status: 200 });
   } catch (e: unknown) {
-    const err = e as { message?: string; statusCode?: number };
-    return NextResponse.json({ message: err?.message ?? "Internal server error" }, { status: err?.statusCode ?? 500 });
+    return NextResponse.json({ message: getErrorMessage(e) ?? "Internal server error" }, { status: getErrorStatusCode(e) ?? 500 });
   }
 }
 

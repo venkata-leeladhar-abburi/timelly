@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
 import bcrypt from "bcryptjs";
+import { Role } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
-const VALID_ROLES = ["SUPERADMIN", "SCHOOLADMIN", "TEACHER", "STUDENT"];
+const VALID_ROLES: readonly Role[] = ["SUPERADMIN", "SCHOOLADMIN", "TEACHER", "STUDENT"];
 
 // Simple CSV parser
 function parseCSV(content: string): Record<string, string>[] {
@@ -86,7 +87,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Validate role
-        if (!VALID_ROLES.includes(role.toUpperCase())) {
+        const normalizedRole = role.toUpperCase();
+        if (!(VALID_ROLES as readonly string[]).includes(normalizedRole)) {
           errors.push(
             `Row ${rowNum}: Invalid role. Must be one of: ${VALID_ROLES.join(", ")}`
           );
@@ -122,7 +124,7 @@ export async function POST(req: NextRequest) {
             name,
             email,
             password: hashedPassword,
-            role: role.toUpperCase() as any,
+            role: normalizedRole as Role,
             schoolId: session.user.schoolId,
             ...(designation && { subject: designation }),
             allowedFeatures: [],

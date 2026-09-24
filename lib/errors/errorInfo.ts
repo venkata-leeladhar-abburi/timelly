@@ -1,3 +1,25 @@
+/** Thrown by route handlers that need to signal a specific HTTP status (403, 400, ...) to their catch block. */
+export class HttpError extends Error {
+  statusCode: number;
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = "HttpError";
+    this.statusCode = statusCode;
+  }
+}
+
+export function getErrorStatusCode(err: unknown): number | undefined {
+  if (
+    err &&
+    typeof err === "object" &&
+    "statusCode" in err &&
+    typeof (err as { statusCode: unknown }).statusCode === "number"
+  ) {
+    return (err as { statusCode: number }).statusCode;
+  }
+  return undefined;
+}
+
 export function getErrorMessage(err: unknown): string | undefined {
   if (err instanceof Error) return err.message;
   if (err && typeof err === "object" && "message" in err && typeof (err as { message: unknown }).message === "string") {

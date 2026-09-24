@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
+import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const where: any = {
+    const where: Prisma.StudentHistoryWhereInput = {
       schoolId: schoolId,
     };
 

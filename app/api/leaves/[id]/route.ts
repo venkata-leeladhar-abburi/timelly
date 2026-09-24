@@ -50,7 +50,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
       );
     }
 
-    const normalizedType = leaveType && VALID_LEAVE_TYPES.includes(leaveType as any)
+    const normalizedType = leaveType && (VALID_LEAVE_TYPES as readonly string[]).includes(leaveType)
       ? (leaveType as (typeof VALID_LEAVE_TYPES)[number])
       : undefined;
     const reasonStr = typeof reason === "string" ? reason.trim() : undefined;
