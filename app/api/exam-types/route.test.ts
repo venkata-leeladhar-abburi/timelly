@@ -35,6 +35,23 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+// GET's reads go through the app_tenant-connected, RLS-restricted client
+// (docs/SECURITY_REVIEW.md); simulate that transaction wrapper, backed by
+// the same mocks used elsewhere in this file (POST/PATCH/DELETE still use
+// the plain prisma import, since writes haven't migrated yet).
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      examType: { findMany: (...args: unknown[]) => mockExamTypeFindMany(...args) },
+      mark: { findMany: (...args: unknown[]) => mockMarkFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest(body?: unknown, query = "") {
   return new Request(`http://localhost/api/exam-types${query}`, {
     method: body !== undefined ? "POST" : "GET",

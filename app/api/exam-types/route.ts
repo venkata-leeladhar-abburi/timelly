@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -90,26 +91,31 @@ export async function GET() {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
-    const customTypes = await prisma.examType.findMany({
-      where: { schoolId },
-      select: {
-        name: true,
-        maxMarks: true,
-        sections: {
-          orderBy: { order: "asc" },
-          select: { id: true, name: true, maxMarks: true, order: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filters above.
+    const [customTypes, fromMarks] = await withTenantScopedClient(schoolId, async (tx) => {
+      const types = await tx.examType.findMany({
+        where: { schoolId },
+        select: {
+          name: true,
+          maxMarks: true,
+          sections: {
+            orderBy: { order: "asc" },
+            select: { id: true, name: true, maxMarks: true, order: true },
+          },
         },
-      },
-    });
-
-    const fromMarks = await prisma.mark.findMany({
-      where: {
-        class: { schoolId },
-        examType: { not: null },
-      },
-      select: { examType: true },
-      distinct: ["examType"],
-      take: 200,
+      });
+      const marks = await tx.mark.findMany({
+        where: {
+          class: { schoolId },
+          examType: { not: null },
+        },
+        select: { examType: true },
+        distinct: ["examType"],
+        take: 200,
+      });
+      return [types, marks] as const;
     });
 
     const byName = new Map<string, ExamTypePayload>();
