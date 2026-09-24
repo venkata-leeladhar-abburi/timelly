@@ -42,6 +42,21 @@ jest.mock("../../../../lib/db", () => ({
   },
 }));
 
+// GET's read goes through the app_tenant-connected, RLS-restricted client
+// (docs/SECURITY_REVIEW.md) when the caller has a schoolId; PUT/DELETE and
+// the schoolId-less GET fallback still use the plain prisma import.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      user: { findUnique: (...args: unknown[]) => mockUserFindUnique(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 const ctx = { params: Promise.resolve({ id: "u2" }) };
 const getRequest = () => new NextRequest("http://localhost/api/user/u2");
 const putRequest = (body: unknown) =>

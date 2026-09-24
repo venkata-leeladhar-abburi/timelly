@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import bcrypt from "bcryptjs";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
@@ -20,29 +21,37 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
 
     const { id } = await params;
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        subject: true,
-        subjects: true,
-        schoolId: true,
-        allowedFeatures: true,
-        createdAt: true,
-        teacherId: true,
-        qualification: true,
-        experience: true,
-        joiningDate: true,
-        teacherStatus: true,
-        mobile: true,
-        address: true,
-        teachingClassIds: true,
-        assignedClasses: { select: { id: true, name: true, section: true } },
-      },
-    });
+    const selectFields = {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      subject: true,
+      subjects: true,
+      schoolId: true,
+      allowedFeatures: true,
+      createdAt: true,
+      teacherId: true,
+      qualification: true,
+      experience: true,
+      joiningDate: true,
+      teacherStatus: true,
+      mobile: true,
+      address: true,
+      teachingClassIds: true,
+      assignedClasses: { select: { id: true, name: true, section: true } },
+    } as const;
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): when the
+    // caller's own schoolId is known, the read goes through the app_tenant
+    // connection, restricted by RLS, not just the post-fetch
+    // `user.schoolId !== session.user.schoolId` check below. Falls back to
+    // the plain client only when session.user.schoolId itself is missing
+    // (that case already 403s below regardless of which client fetched it).
+    const user = session.user.schoolId
+      ? await withTenantScopedClient(session.user.schoolId, (tx) =>
+          tx.user.findUnique({ where: { id }, select: selectFields })
+        )
+      : await prisma.user.findUnique({ where: { id }, select: selectFields });
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
