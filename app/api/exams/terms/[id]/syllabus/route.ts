@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
@@ -34,16 +35,23 @@ export async function GET(
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
     const { id } = await params;
-    const term = await prisma.examTerm.findFirst({
-      where: { id, schoolId },
-      select: { id: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const { term, syllabus } = await withTenantScopedClient(schoolId, async (tx) => {
+      const t = await tx.examTerm.findFirst({
+        where: { id, schoolId },
+        select: { id: true },
+      });
+      if (!t) return { term: null, syllabus: [] };
+
+      const s = await tx.syllabusTracking.findMany({
+        where: { termId: id },
+        orderBy: { subject: "asc" },
+      });
+      return { term: t, syllabus: s };
     });
     if (!term) return NextResponse.json({ message: "Exam term not found" }, { status: 404 });
-
-    const syllabus = await prisma.syllabusTracking.findMany({
-      where: { termId: id },
-      orderBy: { subject: "asc" },
-    });
 
     return NextResponse.json({ syllabus }, { status: 200 });
   } catch (e: unknown) {
