@@ -25,6 +25,19 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      student: { findFirst: (...args: unknown[]) => mockStudentFindFirst(...args) },
+      mark: { findMany: (...args: unknown[]) => mockMarkFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest(query = "") {
   return new Request(`http://localhost/api/marks/report-card${query}`);
 }

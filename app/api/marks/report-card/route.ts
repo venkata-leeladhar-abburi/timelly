@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation, schoolIdViaTeacherClass } from "@/lib/auth/tenant";
 
@@ -54,7 +54,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "studentId is required" }, { status: 400 });
     }
 
-    const student = await prisma.student.findFirst({
+    const student = await withTenantScopedClient(schoolId, (tx) =>
+      tx.student.findFirst({
       where: { id: studentId, schoolId },
       include: {
         user: { select: { name: true } },
@@ -68,7 +69,8 @@ export async function GET(req: Request) {
           },
         },
       },
-    });
+    })
+    );
 
     if (!student) {
       return NextResponse.json({ message: "Student not found" }, { status: 404 });
@@ -81,10 +83,12 @@ export async function GET(req: Request) {
     if (classId) where.classId = classId;
     if (examType && examType !== "ALL") where.examType = examType.toUpperCase();
 
-    const marks = await prisma.mark.findMany({
-      where,
-      orderBy: [{ subject: "asc" }, { createdAt: "desc" }],
-    });
+    const marks = await withTenantScopedClient(schoolId, (tx) =>
+      tx.mark.findMany({
+        where,
+        orderBy: [{ subject: "asc" }, { createdAt: "desc" }],
+      })
+    );
 
     const subjectBest = new Map<string, (typeof marks)[0]>();
     for (const m of marks) {
