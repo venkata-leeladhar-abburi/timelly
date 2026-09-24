@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { getErrorCode, getErrorMessage, getErrorMeta, getErrorStack } from "@/lib/errors/errorInfo";
 
@@ -40,11 +40,13 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    const studentId = session.user.studentId;
+    return await runInTenantScope(schoolId, async () => {
 
     // Check if TC already exists (using select to avoid schema mismatches)
     const existingTC = await prisma.transferCertificate.findFirst({
       where: {
-        studentId: session.user.studentId,
+        studentId: studentId,
         status: {
           in: ["PENDING", "APPROVED"],
         },
@@ -66,7 +68,7 @@ export async function POST(req: Request) {
     const tc = await prisma.transferCertificate.create({
       data: {
         reason: reason || null,
-        studentId: session.user.studentId,
+        studentId: studentId,
         requestedById: session.user.id,
         schoolId,
         status: "PENDING",
@@ -89,6 +91,7 @@ export async function POST(req: Request) {
       { message: "TC request submitted successfully", tc },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     const errMessage = getErrorMessage(error);
     const errCode = getErrorCode(error);

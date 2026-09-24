@@ -81,6 +81,7 @@ export async function PUT(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async () => {
 
     const body = await req.json();
     const { classId, components } = body;
@@ -118,6 +119,7 @@ export async function PUT(req: Request) {
       }
       throw applyErr;
     }
+    });
   } catch (error: unknown) {
     logger.error("Fee structure PUT error:", error);
     return NextResponse.json(

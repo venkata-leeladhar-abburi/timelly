@@ -209,13 +209,14 @@ otherwise run on a transaction that has already closed and silently drop the not
 | No tenant context yet | `auth/[...nextauth]`, `school/create` | Login and school creation happen before a school exists |
 | Payments / gateway | `payment/create-order`, `verify`, `refund`, `webhook`; `parent/subscription/create-order`, `verify`; `fees/offline-payment`; `student/offline-payment` | Webhooks have no session or tenant; multi-step external gateway calls with `$transaction`; SUPERADMIN paths; must commit independent of the HTTP response |
 | Bulk imports | `admissions/bulk-upload`, `student/bulk-upload`, `user/bulk-import` | Long-running, per-row error handling (unique violations) that continues after a failed row |
-| Catch-and-continue writes | `certificates/requests/apply`, `tc/apply` (P2002), `circular/create`, `events/create`, `newsfeed/create`, `newsfeed/[id]` PUT/DELETE, `exam-types` POST/PATCH, `student-leaves/apply`, `marks/[id]` PUT, `fees/structure` PUT, `fees/structure/bulk`, `teacher/attendance` POST, `student/[id]` PUT | Inner `catch` around DB work (unique-conflict handling, raw-SQL fallback, best-effort notification) |
+| Catch-and-continue writes | `newsfeed/create`, `newsfeed/[id]` PUT/DELETE (Prisma failure falls back to raw SQL), `fees/structure/bulk` (per-class try/catch continues), `teacher/attendance` POST (self-heals a missing table via DDL), `student/[id]` PUT (background `void` tasks would outlive the transaction; reactivation catch) | Inner `catch` around DB work whose recovery needs a usable connection, or work that outlives the request |
 | Mixed SUPERADMIN / tenant | `fees/student/[id]` PATCH, `fees/discount-approvals/[id]` | Superadmin acts across tenants; scoping needs a per-caller split |
 | Self / participant scoped | `user/change-password`, `user/me`, `notifications*`, `communication/*`, `homework/submit`, `leaves/[id]` PUT/DELETE, `leaves/[id]/approve`, `leaves/[id]/reject`, `marks/[id]` DELETE, `newsfeed/[id]/like`, `student/parent-details`, `upload` | Ownership is enforced by the caller's own id (`userId`/`studentId`/`teacherId`) or an explicit school check, not a tenant filter |
 
-Migrated in this pass (no inner catches, clear school guard): `class/create`, `exams/units/[id]`
-PATCH, `student-leaves/[id]/approve|reject`, `student/bulk-assign-class`, `school/update`,
-`user/create`, `user/[id]` PUT/DELETE, `student/[id]` DELETE.
-
-Revisit the catch-and-continue group by moving the fallible/best-effort part outside the scope
-(do the main write in the scope, then notify or fall back after it commits).
+Migrated (no DB-work inside an inner catch, clear school guard): `class/create`, `exams/units/[id]`
+PATCH, `student-leaves/[id]/approve|reject`, `student-leaves/apply`, `student/bulk-assign-class`,
+`school/update`, `user/create`, `user/[id]` PUT/DELETE, `student/[id]` DELETE, `circular/create`,
+`events/create`, `fees/structure` PUT, `exam-types` POST/PATCH, `certificates/requests/apply`,
+`tc/apply`. Their inner catches only cover request parsing or the notification helpers, which
+use the owner client (independent of the scope), so a caught error cannot poison the transaction.
+`marks/[id]` PUT stays with the self-scoped group (teacher-owned rows checked by `teacherId`).

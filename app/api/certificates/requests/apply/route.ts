@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   createNotificationsForUserIds,
   getClassStaffNotifyUserIds,
@@ -62,6 +62,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async () => {
 
     // Allow multiple certificate requests - students can apply for multiple certificates
     // They can have multiple pending requests and multiple approved certificates
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
       { message: "Certificate request submitted successfully", certificateRequest },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     const errMessage = getErrorMessage(error);
     const errCode = getErrorCode(error);

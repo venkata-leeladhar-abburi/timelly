@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   createNotificationsForUserIds,
   getSchoolUserIds,
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async () => {
 
     // If classId is provided, verify it belongs to teacher's school
     if (classId) {
@@ -126,6 +127,7 @@ export async function POST(req: Request) {
       { message: "Event created successfully", event },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Create event error:", error);
     return NextResponse.json(

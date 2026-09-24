@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { LeaveType } from "@prisma/client";
 import {
   createNotificationsForUserIds,
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
       select: { schoolId: true },
     });
     if (!student?.schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(student.schoolId, async () => {
 
     const body = await req.json();
     const { leaveType, reason, fromDate, toDate } = body;
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
     invalidateParentPortalCaches({ schoolId: student.schoolId, studentId });
 
     return NextResponse.json({ leave }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Student leave apply:", e);
     return NextResponse.json(

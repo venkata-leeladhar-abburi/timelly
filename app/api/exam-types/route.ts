@@ -169,6 +169,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async () => {
 
     const body = await req.json();
     const name =
@@ -220,6 +221,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ examType }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Exam types POST:", e);
     return NextResponse.json(
@@ -244,6 +246,7 @@ export async function PATCH(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async () => {
 
     const body = await req.json();
     const name =
@@ -311,6 +314,7 @@ export async function PATCH(req: Request) {
     }
 
     return NextResponse.json({ examType }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exam types PATCH:", e);
     return NextResponse.json(

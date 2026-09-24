@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { generateRefNumber } from "@/lib/utils";
 import { CIRCULAR_REF_PREFIX } from "@/lib/constants";
 import {
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 
     const schoolId = await getSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(schoolId, async () => {
 
     const body = await req.json();
     const {
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ circular }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Circular create:", e);
     return NextResponse.json(
