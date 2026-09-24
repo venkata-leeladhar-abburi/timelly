@@ -1,6 +1,6 @@
 import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import { invalidateExtraFeesScopeCacheForStudent } from "@/lib/fees/computeAdminStudentFeeBreakdown";
-import type { StudentDetailsCoreCacheValue } from "@/lib/students/studentDetailsCoreCache";
+
 import {
   CORE_BUNDLE_TTL_MS,
   getStudentDetailsCoreCached,

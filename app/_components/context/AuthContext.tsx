@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import SuperAdminSessionGuard from "@/app/_components/auth/SuperAdminSessionGuard";

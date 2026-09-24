@@ -1,11 +1,5 @@
 import { defaultAnalysisStartYear } from "@/lib/school/schoolAnalysisYear";
-import {
-  analysisCacheKey,
-  analysisHasTables,
-  getSchoolAnalysisCached,
-  peekSchoolAnalysisAny,
-  setSchoolAnalysisCached,
-} from "@/lib/school/schoolAnalysisClientCache";
+import { analysisCacheKey, analysisHasTables, getSchoolAnalysisCached, setSchoolAnalysisCached } from "@/lib/school/schoolAnalysisClientCache";
 import type { SchoolAnalysisPayload } from "@/lib/school/schoolAnalysisTypes";
 
 export type { SchoolAnalysisPayload };

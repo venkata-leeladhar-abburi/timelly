@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
+import { runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import {
   buildStudentDetailsCoreBundle,
   buildStudentDetailsNonPaymentExtras,

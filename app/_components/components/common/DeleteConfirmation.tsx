@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Delete, Loader, Trash, X } from "lucide-react";
+import { AlertCircle, Trash } from "lucide-react";
 import { useState } from "react";
 
 interface DeleteConfirmationProps {

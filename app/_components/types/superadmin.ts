@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+
 
 export type School = {
   id: string;

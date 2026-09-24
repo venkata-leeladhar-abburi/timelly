@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Download, CheckCircle, AlertCircle, Loader, X } from "lucide-react";
+import { Upload, Download, CheckCircle, AlertCircle, Loader } from "lucide-react";
 import { bulkImportUsers } from "@/lib/api/user";
 
 interface ImportResult {

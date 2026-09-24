@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { X, Mail, User, Settings, LogOut, Phone, MapPin, Hash } from "lucide-react";
+import { X, Mail, User, Settings, Phone, MapPin } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { AVATAR_URL } from "../../constants/images";
 

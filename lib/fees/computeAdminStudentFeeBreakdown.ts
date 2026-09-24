@@ -23,7 +23,7 @@ import { sumSuccessfulFeePayments } from "@/lib/fees/reconcileStudentFeeFromPaym
 import { cleanupDuplicateHostelMessExtraFees } from "@/lib/fees/cleanupDuplicateHostelMessExtraFees";
 import { migrateUnsplitLumpExtraFees } from "@/lib/fees/extraFeeInstallmentDb";
 import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
-import { repairOrphanExtraFeeAllocations } from "@/lib/fees/repairOrphanExtraFeeAllocations";
+
 
 function normalizeExtraFeeName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");

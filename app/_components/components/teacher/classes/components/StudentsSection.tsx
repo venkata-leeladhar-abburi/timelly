@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Award, ChevronDown, ChevronUp, Mail, Phone } from "lucide-react";
+import { Award, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import TableLayout from "../../../common/TableLayout";
 import SectionHeaderWithSearch from "../../../common/SectionHeaderWithSearch";
 import { AVATAR_URL } from "../../../../constants/images";

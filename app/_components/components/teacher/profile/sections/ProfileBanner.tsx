@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronUp, PencilLine, SquarePen } from "lucide-react";
+import { ChevronUp, SquarePen } from "lucide-react";
 import PageHeader from "../../../common/PageHeader";
 
 interface ProfileBannerProps {

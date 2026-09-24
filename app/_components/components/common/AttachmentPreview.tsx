@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, ExternalLink, ImageIcon } from "lucide-react";
+import { FileText, ExternalLink } from "lucide-react";
 
 const IMAGE_EXT = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
 function isImageUrl(url: string): boolean {
