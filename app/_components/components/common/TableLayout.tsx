@@ -175,7 +175,7 @@ function DataTable<T>({
           </div>
         )}
 
-        <div className={`w-full min-w-0 max-w-full overscroll-contain ${scrollViewportClass}`}>
+        <div className={`w-full min-w-0 max-w-full overscroll-x-contain ${scrollViewportClass}`}>
           <table
             className={`${
               scrollableWide ? "w-max min-w-full table-auto" : "w-full table-fixed"

@@ -41,9 +41,20 @@ function getTenantConnectionString(): string {
   return url;
 }
 
+function withParam(url: string, key: string, value: string): string {
+  if (new RegExp(`[?&]${key}=`).test(url)) return url; // respect explicit settings
+  return `${url}${url.includes("?") ? "&" : "?"}${key}=${value}`;
+}
+
+// Same pool tuning as lib/db.ts; without it this client used Prisma's tiny default
+// pool, so concurrent tab requests queued for a connection and burned their tx timeout.
 function getTenantClient(): PrismaClient {
   if (!tenantClientSingleton) {
-    tenantClientSingleton = new PrismaClient({ datasourceUrl: getTenantConnectionString() });
+    let url = getTenantConnectionString();
+    url = withParam(url, "connection_limit", process.env.PRISMA_CONNECTION_LIMIT || (process.env.NODE_ENV === "development" ? "20" : "5"));
+    url = withParam(url, "pool_timeout", "30");
+    url = withParam(url, "connect_timeout", "10");
+    tenantClientSingleton = new PrismaClient({ datasourceUrl: url });
   }
   return tenantClientSingleton;
 }
@@ -75,5 +86,10 @@ export async function withTenantScopedClient<T>(
     // sites ever get threaded from).
     await tx.$executeRaw`SELECT set_config('app.current_school_id', ${schoolId}, true)`;
     return fn(tx);
-  }, options);
+  }, {
+    // Prisma's default is 5s, which a slow remote DB blows through (P2028). Matches
+    // TENANT_SCOPE_TIMEOUT_MS / its max wait in tenantContext.ts (not imported: cycle).
+    timeout: options?.timeout ?? (Number(process.env.TENANT_SCOPE_TIMEOUT_MS) || 30_000),
+    maxWait: options?.maxWait ?? 10_000,
+  });
 }

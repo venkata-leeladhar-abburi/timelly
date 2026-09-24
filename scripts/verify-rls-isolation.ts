@@ -43,16 +43,16 @@ async function scoped<T>(schoolId: string, fn: (tx: PrismaClient) => Promise<T>)
 
 (async () => {
   if (!process.env.DATABASE_URL_TENANT) throw new Error("DATABASE_URL_TENANT is not set");
-  const schools = await owner.school.findMany({ select: { id: true, name: true }, orderBy: { createdAt: "asc" }, take: 2 });
+  const schools = await retry(() => owner.school.findMany({ select: { id: true, name: true }, orderBy: { createdAt: "asc" }, take: 2 }));
   if (schools.length < 2) throw new Error("Need at least 2 schools to test cross-tenant isolation");
   const [a, b] = schools;
 
-  const rls = await owner.$queryRawUnsafe<Array<{ tablename: string; hasPolicy: boolean }>>(`
+  const rls = await retry(() => owner.$queryRawUnsafe<Array<{ tablename: string; hasPolicy: boolean }>>(`
     SELECT c.relname AS tablename,
            EXISTS (SELECT 1 FROM pg_policies p WHERE p.schemaname = 'public' AND p.tablename = c.relname) AS "hasPolicy"
     FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relrowsecurity
-      AND c.relname NOT LIKE '\_prisma%' ORDER BY c.relname`);
+      AND c.relname NOT LIKE '\_prisma%' ORDER BY c.relname`));
 
   console.log(`schools: A=${a.name} (${a.id}) B=${b.name} (${b.id})\n`);
   console.log("table".padEnd(28), "owner total".padStart(11), "no-ctx".padStart(7), "as A".padStart(8), "as B".padStart(8), " verdict");

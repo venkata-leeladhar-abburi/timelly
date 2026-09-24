@@ -208,6 +208,7 @@ export default function StudentsManagementPage({ classes, reload }: Props) {
                 : undefined
             }
             showMobile={false}
+            scrollableWide
             pagination={{
               page: safePage,
               totalPages,

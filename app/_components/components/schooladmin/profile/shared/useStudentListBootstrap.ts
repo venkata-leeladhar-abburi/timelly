@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { readStudentListCacheLegacy } from "@/lib/students/studentListSessionCache";
+import { readStudentListCacheLegacy, writeStudentListCacheLegacy } from "@/lib/students/studentListSessionCache";
 import { resolveStudentDisplayName } from "@/lib/students/resolveStudentDisplayName";
 import type { StudentDetail, StudentOption } from "./types";
 import { buildPlaceholderDetail, normalizeStudentOption } from "./studentDetailHelpers";
@@ -71,16 +71,26 @@ export function useStudentListBootstrap({
 
     (async () => {
       try {
-        const classesRes = await fetch("/api/class/list", { credentials: "include" });
-        if (!cancelled && classesRes.ok) {
-          const c = await classesRes.json();
-          setClasses(c.classes ?? []);
-        }
-
-        if (studentIdFromUrl) {
-          setListLoading(false);
-          return;
-        }
+        // One lean request (search=1 => minimal columns, all=1 => no cursor round-trips), in parallel with classes.
+        const classesPromise = fetch("/api/class/list", { credentials: "include" }).then(async (r) => {
+          if (!cancelled && r.ok) {
+            const c = await r.json();
+            setClasses(c.classes ?? []);
+          }
+        });
+        const studentsPromise = fetch("/api/student/list?search=1&all=1&take=10000", {
+          credentials: "include",
+          cache: "no-store",
+        }).then(async (r) => {
+          if (cancelled || !r.ok) return;
+          const data = await r.json().catch(() => ({}));
+          const rows = Array.isArray(data?.students) ? data.students : [];
+          if (!rows.length) return;
+          const options = rows.map(mapListRow).map(normalizeStudentOption);
+          setStudents(options);
+          writeStudentListCacheLegacy(options);
+        });
+        await Promise.all([classesPromise, studentsPromise]);
 
         if (!cancelled) setListLoading(false);
       } catch {
