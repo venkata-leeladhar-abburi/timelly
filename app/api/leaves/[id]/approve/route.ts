@@ -1,5 +1,5 @@
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { getServerSession } from "next-auth";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
@@ -27,6 +27,7 @@ export async function PATCH(
 
     // 1️⃣ Auth check
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
     if (!session?.user?.id) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
@@ -123,6 +124,7 @@ export async function PATCH(
       status: 200
     });
 
+    });
   } catch (error: unknown) {
     logger.error("Leave approval failed:", error);
     return new Response(

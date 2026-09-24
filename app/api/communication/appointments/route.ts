@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
@@ -122,6 +122,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    return await runInOptionalTenantScope(session.user.schoolId, async () => {
     const { teacherId, scheduledAt, note } = await req.json();
 
     if (!teacherId) {
@@ -181,6 +182,7 @@ export async function POST(req: Request) {
       { message: "Appointment requested", appointment },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Create appointment error:", error);
     return NextResponse.json(

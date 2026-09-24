@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { readFirstSheetRows } from "@/lib/excel/readWorkbookRows";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { saveClassFeeStructureAndSyncStudents } from "@/lib/fees/classFeeStructureApply";
 import { logger } from "@/lib/logger";
@@ -89,10 +89,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Excel sheet is empty" }, { status: 400 });
     }
 
-    const classes = await prisma.class.findMany({
+    const classes = await runInTenantScope(schoolId, () => prisma.class.findMany({
       where: { schoolId },
       select: { id: true, name: true, section: true },
-    });
+    }));
 
     type Comp = { name: string; amount: number };
     const byClassId = new Map<string, Comp[]>();
@@ -139,11 +139,11 @@ export async function POST(req: Request) {
       }
       const merged = [...mergeMap.entries()].map(([name, amount]) => ({ name, amount }));
       try {
-        await saveClassFeeStructureAndSyncStudents({
+        await runInTenantScope(schoolId, () => saveClassFeeStructureAndSyncStudents({
           schoolId,
           classId,
           components: merged,
-        });
+        }));
         const cls = classes.find((c) => c.id === classId);
         const label = cls
           ? `Class ${cls.name}${cls.section ? `-${cls.section}` : ""}`

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 
@@ -54,6 +54,7 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
     if (!session?.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -93,6 +94,7 @@ export async function PUT(req: Request) {
     });
 
     return NextResponse.json({ message: "Parent details updated successfully" });
+    });
   } catch (e: unknown) {
     logger.error("Update parent details error:", e);
     return NextResponse.json(

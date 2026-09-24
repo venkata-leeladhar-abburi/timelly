@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { NotificationType } from "@prisma/client";
 import { apiMemGetSwr, apiMemSet } from "@/lib/cache/apiMemoryCache";
 import { logger } from "@/lib/logger";
@@ -68,6 +68,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -95,6 +96,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ notification }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Notifications POST:", e);
     return NextResponse.json(

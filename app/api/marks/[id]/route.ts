@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { assertTeacherCanEnterMarks } from "@/lib/teacher/teacherMarksScope";
 import { parseMarkComponents, sumComponents } from "@/lib/exams/markComponents";
 import { randomUUID } from "crypto";
@@ -25,6 +25,7 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
 
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -204,6 +205,7 @@ export async function PUT(
       { message: "Marks updated successfully", mark: updatedMark },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Update marks error:", error);
     return NextResponse.json(
@@ -222,6 +224,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
 
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -256,6 +259,7 @@ export async function DELETE(
       { message: "Mark deleted successfully" },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Delete marks error:", error);
     return NextResponse.json(

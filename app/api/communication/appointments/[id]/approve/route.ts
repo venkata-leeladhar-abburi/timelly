@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -22,6 +22,7 @@ export async function POST(_req: Request, context: ApproveParams) {
   const isTeacher = session.user.role === "TEACHER";
 
   try {
+    return await runInOptionalTenantScope(session.user.schoolId, async () => {
     if (!appointmentId) {
       return NextResponse.json({ message: "Appointment id missing" }, { status: 400 });
     }
@@ -62,6 +63,7 @@ export async function POST(_req: Request, context: ApproveParams) {
       { message: "Appointment approved", appointment: updated },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Approve appointment error:", error);
     return NextResponse.json(

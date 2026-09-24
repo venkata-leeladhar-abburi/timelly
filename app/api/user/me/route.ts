@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
 
@@ -92,6 +92,7 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -175,6 +176,7 @@ export async function PUT(req: Request) {
       });
 
     return NextResponse.json({ user }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("User me PUT:", e);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 async function verifyAndGetFeed(id: string, schoolId: string) {
@@ -34,7 +34,7 @@ export async function PUT(
       return NextResponse.json({ message: "School not found in session" }, { status: 400 });
     }
 
-    const exists = await verifyAndGetFeed(id, schoolId);
+    const exists = await runInTenantScope(schoolId, () => verifyAndGetFeed(id, schoolId));
     if (!exists) {
       return NextResponse.json(
         { message: "News feed not found or doesn't belong to your school" },
@@ -43,7 +43,7 @@ export async function PUT(
     }
 
     try {
-      const updated = await prisma.newsFeed.update({
+      const updated = await runInTenantScope(schoolId, () => prisma.newsFeed.update({
         where: { id },
         data: {
           ...(title != null && title !== "" && { title }),
@@ -53,7 +53,7 @@ export async function PUT(
         include: {
           createdBy: { select: { id: true, name: true, email: true } },
         },
-      });
+      }));
       return NextResponse.json(
         { message: "News feed updated successfully", newsFeed: updated },
         { status: 200 }
@@ -82,10 +82,10 @@ export async function PUT(
         return NextResponse.json({ message: "News feed updated successfully", newsFeed: {} }, { status: 200 });
       }
       values.push(id, schoolId);
-      await prisma.$executeRawUnsafe(
+      await runInTenantScope(schoolId, () => prisma.$executeRawUnsafe(
         `UPDATE "NewsFeed" SET ${parts.join(", ")}, "updatedAt" = NOW() WHERE id = $${idx} AND "schoolId" = $${idx + 1}`,
         ...values
-      );
+      ));
       return NextResponse.json(
         { message: "News feed updated successfully", newsFeed: {} },
         { status: 200 }
@@ -116,7 +116,7 @@ export async function DELETE(
       return NextResponse.json({ message: "School not found in session" }, { status: 400 });
     }
 
-    const exists = await verifyAndGetFeed(id, schoolId);
+    const exists = await runInTenantScope(schoolId, () => verifyAndGetFeed(id, schoolId));
     if (!exists) {
       return NextResponse.json(
         { message: "News feed not found or doesn't belong to your school" },
@@ -125,14 +125,14 @@ export async function DELETE(
     }
 
     try {
-      await prisma.newsFeed.delete({ where: { id } });
+      await runInTenantScope(schoolId, () => prisma.newsFeed.delete({ where: { id } }));
     } catch (prismaError: unknown) {
       logger.error("newsFeed.delete failed, falling back to raw SQL:", prismaError);
-      await prisma.$executeRawUnsafe(
+      await runInTenantScope(schoolId, () => prisma.$executeRawUnsafe(
         `DELETE FROM "NewsFeed" WHERE id = $1 AND "schoolId" = $2`,
         id,
         schoolId
-      );
+      ));
     }
     return NextResponse.json({ message: "News feed deleted successfully" }, { status: 200 });
   } catch (error: unknown) {

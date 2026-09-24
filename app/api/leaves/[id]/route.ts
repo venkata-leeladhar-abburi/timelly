@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
@@ -12,6 +12,7 @@ type Params = Promise<{ id: string }>;
 export async function PUT(req: Request, { params }: { params: Params }) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -92,6 +93,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     });
 
     return NextResponse.json(leave, { status: 200 });
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal Server Error";
     logger.error("Leaves update error:", e);
@@ -103,6 +105,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
 export async function DELETE(req: Request, { params }: { params: Params }) {
   try {
     const session = await getServerSession(authOptions);
+    return await runInOptionalTenantScope(session?.user?.schoolId, async () => {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -131,6 +134,7 @@ export async function DELETE(req: Request, { params }: { params: Params }) {
     });
 
     return NextResponse.json({ success: true }, { status: 200 });
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal Server Error";
     logger.error("Leaves delete error:", e);

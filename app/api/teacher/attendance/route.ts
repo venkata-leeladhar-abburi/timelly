@@ -252,10 +252,10 @@ export async function POST(req: Request) {
       }
     }
 
-    const teachers = await prisma.user.findMany({
+    const teachers = await runInTenantScope(schoolId, () => prisma.user.findMany({
       where: { id: { in: candidateIds }, schoolId, role: "TEACHER" },
       select: { id: true },
-    });
+    }));
     const validTeacherIds = new Set(teachers.map((t) => t.id));
 
     const rows = attendances.filter(
@@ -273,12 +273,12 @@ export async function POST(req: Request) {
         params.push(randomUUID(), a.teacherId, schoolId, dateIso, a.status);
       });
 
-      await prisma.$executeRawUnsafe(
+      await runInTenantScope(schoolId, () => prisma.$executeRawUnsafe(
         `INSERT INTO "TeacherDailyAttendance" ("id", "teacherId", "schoolId", "date", "status", "createdAt", "updatedAt")
          VALUES ${valueSql.join(", ")}
          ON CONFLICT ("teacherId", "date") DO UPDATE SET "status" = EXCLUDED."status", "updatedAt" = NOW()`,
         ...params
-      );
+      ));
     }
 
     purgeSchoolDashboardServerCacheMatching(`teacher:attendance:${schoolId}`);
