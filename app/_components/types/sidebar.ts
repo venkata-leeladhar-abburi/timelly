@@ -1,3 +1,4 @@
+import type { ElementType } from "react";
 import { Permission } from "../enums/permissions";
 
 // types/sidebar.ts
@@ -7,7 +8,7 @@ export type SidebarItem = {
   mobileLabel?: string;
   tab?: string;
   href?: string;
-  icon: any;
+  icon: ElementType;
   action?: "logout";
   permission?: Permission;
   /**

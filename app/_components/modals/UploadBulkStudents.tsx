@@ -4,7 +4,15 @@ import { assignStudentsToClass } from "../services/student.service";
 import { PRIMARY_COLOR } from "../constants/colors";
 import { downloadBulkStudentTemplateXlsx } from "@/lib/students/bulkStudentTemplateXlsx";
 
-export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
+export default function UploadCSVModal({
+  classId,
+  onClose,
+  onSuccess,
+}: {
+  classId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -76,7 +84,7 @@ export default function UploadCSVModal({ classId, onClose, onSuccess }: any) {
 
       // Filter only unassigned students (file may have assigned some via class/section)
       const unassignedStudents = studentsData.students.filter(
-        (student: any) => !student.class
+        (student: { class?: unknown }) => !student.class
       );
 
       if (unassignedStudents.length === 0) {

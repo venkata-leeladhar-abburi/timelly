@@ -1,6 +1,22 @@
 import jsPDF from "jspdf";
 
-export async function generateReceiptPDF(data: any): Promise<ArrayBuffer> {
+type ReceiptPDFInput = {
+    copyType?: string;
+    schoolName?: string;
+    student?: {
+        user?: { name?: string | null } | null;
+        admissionNumber?: string | null;
+        class?: { displayName?: string | null } | null;
+    } | null;
+    payment?: {
+        createdAt?: string | Date;
+        transactionId?: string | null;
+        gateway?: string | null;
+        amount?: number | null;
+    } | null;
+};
+
+export async function generateReceiptPDF(data: ReceiptPDFInput): Promise<ArrayBuffer> {
     const doc = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -103,7 +119,7 @@ export async function generateReceiptPDF(data: any): Promise<ArrayBuffer> {
     doc.setFont("helvetica", "normal");
 
     const paymentInfo = [
-        [`Payment Date:`, new Date(data.payment?.createdAt).toLocaleDateString("en-IN")],
+        [`Payment Date:`, new Date(data.payment?.createdAt as string | Date).toLocaleDateString("en-IN")],
         [`Transaction ID:`, data.payment?.transactionId || "N/A"],
         [`Payment Method:`, data.payment?.gateway || "Online"],
     ];
