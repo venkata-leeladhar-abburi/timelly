@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { computeCurrentAndPreviousFeeStats } from "@/lib/fees/computeFeeSummaryStats";
 import { logger } from "@/lib/logger";
 
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "School not found in session" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const collectionDate = dateRangeFromYmd(searchParams.get("date"));
     const cacheKey = `${schoolId}:${collectionDate.ymd}`;
@@ -140,6 +141,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ summary: responseSummary });
+    });
   } catch (error: unknown) {
     logger.error("Chairman dashboard:", error);
     return NextResponse.json(

@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 
 const SUCCESS_STATUSES = ["SUCCESS", "COMPLETED"] as const;
 

@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 
 export type SchoolAdminSchoolContext =
   | { schoolId: string }

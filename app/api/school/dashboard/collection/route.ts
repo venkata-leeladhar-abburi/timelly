@@ -11,6 +11,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 /** Day collection — ?from=YYYY-MM-DD&to=YYYY-MM-DD&part=summary | heads (fast) or full payload. */
@@ -42,14 +43,11 @@ export async function GET(request: Request) {
       return NextResponse.json(cached, { status: 200 });
     }
 
-    let payload: unknown;
-    if (part === "summary") {
-      payload = await buildSchoolDashboardCollectionSummary(ctx.schoolId, from, to);
-    } else if (part === "heads") {
-      payload = await buildSchoolDashboardCollectionByHead(ctx.schoolId, from, to);
-    } else {
-      payload = await buildSchoolDashboardCollection(ctx.schoolId, from, to);
-    }
+    const payload: unknown = await runInTenantScope<unknown>(ctx.schoolId, async () => {
+      if (part === "summary") return buildSchoolDashboardCollectionSummary(ctx.schoolId, from, to);
+      if (part === "heads") return buildSchoolDashboardCollectionByHead(ctx.schoolId, from, to);
+      return buildSchoolDashboardCollection(ctx.schoolId, from, to);
+    });
 
     setSchoolDashboardServerCached(cacheKey, payload, part === "summary" ? 120_000 : 90_000);
     return NextResponse.json(payload, { status: 200 });

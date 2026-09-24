@@ -3,6 +3,12 @@
  */
 import { GET } from "@/app/api/fees/discount-approvals/route";
 
+jest.mock("@/lib/db/tenantContext", () => ({
+  runInTenantScope: (_schoolId: string, fn: () => unknown) => fn(),
+  runInOptionalTenantScope: (_schoolId: unknown, fn: () => unknown) => fn(),
+  tenantDb: new Proxy({}, { get: (_t, p) => (jest.requireMock("@/lib/db").default as Record<string | symbol, unknown>)[p] }),
+}));
+
 const mockGetServerSession = jest.fn();
 const mockQueryRaw = jest.fn();
 const mockGetCached = jest.fn();

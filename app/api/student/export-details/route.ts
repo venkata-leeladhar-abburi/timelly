@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   buildStudentDetailsExportWorkbook,
   studentToDetailsExportRow,
@@ -49,6 +49,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School is paused" }, { status: 403 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const classId = searchParams.get("classId")?.trim() || "";
     const className = searchParams.get("className")?.trim() || "";
@@ -145,6 +146,7 @@ export async function GET(req: Request) {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
       },
+    });
     });
   } catch (error: unknown) {
     logger.error("Student details export error:", error);

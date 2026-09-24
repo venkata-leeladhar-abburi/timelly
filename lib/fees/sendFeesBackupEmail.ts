@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { buildFeesBackupEmailContent } from "@/lib/fees/feesBackupEmailTemplate";
 import { generateSchoolFeesBackupBuffer, type SchoolFeesBackupFile } from "@/lib/fees/generateSchoolFeesBackupBuffer";
 import { logger } from "@/lib/logger";

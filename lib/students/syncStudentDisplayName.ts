@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { splitFullNameToApplicationParts } from "@/lib/students/resolveStudentDisplayName";
 
 type SyncDb = Pick<typeof prisma, "user" | "studentApplication">;

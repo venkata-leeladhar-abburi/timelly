@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { requireSchoolId, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 import { withRequestTiming } from "@/lib/cache/requestTiming";
 import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
@@ -74,7 +74,7 @@ export async function GET(_req: Request, context: RouteParams) {
 
     const schoolId = isOwnStudent ? null : ctx.schoolId;
 
-    return await withRequestTiming(
+    return await runInOptionalTenantScope(schoolId, () => withRequestTiming(
       { route: "GET /api/student/[id]", schoolId: schoolId, userId: session.user.id },
       async () => {
         const student = await prisma.student.findFirst({
@@ -395,7 +395,7 @@ export async function GET(_req: Request, context: RouteParams) {
       })),
     });
       }
-    );
+    ));
   } catch (error: unknown) {
     logger.error("Student details error:", error);
     return NextResponse.json(

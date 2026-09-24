@@ -7,6 +7,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -47,12 +48,14 @@ export async function GET(req: Request) {
       return NextResponse.json(cached, { status: 200 });
     }
 
-    const report = await buildFeesComparisonReport(ctx.schoolId, {
-      rangeAFrom,
-      rangeATo,
-      rangeBFrom,
-      rangeBTo,
-    });
+    const report = await runInTenantScope(ctx.schoolId, () =>
+      buildFeesComparisonReport(ctx.schoolId, {
+        rangeAFrom,
+        rangeATo,
+        rangeBFrom,
+        rangeBTo,
+      })
+    );
 
     setSchoolDashboardServerCached(cacheKey, report, 60_000);
     return NextResponse.json(report);

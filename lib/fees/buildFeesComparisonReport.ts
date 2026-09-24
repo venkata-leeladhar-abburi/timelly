@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { loadAdmissionFeeDayReportTransactions } from "@/lib/fees/loadAdmissionFeeDayReportTx";
 
 export type FeesComparisonRange = {

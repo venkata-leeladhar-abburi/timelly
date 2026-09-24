@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   getDiscountApprovalsListCached,
   setDiscountApprovalsListCached,
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ approvals: cached });
   }
 
-  const rows =
+  const rows = await runInTenantScope(schoolId, async () =>
     safeStatus === "ALL"
       ? await prisma.$queryRaw<ApprovalListRow[]>`
     SELECT
@@ -158,7 +158,8 @@ export async function GET(req: NextRequest) {
       AND fda.status = CAST(${safeStatus} AS "DiscountApprovalStatus")
     ORDER BY fda."createdAt" DESC
     LIMIT 100
-  `;
+  `
+  );
 
   const approvals = mapApprovals(rows);
   setDiscountApprovalsListCached(cacheKey, approvals);

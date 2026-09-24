@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { isStudentHosteller } from "@/lib/fees/extraFeeResidencyScope";
 import { admissionWorkflowByIds, studentApplicationHasWorkflowColumn } from "@/lib/admission/admissionsListQuery";
 import { activeStudentWhere } from "@/lib/students/studentStatus";

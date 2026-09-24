@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { computeAdminStudentFeeBreakdown } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import { isRedisEnabled } from "@/lib/cache/redis";
 import {
@@ -51,6 +51,7 @@ export async function GET(req: Request) {
     const schoolId = await getSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId")?.trim();
     if (!studentId) return NextResponse.json({ message: "studentId is required" }, { status: 400 });
@@ -100,6 +101,7 @@ export async function GET(req: Request) {
       );
     }
     return NextResponse.json(result, { status: 200 });
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     if (message.includes("Fee record not found")) {

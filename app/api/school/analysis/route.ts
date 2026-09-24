@@ -13,6 +13,7 @@ import {
   getSchoolDashboardServerCached,
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -62,13 +63,13 @@ export async function GET(req: Request) {
     let payload: Record<string, unknown>;
     const ttlMs = fastOnly ? 300_000 : 120_000;
 
-    if (fastOnly) {
-      payload = await buildSchoolAnalysisFast(schoolId, startYear, classId);
-    } else if (tablesOnly) {
-      payload = await buildSchoolAnalysisTables(schoolId, startYear, classId, undefined, tableSection);
-    } else {
-      payload = await buildSchoolAnalysisFull(schoolId, startYear, classId);
-    }
+    payload = await runInTenantScope(schoolId, () => {
+      if (fastOnly) return buildSchoolAnalysisFast(schoolId, startYear, classId);
+      if (tablesOnly) {
+        return buildSchoolAnalysisTables(schoolId, startYear, classId, undefined, tableSection);
+      }
+      return buildSchoolAnalysisFull(schoolId, startYear, classId);
+    });
 
     setSchoolDashboardServerCached(cacheKey, payload, ttlMs);
     return NextResponse.json(payload);

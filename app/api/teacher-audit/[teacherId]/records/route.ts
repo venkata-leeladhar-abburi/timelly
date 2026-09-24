@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { TeacherAuditCategory } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -51,6 +51,7 @@ export async function GET(
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
+    return await runInTenantScope(schoolId, async () => {
     const teacher = await prisma.user.findFirst({
       where: { id: teacherId, schoolId, role: "TEACHER" },
       select: { id: true },
@@ -93,6 +94,7 @@ export async function GET(
       },
       { status: 200 }
     );
+    });
   } catch (e: unknown) {
     logger.error("Teacher audit records GET:", e);
     return NextResponse.json(

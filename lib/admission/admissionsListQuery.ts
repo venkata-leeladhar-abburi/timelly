@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 
 /** Cached after first lookup (restart server after applying migration). */
 let workflowColumnCached: boolean | null = null;

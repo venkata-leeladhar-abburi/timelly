@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   computeStudentCredentials,
   type StudentCredentialRow,
@@ -124,6 +124,7 @@ export async function GET(req: Request) {
     if ("error" in auth) return auth.error;
     const { schoolId } = auth;
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const classId = searchParams.get("classId")?.trim() || "";
     const className = searchParams.get("className")?.trim() || "";
@@ -178,6 +179,7 @@ export async function GET(req: Request) {
         : payload,
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Student credentials error:", error);
     const message = error instanceof Error ? error.message : "Internal server error";

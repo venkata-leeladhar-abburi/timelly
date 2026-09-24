@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 
 /**
  * Classes a teacher can work with for marks/homework/etc:

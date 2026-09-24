@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 
 /** Normalize subject names for case-insensitive comparison. */

@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { buildParentCombinedStats } from "@/lib/parent/buildParentStatsFast";
 import {
   getParentPortalServerCached,

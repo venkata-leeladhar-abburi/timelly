@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { purgeExpiredNewsFeeds } from "@/lib/newsfeedRetention";
 import { buildSchoolDashboardCollectionSummary } from "@/lib/school/buildSchoolDashboardCollection";
 import { buildSchoolDashboardFast } from "@/lib/school/buildSchoolDashboardFast";
@@ -75,7 +75,9 @@ export async function GET(request: Request) {
     const fastOnly = url.searchParams.get("fast") === "1";
 
     if (fastOnly) {
-      const payload = await buildSchoolDashboardFast(schoolId, dateParam);
+      const payload = await runInTenantScope(schoolId, () =>
+        buildSchoolDashboardFast(schoolId, dateParam)
+      );
       return NextResponse.json(payload, { status: 200 });
     }
 
@@ -106,7 +108,7 @@ export async function GET(request: Request) {
       newsFeeds,
       recentPayments,
       collection,
-    ] = await Promise.all([
+    ] = await runInTenantScope(schoolId, () => Promise.all([
       prisma.class.count({ where: { schoolId } }),
       prisma.student.count({ where: { schoolId, ...activeStudentWhere } }),
       prisma.user.count({ where: { schoolId, role: "TEACHER" } }),
@@ -167,7 +169,7 @@ export async function GET(request: Request) {
         LIMIT 5
       `),
       buildSchoolDashboardCollectionSummary(schoolId, dateParam),
-    ]);
+    ]));
 
     const totalPaid = feeTotals.totalPaid;
     const totalFee = feeTotals.totalFee;

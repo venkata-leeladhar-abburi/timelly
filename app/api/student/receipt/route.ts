@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import type { Payment } from "@prisma/client";
 import { generateReceiptPDFServer } from "@/lib/fees/receiptGeneratorServer";
 import { logger } from "@/lib/logger";
@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "School not found" }, { status: 400 });
         }
 
+    return await runInTenantScope(schoolId, async () => {
         const searchParams = request.nextUrl.searchParams;
         const paymentId = searchParams.get("paymentId");
         const studentId = searchParams.get("studentId");
@@ -211,6 +212,7 @@ export async function GET(request: NextRequest) {
                 "Cache-Control": "no-store",
             },
         });
+    });
     } catch (error) {
         logger.error("Receipt generation error:", error);
         return NextResponse.json(

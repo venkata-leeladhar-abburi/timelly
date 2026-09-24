@@ -12,6 +12,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { logger } from "@/lib/logger";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -38,7 +39,8 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
-    return await withRequestTiming(
+
+    return await runInTenantScope(schoolId, async () => {    return await withRequestTiming(
       { route: "GET /api/fees/summary", schoolId, userId: session.user.id },
       async () => {
         // Cursor pagination (by studentFee.studentId which is unique).
@@ -92,6 +94,7 @@ export async function GET(req: Request) {
         return NextResponse.json(payload, { status: 200 });
       }
     );
+    });
   } catch (error: unknown) {
     logger.error("Fee summary error:", error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { saveClassFeeStructureAndSyncStudents } from "@/lib/fees/classFeeStructureApply";
 import { finalFeeFromStructureAndExtras, sumExtraFeesForStudent } from "@/lib/fees/studentTuitionFromStructure";
@@ -30,6 +30,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const classId = searchParams.get("classId");
 
@@ -54,6 +55,7 @@ export async function GET(req: Request) {
       setSchoolDashboardServerCached(`fees:structure:${schoolId}`, payload, 45_000);
     }
     return NextResponse.json(payload);
+    });
   } catch (error: unknown) {
     logger.error("Fee structure GET error:", error);
     return NextResponse.json(

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { buildSchoolDashboardDayCollectionBundle } from "@/lib/school/buildSchoolDashboardCollection";
 import { peekSchoolDashboardFeeTotals } from "@/lib/fees/schoolDashboardFeeTotals";
 import {

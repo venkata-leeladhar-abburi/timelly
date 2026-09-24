@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import {
   getSchoolDashboardServerCached,
@@ -33,6 +33,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const studentId = searchParams.get("studentId")?.trim() || undefined;
     const rawLimit = Number(searchParams.get("limit")) || 100;
@@ -195,6 +196,7 @@ export async function GET(req: Request) {
       setSchoolDashboardServerCached(`fees:transactions:${schoolId}:${limit}`, payload, 20_000);
     }
     return NextResponse.json(payload, { status: 200 });
+    });
   } catch (error: unknown) {
     logger.error("Transactions error:", error);
     return NextResponse.json(

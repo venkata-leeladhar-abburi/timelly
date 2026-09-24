@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { requireSchoolId } from "@/lib/auth/tenant";
 import { formatDobYmd } from "@/lib/dobCalendar";
 import { withRequestTiming } from "@/lib/cache/requestTiming";
@@ -41,6 +41,7 @@ export async function GET(req: Request) {
     if (!ctx.ok) return NextResponse.json({ message: ctx.message }, { status: ctx.status });
     const schoolId = ctx.schoolId;
 
+    return await runInTenantScope(schoolId, async () => {
     if (session.user.schoolIsActive === false) {
       return NextResponse.json(
         { message: "School is paused" },
@@ -283,6 +284,7 @@ export async function GET(req: Request) {
         return NextResponse.json(payload, { status: 200 });
       }
     );
+    });
   } catch (error: unknown) {
     logger.error("List students error:", error);
     return NextResponse.json(

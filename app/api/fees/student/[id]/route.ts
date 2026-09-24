@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
@@ -21,7 +21,12 @@ export async function GET(_req: Request, context: RouteParams) {
   }
 
   try {
-    const fee = await prisma.studentFee.findUnique({
+    // SUPERADMIN reads across tenants (owner connection); everyone else is RLS-scoped.
+    const scopeSchoolId =
+      session.user.role !== "SUPERADMIN" && typeof session.user.schoolId === "string" && session.user.schoolId.trim()
+        ? session.user.schoolId
+        : null;
+    const fee = await runInOptionalTenantScope(scopeSchoolId, () => prisma.studentFee.findUnique({
       where: { studentId: id },
       include: {
         student: { select: { schoolId: true } },
@@ -30,7 +35,7 @@ export async function GET(_req: Request, context: RouteParams) {
           take: 10,
         },
       },
-    });
+    }));
 
     if (!fee) {
       return NextResponse.json(

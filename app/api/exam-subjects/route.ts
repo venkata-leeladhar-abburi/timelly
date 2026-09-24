@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -118,6 +118,7 @@ export async function GET() {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const [customSubjects, teacherSubjects, hidden] = await Promise.all([
       prisma.examSubject.findMany({
         where: { schoolId },
@@ -149,6 +150,7 @@ export async function GET() {
       .sort();
 
     return NextResponse.json({ subjects }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exam subjects GET:", e);
     return NextResponse.json(

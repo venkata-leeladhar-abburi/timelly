@@ -64,7 +64,8 @@ function getTenantClient(): PrismaClient {
  */
 export async function withTenantScopedClient<T>(
   schoolId: string,
-  fn: (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">) => Promise<T>
+  fn: (tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">) => Promise<T>,
+  options?: { timeout?: number; maxWait?: number }
 ): Promise<T> {
   const client = getTenantClient();
   return client.$transaction(async (tx) => {
@@ -74,5 +75,5 @@ export async function withTenantScopedClient<T>(
     // sites ever get threaded from).
     await tx.$executeRaw`SELECT set_config('app.current_school_id', ${schoolId}, true)`;
     return fn(tx);
-  });
+  }, options);
 }

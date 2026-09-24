@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import {
@@ -32,6 +32,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found in session" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const classIdFilter = searchParams.get("classId")?.trim() || undefined;
     const statusFilter = studentStatusFilter(searchParams.get("status"));
@@ -218,6 +219,7 @@ export async function GET(req: Request) {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
       },
+    });
     });
   } catch (error: unknown) {
     logger.error("Fee due report export error:", error);

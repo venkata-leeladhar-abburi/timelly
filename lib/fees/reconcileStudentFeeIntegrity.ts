@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { computeAdminStudentFeeBreakdown } from "@/lib/fees/computeAdminStudentFeeBreakdown";
 import { roundRupee } from "@/lib/formatRupee";
 import { repairOrphanExtraFeeAllocations } from "@/lib/fees/repairOrphanExtraFeeAllocations";

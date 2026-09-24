@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 
 /**
  * Resolves school id for fee-related APIs when JWT `schoolId` is missing

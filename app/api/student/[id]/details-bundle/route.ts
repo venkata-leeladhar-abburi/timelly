@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import {
   buildStudentDetailsCoreBundle,
   buildStudentDetailsNonPaymentExtras,
@@ -81,6 +81,7 @@ export async function GET(req: Request, context: RouteParams) {
     const schoolId = await resolveSchoolId(session);
     const resolvedSchoolId = schoolId ?? null;
 
+    return await runInOptionalTenantScope(resolvedSchoolId, async () => {
     if (extrasOnly) {
       if (url.searchParams.get("scope") === "payments") {
         const includeAdmissionApplicationPayments =
@@ -174,6 +175,7 @@ export async function GET(req: Request, context: RouteParams) {
       : null;
 
     return NextResponse.json({ ...detail, feeBreakdown }, { status: 200 });
+    });
   } catch (error: unknown) {
     logger.error("Student details bundle error:", error);
     return NextResponse.json(

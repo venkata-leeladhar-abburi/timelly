@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 /** News feed posts are removed after this age (7 days). */

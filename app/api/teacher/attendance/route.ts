@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   getSchoolDashboardServerCached,
   purgeSchoolDashboardServerCacheMatching,
@@ -144,6 +144,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const dateStr = searchParams.get("date");
     if (!dateStr) {
@@ -176,6 +177,7 @@ export async function GET(req: Request) {
     };
     setSchoolDashboardServerCached(cacheKey, payload, 30_000);
     return NextResponse.json(payload);
+    });
   } catch (error: unknown) {
     logger.error("Get teacher attendance error:", error);
     return NextResponse.json(

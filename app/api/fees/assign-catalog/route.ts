@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolIdForSession } from "../extra-head-templates/resolveSchoolId";
 import {
   getAssignCatalogMemCached,
@@ -41,6 +41,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const studentId = (searchParams.get("studentId") ?? "").trim();
     let classId = (searchParams.get("classId") ?? "").trim();
@@ -154,6 +155,7 @@ export async function GET(req: Request) {
     };
     setAssignCatalogMemCached(memKey, payload);
     return NextResponse.json(payload, { status: 200 });
+    });
   } catch (error: unknown) {
     logger.error("assign-catalog GET error:", error);
     const message = error instanceof Error ? error.message : "Internal server error";

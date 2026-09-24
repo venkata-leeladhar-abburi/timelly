@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import {
   extraFeeAppliesToStudent,
   parseExtraFeeResidencyScopeBody,
@@ -63,6 +63,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
+    return await runInTenantScope(schoolId, async () => {
     const { searchParams } = new URL(req.url);
     const runMaintenance = searchParams.get("maintenance") === "1";
 
@@ -114,6 +115,7 @@ export async function GET(req: Request) {
       setSchoolDashboardServerCached(`fees:extra:${schoolId}`, payload, 30_000);
     }
     return NextResponse.json(payload);
+    });
   } catch (error: unknown) {
     logger.error("Extra fees GET error:", error);
     return NextResponse.json(

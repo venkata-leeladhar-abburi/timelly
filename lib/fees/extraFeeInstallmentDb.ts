@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import {
   baseNameFromInstallmentFee,
   buildInstallmentFeeNames,

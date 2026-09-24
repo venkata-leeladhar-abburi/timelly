@@ -1,4 +1,4 @@
-import prisma from "@/lib/db";
+import { tenantDb as prisma } from "@/lib/db/tenantContext";
 import type { DayReportTx } from "@/lib/fees/feeDayReportExcel";
 
 /** Map admission-application payment fields to Payment.gateway codes used by fee reports. */
