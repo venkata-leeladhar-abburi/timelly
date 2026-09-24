@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
@@ -30,33 +31,38 @@ export async function GET(
       );
     }
 
-    const classData = await prisma.class.findFirst({
-      where: {
-        id: classId,
-        schoolId: schoolId,
-      },
-      include: {
-        teacher: {
-          select: { id: true, name: true, email: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const classData = await withTenantScopedClient(schoolId, (tx) =>
+      tx.class.findFirst({
+        where: {
+          id: classId,
+          schoolId: schoolId,
         },
-        students: {
-          where: activeStudentWhere,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                photoUrl: true  
+        include: {
+          teacher: {
+            select: { id: true, name: true, email: true },
+          },
+          students: {
+            where: activeStudentWhere,
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  photoUrl: true
+                },
               },
             },
           },
+          school: {
+            select: { id: true, name: true },
+          },
         },
-        school: {
-          select: { id: true, name: true },
-        },
-      },
-    });
+      })
+    );
 
     if (!classData) {
       return NextResponse.json(
