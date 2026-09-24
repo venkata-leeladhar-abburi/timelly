@@ -20,11 +20,27 @@ jest.mock("@/lib/db", () => ({
   default: {
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
     schoolSettings: {
-      findUnique: (...args: unknown[]) => mockSettingsFindUnique(...args),
-      create: (...args: unknown[]) => mockSettingsCreate(...args),
       upsert: (...args: unknown[]) => mockSettingsUpsert(...args),
     },
   },
+}));
+
+// GET's read-or-create goes through the app_tenant-connected,
+// RLS-restricted client (docs/SECURITY_REVIEW.md); PUT still uses the
+// plain prisma import.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      schoolSettings: {
+        findUnique: (...args: unknown[]) => mockSettingsFindUnique(...args),
+        create: (...args: unknown[]) => mockSettingsCreate(...args),
+      },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 function makePutRequest(body: unknown) {

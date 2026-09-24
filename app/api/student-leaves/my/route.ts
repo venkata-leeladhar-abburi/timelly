@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
@@ -37,10 +38,15 @@ export async function GET(request: Request) {
       }
     }
 
-    const leaves = await prisma.studentLeaveRequest.findMany({
-      where: { studentId: student.id },
-      orderBy: { fromDate: "desc" },
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { studentId }` filter above.
+    const leaves = await withTenantScopedClient(student.schoolId, (tx) =>
+      tx.studentLeaveRequest.findMany({
+        where: { studentId: student.id },
+        orderBy: { fromDate: "desc" },
+      })
+    );
 
     if (!bypassCache) {
       await parentPortalSwrWrite({

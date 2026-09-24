@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
@@ -24,16 +25,16 @@ export async function GET() {
     const schoolId = await getSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
-    const settings = await prisma.schoolSettings.findUnique({
-      where: { schoolId },
-    });
-
-    if (!settings) {
-      const created = await prisma.schoolSettings.create({
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads/writes
+    // go through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const settings = await withTenantScopedClient(schoolId, async (tx) => {
+      const existing = await tx.schoolSettings.findUnique({ where: { schoolId } });
+      if (existing) return existing;
+      return tx.schoolSettings.create({
         data: { schoolId, admissionPrefix: "ADM", rollNoPrefix: "", admissionCounter: 0 },
       });
-      return NextResponse.json({ settings: created }, { status: 200 });
-    }
+    });
     return NextResponse.json({ settings }, { status: 200 });
   } catch (e: unknown) {
     logger.error("School settings GET:", e);
