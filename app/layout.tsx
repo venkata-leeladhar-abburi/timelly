@@ -56,7 +56,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* suppressHydrationWarning: browser extensions (e.g. Grammarly) inject attributes on <body> before hydration. */}
       <body
+        suppressHydrationWarning
         className={`
           ${inter.variable}
           ${geistSans.variable}
