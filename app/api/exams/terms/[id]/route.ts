@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { ExamTermStatus } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -35,18 +36,23 @@ export async function GET(
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
 
     const { id } = await params;
-    const term = await prisma.examTerm.findFirst({
-      where: { id, schoolId },
-      include: {
-        class: { select: { id: true, name: true, section: true } },
-        schedules: { orderBy: { examDate: "asc" } },
-        syllabus: {
-          orderBy: { subject: "asc" },
-          include: { units: { orderBy: { order: "asc" } } },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const term = await withTenantScopedClient(schoolId, (tx) =>
+      tx.examTerm.findFirst({
+        where: { id, schoolId },
+        include: {
+          class: { select: { id: true, name: true, section: true } },
+          schedules: { orderBy: { examDate: "asc" } },
+          syllabus: {
+            orderBy: { subject: "asc" },
+            include: { units: { orderBy: { order: "asc" } } },
+          },
+          sections: { orderBy: { order: "asc" } },
         },
-        sections: { orderBy: { order: "asc" } },
-      },
-    });
+      })
+    );
     if (!term) return NextResponse.json({ message: "Exam term not found" }, { status: 404 });
     return NextResponse.json({ term }, { status: 200 });
   } catch (e: unknown) {

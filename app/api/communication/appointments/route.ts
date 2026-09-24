@@ -64,32 +64,37 @@ export async function GET() {
     );
   }
     where.schoolId = schoolId;
-    const appointments = await prisma.appointment.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      include: {
-        student: {
-          select: {
-            id: true,
-            fatherName: true,
-            user: { select: { name: true, photoUrl: true } },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where.schoolId` filter above.
+    const appointments = await withTenantScopedClient(schoolId, (tx) =>
+      tx.appointment.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        include: {
+          student: {
+            select: {
+              id: true,
+              fatherName: true,
+              user: { select: { name: true, photoUrl: true } },
+            },
+          },
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+              photoUrl: true,
+              subject: true,
+            },
+          },
+          messages: {
+            take: 1,
+            orderBy: { createdAt: "desc" as const },
+            select: { content: true },
           },
         },
-        teacher: {
-          select: {
-            id: true,
-            name: true,
-            photoUrl: true,
-            subject: true,
-          },
-        },
-        messages: {
-          take: 1,
-          orderBy: { createdAt: "desc" as const },
-          select: { content: true },
-        },
-      },
-    });
+      })
+    );
 
     return NextResponse.json({ appointments });
   } catch (error: unknown) {

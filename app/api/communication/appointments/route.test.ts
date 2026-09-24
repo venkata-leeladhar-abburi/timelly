@@ -24,11 +24,24 @@ jest.mock("@/lib/db", () => ({
     class: { findFirst: (...args: unknown[]) => mockClassFindFirst(...args) },
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
     appointment: {
-      findMany: (...args: unknown[]) => mockAppointmentFindMany(...args),
       create: (...args: unknown[]) => mockAppointmentCreate(...args),
     },
     user: { findUnique: (...args: unknown[]) => mockUserFindUnique(...args) },
   },
+}));
+
+// GET's reads go through the app_tenant-connected, RLS-restricted client
+// (docs/SECURITY_REVIEW.md); POST still uses the plain prisma import.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      appointment: { findMany: (...args: unknown[]) => mockAppointmentFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 function makeRequest(body: unknown) {
