@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 
 export async function GET(
@@ -32,9 +33,29 @@ export async function GET(
       );
     }
 
-    const event = await prisma.event.findFirst({
-      where: { id: eventId, schoolId },
-      select: { id: true, title: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const { event, registrations } = await withTenantScopedClient(schoolId, async (tx) => {
+      const evt = await tx.event.findFirst({
+        where: { id: eventId, schoolId },
+        select: { id: true, title: true },
+      });
+      if (!evt) return { event: null, registrations: [] };
+
+      const regs = await tx.eventRegistration.findMany({
+        where: { eventId },
+        include: {
+          student: {
+            include: {
+              user: { select: { id: true, name: true, email: true } },
+              class: { select: { id: true, name: true, section: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+      return { event: evt, registrations: regs };
     });
 
     if (!event) {
@@ -43,19 +64,6 @@ export async function GET(
         { status: 404 }
       );
     }
-
-    const registrations = await prisma.eventRegistration.findMany({
-      where: { eventId },
-      include: {
-        student: {
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-            class: { select: { id: true, name: true, section: true } },
-          },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    });
 
     const students = registrations.map((r) => ({
       id: r.student.id,

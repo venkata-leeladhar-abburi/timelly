@@ -18,12 +18,17 @@ jest.mock("@/lib/fees/resolveFeesSchoolId", () => ({
   resolveFeesSchoolId: (...args: unknown[]) => mockResolveFeesSchoolId(...args),
 }));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
-    payment: { groupBy: (...args: unknown[]) => mockPaymentGroupBy(...args) },
-    user: { findMany: (...args: unknown[]) => mockUserFindMany(...args) },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      payment: { groupBy: (...args: unknown[]) => mockPaymentGroupBy(...args) },
+      user: { findMany: (...args: unknown[]) => mockUserFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 const adminSession = { user: { id: "u1", role: "SCHOOLADMIN", schoolId: "s1" } };
