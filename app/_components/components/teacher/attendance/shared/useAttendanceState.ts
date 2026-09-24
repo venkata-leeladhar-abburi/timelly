@@ -103,7 +103,13 @@ export function useAttendanceState() {
         const mappedStudents: StudentRow[] = Array.isArray(
           classData?.students
         )
-          ? classData.students.map((student: any, index: number) => ({
+          ? classData.students.map((student: {
+            id: string;
+            rollNo?: string | null;
+            name?: string | null;
+            photoUrl?: string | null;
+            user?: { name?: string | null; photoUrl?: string | null } | null;
+          }, index: number) => ({
               id: student.id,
               roll: student.rollNo || `${index + 1}`.padStart(2, "0"),
               name: student.user?.name || student.name || "Unknown",

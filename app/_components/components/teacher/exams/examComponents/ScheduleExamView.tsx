@@ -11,7 +11,12 @@ export default function ScheduleExamView({
     examId,
     onCancel,
     onSave,
-}: any) {
+}: {
+    mode?: "create" | "edit";
+    examId?: string;
+    onCancel: () => void;
+    onSave?: () => void;
+}) {
     const {
         units,
         setUnits,

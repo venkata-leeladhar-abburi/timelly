@@ -1,10 +1,11 @@
 "use client";
 
 import React from 'react';
+import type { TeacherExam } from "./examTypes";
 import { Calendar, Clock, Pencil, Trash2, EyeIcon } from "lucide-react";
 
 interface ExamCardProps {
-  exam: any;
+  exam: TeacherExam;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -25,7 +26,7 @@ export default function ExamCard({ exam, onView, onEdit, onDelete }: ExamCardPro
     !exam.syllabus || exam.syllabus.length === 0
       ? 0
       : Math.min(100, Math.max(0, Math.round(
-          exam.syllabus.reduce((s: number, x: any) => s + (Number(x.completedPercent) || 0), 0) /
+          exam.syllabus.reduce((s: number, x) => s + (Number(x.completedPercent) || 0), 0) /
           exam.syllabus.length
         )));
 

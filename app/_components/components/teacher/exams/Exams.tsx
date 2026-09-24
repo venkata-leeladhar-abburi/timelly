@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import PageHeader from "../../common/PageHeader";
 import { Plus, Search } from "lucide-react";
+import type { TeacherExam } from "./examComponents/examTypes";
 import ExamCard from "./examComponents/ExamCard";
 import ScheduleExamView from "./examComponents/ScheduleExamView";
 import ExamDetailsView from "./examComponents/ExamDetailsView";
@@ -25,16 +26,16 @@ type ViewState =
 export default function TeacherExamsTab() {
     const initial = peekTeacherExamsList();
     const [view, setView] = useState<ViewState>({ mode: "list" });
-    const [exams, setExams] = useState<any[]>(() => (Array.isArray(initial) ? initial : []));
+    const [exams, setExams] = useState<TeacherExam[]>(() => (Array.isArray(initial) ? (initial as TeacherExam[]) : []));
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(() => !initial);
-    const [examToDelete, setExamToDelete] = useState<any | null>(null);
+    const [examToDelete, setExamToDelete] = useState<TeacherExam | null>(null);
 
     const loadExams = useCallback(async (revalidate = false) => {
         if (!revalidate) {
             const cached = peekTeacherExamsList();
             if (cached) {
-                setExams(Array.isArray(cached) ? cached : []);
+                setExams(Array.isArray(cached) ? (cached as TeacherExam[]) : []);
                 setLoading(false);
                 void loadExams(true);
                 return;
@@ -44,7 +45,7 @@ export default function TeacherExamsTab() {
         setLoading((prev) => (exams.length === 0 ? true : prev));
         try {
             const list = await loadTeacherExamsList({ revalidate: true });
-            setExams(Array.isArray(list) ? list : []);
+            setExams(Array.isArray(list) ? (list as TeacherExam[]) : []);
         } catch (error) {
             console.error("Failed to load exams:", error);
             if (exams.length === 0) setExams([]);

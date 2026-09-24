@@ -3,11 +3,20 @@
 import React, { useEffect, useState } from "react";
 import { ChevronLeft, Calendar, Clock, CheckCircle2, Pencil, LayoutGrid } from "lucide-react";
 import { fetchExamScheduleDetail } from "@/lib/api/examSchedules";
+import type { TeacherExam } from "./examTypes";
 import PageHeader from "../../../common/PageHeader";
 import TimellyLoader from "../../../common/TimellyLoader";
 
-export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
-  const [exam, setExam] = useState<any>(null);
+export default function ExamDetailsView({
+  examId,
+  onBack,
+  onEdit,
+}: {
+  examId: string;
+  onBack: () => void;
+  onEdit?: () => void;
+}) {
+  const [exam, setExam] = useState<TeacherExam | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,7 +24,7 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
       setLoading(true);
       try {
         const { ok, data } = await fetchExamScheduleDetail(examId);
-        if (ok && data.exam) setExam(data.exam);
+        if (ok && data.exam) setExam(data.exam as TeacherExam);
         else setExam(null);
       } catch {
         setExam(null);
@@ -142,7 +151,7 @@ export default function ExamDetailsView({ examId, onBack, onEdit }: any) {
 
           <div className="p-6 space-y-4 overflow-y-auto max-h-[850px] custom-scrollbar">
             {Array.isArray(exam?.syllabus) && exam.syllabus.length > 0 ? (
-              exam.syllabus.map((unit: { subject?: string; completedPercent?: number }, idx: number) => {
+              exam.syllabus.map((unit, idx) => {
                 const pct = Math.min(100, Math.max(0, Number(unit.completedPercent) || 0));
                 return (
                   <div key={idx} className="bg-white/5 border border-white/5 rounded-xl p-4 flex flex-col gap-4 transition-all hover:bg-white/[0.07]">
