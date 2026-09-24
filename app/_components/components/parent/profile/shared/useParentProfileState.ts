@@ -24,7 +24,7 @@ export function useParentProfileState() {
   const [profile, setProfile] = useState<StudentProfile | null>(initialProfile);
   const [user, setUser] = useState<{ name: string | null; photoUrl: string | null; mobile: string | null } | null>(null);
   const [homeworkTotal, setHomeworkTotal] = useState(initialDash?.homeworkTotal ?? 0);
-  const [homeworkSubmitted, setHomeworkSubmitted] = useState(initialDash?.homeworkSubmitted ?? 0);
+  const [_homeworkSubmitted, setHomeworkSubmitted] = useState(initialDash?.homeworkSubmitted ?? 0);
   const [pendingHomework, setPendingHomework] = useState(
     Math.max(0, (initialDash?.homeworkTotal ?? 0) - (initialDash?.homeworkSubmitted ?? 0))
   );

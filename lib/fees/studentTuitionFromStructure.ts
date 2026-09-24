@@ -146,7 +146,7 @@ export function shouldOmitLegacySplitHostelMessExtraForBreakdown<
 >(
   ef: T,
   allSchoolExtras: T[],
-  opts: { classId: string | null; residencyType: string | null }
+  _opts: { classId: string | null; residencyType: string | null }
 ): boolean {
   return shouldOmitLegacySplitDuplicate(ef as ExtraFeeRow, allSchoolExtras as ExtraFeeRow[]);
 }

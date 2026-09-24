@@ -199,7 +199,7 @@ function ParentDashboardInner() {
     subStatus.status !== "ACTIVE" &&
     !subStatus.isTrial;
 
-  const shouldLockThisTab =
+  const _shouldLockThisTab =
     isLocked && !["fees", "subscription"].includes(tab);
 
   // User request: when subscription is required, show the popup card,

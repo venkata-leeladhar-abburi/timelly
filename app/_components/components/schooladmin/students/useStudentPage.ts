@@ -15,7 +15,7 @@ import { UseStudentExport as useStudentExport } from "./shared";
 import { useStudentClassesBootstrap } from "./shared";
 import { useStudentListFetching } from "./shared";
 
-export default function useStudentPage({ classes, reload }: Props) {
+export default function useStudentPage({ classes, reload: _reload }: Props) {
   const stableClasses = classes ?? EMPTY_CLASSES;
   const { availableClasses, classesLoading } = useStudentClassesBootstrap(stableClasses);
   const [selectedClass, setSelectedClass] = useState("");

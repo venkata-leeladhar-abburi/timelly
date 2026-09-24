@@ -106,7 +106,7 @@ export const OfflinePayments = ({ studentId, studentName, remainingFee, onPaymen
       });
     };
 
-    const numericAmount = useMemo(() => parseFloat(formData.amount) || 0, [formData.amount]);
+    const _numericAmount = useMemo(() => parseFloat(formData.amount) || 0, [formData.amount]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -169,7 +169,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
   // Only filter menu items for TEACHER role. Other roles see full menu.
   const allowedFeatures = session?.user?.allowedFeatures ?? [];
   const isTeacher = session?.user?.role === "TEACHER";
-  const isStudent = session?.user?.role === "STUDENT";
+  const _isStudent = session?.user?.role === "STUDENT";
 
   const handleClick = async (item: SidebarItem) => {
     if (item.disabled) {

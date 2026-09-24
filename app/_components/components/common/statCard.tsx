@@ -25,7 +25,7 @@ export default function StatCard({
   footer,
   className = "",
   children,
-  iconVariant = "boxed",
+  iconVariant: _iconVariant = "boxed",
   showBgIcon = false,
   variant = "default",
 }: StatCardProps) {

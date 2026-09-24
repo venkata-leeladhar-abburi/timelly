@@ -82,7 +82,7 @@ export default function TeacherHomeworkTab() {
     handleSubmitSuccess(homework as Parameters<typeof handleSubmitSuccess>[0]);
   };
 
-  const activeCount = useMemo(() => {
+  const _activeCount = useMemo(() => {
     const now = new Date().toISOString();
     return filteredHomeworks.filter((h) => h.dueDate && h.dueDate >= now).length;
   }, [filteredHomeworks]);

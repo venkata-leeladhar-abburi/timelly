@@ -13,7 +13,7 @@ interface Props {
 
 const ShowTeacher = ({ teacher, onClose, onEdit }: Props) => {
     const [details, setDetails] = useState<TeacherDetails | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [_loading, setLoading] = useState(false);
 
     useEffect(() => {
         document.documentElement.style.overflow = "hidden";

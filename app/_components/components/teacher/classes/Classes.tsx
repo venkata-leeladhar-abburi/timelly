@@ -63,9 +63,9 @@ export default function TeacherClasses() {
     [filteredStudents, metrics.byStudentId]
   );
 
-  const totalClasses = classes.length;
-  const totalStudents = students.length;
-  const activeStudents = classStudents.length;
+  const _totalClasses = classes.length;
+  const _totalStudents = students.length;
+  const _activeStudents = classStudents.length;
 
   return (
     <div className="min-h-screen text-white sm:lg:space-y-6">

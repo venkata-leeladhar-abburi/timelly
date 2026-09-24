@@ -79,7 +79,7 @@ const SubjectPerformance = ({ marks }: SubjectPerformanceProps) => {
     });
 
     return Array.from(subjectMap.values()).map((mark) => {
-      const percentage = mark.totalMarks > 0 ? (mark.marks / mark.totalMarks) * 100 : 0;
+      const _percentage = mark.totalMarks > 0 ? (mark.marks / mark.totalMarks) * 100 : 0;
       return {
         name: mark.subject,
         marks: mark.marks,

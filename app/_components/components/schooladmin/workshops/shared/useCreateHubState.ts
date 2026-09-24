@@ -140,7 +140,6 @@ export function useCreateHubState({ events }: { events: HubEvent[] }) {
       if (!tid) throw new Error("No template ID returned");
 
       setAssignProgress({ current: 0, total: toAssign.length });
-      let successCount = 0;
 
       for (let i = 0; i < toAssign.length; i++) {
         const student = toAssign[i];
@@ -173,7 +172,6 @@ export function useCreateHubState({ events }: { events: HubEvent[] }) {
           if (!res.ok) {
             throw new Error(data?.message || "Assign failed");
           }
-          successCount++;
         } catch (err) {
           console.error("Assign error for", student.name, err);
           setError(

@@ -33,11 +33,11 @@ export default function ProfileModal({
   const isSuperAdmin = normalizedRole === "SUPER_ADMIN" || normalizedRole === "SUPERADMIN";
   const phone = profileProp?.phone ?? session?.user?.mobile ?? "";
   const address = profileProp?.address ?? "";
-  const status = profileProp?.status ?? "ACTIVE";
+  const _status = profileProp?.status ?? "ACTIVE";
   const imageUrl = profileProp?.image ?? session?.user?.image ?? AVATAR_URL;
   const roleLabel = formatRole(role);
 
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     onClose();
     await signOut({ callbackUrl: "/" });
   };

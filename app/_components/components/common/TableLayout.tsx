@@ -86,7 +86,7 @@ function DataTable<T>({
   tableTitle,
   tableSubtitle,
   headerRight,
-  showMobile = true,
+  showMobile: _showMobile = true,
   container = true,
   rounded = true,
   containerClassName = "",

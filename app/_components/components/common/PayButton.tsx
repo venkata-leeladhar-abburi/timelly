@@ -24,7 +24,7 @@ interface PayButtonProps {
 
 export default function PayButton({
   amount,
-  onSuccess,
+  onSuccess: _onSuccess,
   returnPath,
   eventRegistrationId,
   endpoint = "/api/payment/create-order",

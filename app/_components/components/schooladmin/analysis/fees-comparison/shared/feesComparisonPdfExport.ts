@@ -114,7 +114,7 @@ export async function exportPdf(report: ComparisonReport) {
     doc.text(`Page ${pageNo}`, pageWidth - margin, pageHeight - 6, { align: "right" });
   };
 
-  const drawRow = (row: ComparisonRow | null, index: number) => {
+  const drawRow = (row: ComparisonRow | null, _index: number) => {
     if (y > pageHeight - 18) {
       drawFooter();
       doc.addPage();

@@ -57,7 +57,7 @@ export default function EventCard({
   title,
   description,
   eventDate,
-  location,
+  location: _location,
   mode,
   registrations,
   maxSeats,
