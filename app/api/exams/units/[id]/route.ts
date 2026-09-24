@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { requireSchoolId } from "@/lib/auth/tenant";
 
 /** PATCH: update unit completedPercent (used by teacher portal for progress) */
 export async function PATCH(
@@ -17,7 +18,16 @@ export async function PATCH(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
+    const tenant = await requireSchoolId(session);
+    if (!tenant.ok) return NextResponse.json({ message: tenant.message }, { status: tenant.status });
+
     const { id } = await params;
+    const owned = await prisma.syllabusUnit.findFirst({
+      where: { id, tracking: { term: { schoolId: tenant.schoolId } } },
+      select: { id: true },
+    });
+    if (!owned) return NextResponse.json({ message: "Unit not found" }, { status: 404 });
+
     const body = await req.json();
     const completedPercentRaw = Number(body.completedPercent ?? 0);
     const completedPercent = Math.max(0, Math.min(100, Math.trunc(completedPercentRaw)));
