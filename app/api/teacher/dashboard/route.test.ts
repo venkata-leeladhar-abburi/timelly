@@ -22,18 +22,23 @@ jest.mock("@/lib/teacher/teacherClassAccess", () => ({
   getTeacherAccessibleClassIds: (...args: unknown[]) => mockGetTeacherAccessibleClassIds(...args),
 }));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
-    class: { findMany: (...args: unknown[]) => mockClassFindMany(...args) },
-    circular: { findMany: (...args: unknown[]) => mockCircularFindMany(...args) },
-    notification: {
-      findMany: (...args: unknown[]) => mockNotificationFindMany(...args),
-      count: (...args: unknown[]) => mockNotificationCount(...args),
-    },
-    appointment: { findMany: (...args: unknown[]) => mockAppointmentFindMany(...args) },
-    event: { findMany: (...args: unknown[]) => mockEventFindMany(...args) },
-  },
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      class: { findMany: (...args: unknown[]) => mockClassFindMany(...args) },
+      circular: { findMany: (...args: unknown[]) => mockCircularFindMany(...args) },
+      notification: {
+        findMany: (...args: unknown[]) => mockNotificationFindMany(...args),
+        count: (...args: unknown[]) => mockNotificationCount(...args),
+      },
+      appointment: { findMany: (...args: unknown[]) => mockAppointmentFindMany(...args) },
+      event: { findMany: (...args: unknown[]) => mockEventFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 describe("GET /api/teacher/dashboard", () => {

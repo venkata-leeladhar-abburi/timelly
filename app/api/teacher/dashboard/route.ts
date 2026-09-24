@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
 
@@ -23,52 +23,59 @@ export async function GET() {
 
     const accessibleIds = await getTeacherAccessibleClassIds(userId, schoolId);
 
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` / `where: { userId }` filters below.
     const [classes, circulars, notifications, unreadCount, appointments] =
-      await Promise.all([
-        accessibleIds.length
-          ? prisma.class.findMany({
-              where: { id: { in: accessibleIds }, schoolId },
-              include: { _count: { select: { students: true } } },
-              orderBy: { createdAt: "desc" },
-            })
-          : Promise.resolve([]),
-        prisma.circular.findMany({
-          where: { schoolId },
-          include: { issuedBy: { select: { name: true, photoUrl: true } } },
-          orderBy: { createdAt: "desc" },
-          take: 3,
-        }),
-        prisma.notification.findMany({
-          where: { userId },
-          orderBy: { createdAt: "desc" },
-          take: 25,
-        }),
-        prisma.notification.count({
-          where: { userId, isRead: false },
-        }),
-        prisma.appointment.findMany({
-          where: { teacherId: userId },
-          include: {
-            student: {
-              select: {
-                fatherName: true,
-                user: { select: { name: true } },
+      await withTenantScopedClient(schoolId, (tx) =>
+        Promise.all([
+          accessibleIds.length
+            ? tx.class.findMany({
+                where: { id: { in: accessibleIds }, schoolId },
+                include: { _count: { select: { students: true } } },
+                orderBy: { createdAt: "desc" },
+              })
+            : Promise.resolve([]),
+          tx.circular.findMany({
+            where: { schoolId },
+            include: { issuedBy: { select: { name: true, photoUrl: true } } },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+          }),
+          tx.notification.findMany({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+            take: 25,
+          }),
+          tx.notification.count({
+            where: { userId, isRead: false },
+          }),
+          tx.appointment.findMany({
+            where: { teacherId: userId },
+            include: {
+              student: {
+                select: {
+                  fatherName: true,
+                  user: { select: { name: true } },
+                },
               },
             },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 4,
-        }),
-      ]);
+            orderBy: { createdAt: "desc" },
+            take: 4,
+          }),
+        ])
+      );
 
     let events: Array<{ id: string; title: string; eventDate: Date | null }> = [];
     try {
-      events = await prisma.event.findMany({
-        where: { schoolId },
-        select: { id: true, title: true, eventDate: true },
-        orderBy: { eventDate: "asc" },
-        take: 4,
-      });
+      events = await withTenantScopedClient(schoolId, (tx) =>
+        tx.event.findMany({
+          where: { schoolId },
+          select: { id: true, title: true, eventDate: true },
+          orderBy: { eventDate: "asc" },
+          take: 4,
+        })
+      );
     } catch (err) {
       logger.warn("Teacher dashboard events fallback:", err);
       events = [];
