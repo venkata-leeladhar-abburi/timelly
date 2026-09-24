@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { ExamTermStatus } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -62,110 +63,113 @@ export async function GET(req: Request) {
     const classIdParam = searchParams.get("classId");
     const status = searchParams.get("status");
 
-    /* ======================================================
-       TEACHER – OLD LOGIC (UNCHANGED)
-    ====================================================== */
-    if (role === "TEACHER") {
-      const terms = await prisma.examTerm.findMany({
-        where: {
-          schoolId,
-          ...(classIdParam ? { classId: classIdParam } : {}),
-          ...(status ? { status: status as ExamTermStatus } : {}),
-        },
-        include: {
-          class: { select: { id: true, name: true, section: true } },
-          schedules: { orderBy: { examDate: "asc" } },
-          syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
-        },
-        orderBy: { createdAt: "desc" },
-      });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filters in each branch below.
+    const result = await withTenantScopedClient(schoolId, async (tx) => {
+      /* ======================================================
+         TEACHER – OLD LOGIC (UNCHANGED)
+      ====================================================== */
+      if (role === "TEACHER") {
+        const terms = await tx.examTerm.findMany({
+          where: {
+            schoolId,
+            ...(classIdParam ? { classId: classIdParam } : {}),
+            ...(status ? { status: status as ExamTermStatus } : {}),
+          },
+          include: {
+            class: { select: { id: true, name: true, section: true } },
+            schedules: { orderBy: { examDate: "asc" } },
+            syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
+          },
+          orderBy: { createdAt: "desc" },
+        });
 
-      const exams: Array<{
-        id: string;
-        termId: string;
-        name: string;
-        status: ExamTermStatus;
-        subject: string;
-        class: { id: string; name: string; section: string };
-        date: string;
-        time: string;
-        duration: string;
-        syllabus: Array<{ completedPercent: number }>;
-      }> = [];
+        const exams: Array<{
+          id: string;
+          termId: string;
+          name: string;
+          status: ExamTermStatus;
+          subject: string;
+          class: { id: string; name: string; section: string };
+          date: string;
+          time: string;
+          duration: string;
+          syllabus: Array<{ completedPercent: number }>;
+        }> = [];
 
-      for (const term of terms) {
-        const classInfo = term.class
-          ? { id: term.class.id, name: term.class.name, section: term.class.section ?? "" }
-          : { id: "", name: "", section: "" };
+        for (const term of terms) {
+          const classInfo = term.class
+            ? { id: term.class.id, name: term.class.name, section: term.class.section ?? "" }
+            : { id: "", name: "", section: "" };
 
-        for (const s of term.schedules) {
-          const tracking = term.syllabus.find((sy) => sy.subject === s.subject);
-          const syllabus = tracking
-            ? tracking.units.length > 0
-              ? tracking.units.map((u) => ({ completedPercent: u.completedPercent }))
-              : [{ completedPercent: tracking.completedPercent }]
-            : [];
+          for (const s of term.schedules) {
+            const tracking = term.syllabus.find((sy) => sy.subject === s.subject);
+            const syllabus = tracking
+              ? tracking.units.length > 0
+                ? tracking.units.map((u) => ({ completedPercent: u.completedPercent }))
+                : [{ completedPercent: tracking.completedPercent }]
+              : [];
 
-          exams.push({
-            id: s.id,
-            termId: term.id,
-            name: term.name,
-            status: term.status,
-            subject: s.subject,
-            class: classInfo,
-            date: formatExamDate(s.examDate),
-            time: s.startTime,
-            duration: formatDuration(s.durationMin),
-            syllabus,
-          });
+            exams.push({
+              id: s.id,
+              termId: term.id,
+              name: term.name,
+              status: term.status,
+              subject: s.subject,
+              class: classInfo,
+              date: formatExamDate(s.examDate),
+              time: s.startTime,
+              duration: formatDuration(s.durationMin),
+              syllabus,
+            });
+          }
         }
+
+        return { kind: "teacher" as const, exams };
       }
 
-      return NextResponse.json({ exams }, { status: 200 });
-    }
+      /* ======================================================
+         STUDENT
+      ====================================================== */
+      if (role === "STUDENT") {
+        const student = await tx.student.findUnique({
+          where: { userId: session.user.id },
+          select: { classId: true },
+        });
 
-    /* ======================================================
-       STUDENT
-    ====================================================== */
-    if (role === "STUDENT") {
-      const student = await prisma.student.findUnique({
-        where: { userId: session.user.id },
-        select: { classId: true },
-      });
+        if (!student?.classId) {
+          return { kind: "studentNoClass" as const };
+        }
 
-      if (!student?.classId) {
-        return NextResponse.json({ message: "Student class not assigned" }, { status: 400 });
+        const terms = await tx.examTerm.findMany({
+          where: {
+            schoolId,
+            classId: student.classId,
+            ...(status ? { status: status as ExamTermStatus } : {}),
+          },
+          include: {
+            class: { include: { teacher: { select: { name: true } } } },
+            schedules: { orderBy: { examDate: "asc" } },
+            syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
+            sections: { orderBy: { order: "asc" } },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+
+        return { kind: "student" as const, terms };
       }
 
-      const terms = await prisma.examTerm.findMany({
-        where: {
-          schoolId,
-          classId: student.classId,
-          ...(status ? { status: status as ExamTermStatus } : {}),
-        },
-        include: {
-          class: { include: { teacher: { select: { name: true } } } },
-          schedules: { orderBy: { examDate: "asc" } },
-          syllabus: { orderBy: { subject: "asc" }, include: { units: { orderBy: { order: "asc" } } } },
-          sections: { orderBy: { order: "asc" } },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      return NextResponse.json({ terms }, { status: 200 });
-    }
-
-    /* ======================================================
-       SCHOOL ADMIN – UPDATED
-    ====================================================== */
-    if (role === "SCHOOLADMIN") {
-      const classes = await prisma.class.findMany({
+      /* ======================================================
+         SCHOOL ADMIN – UPDATED
+      ====================================================== */
+      const classes = await tx.class.findMany({
         where: { schoolId },
         select: { id: true, name: true, section: true },
         orderBy: { name: "asc" },
       });
 
-      const terms = await prisma.examTerm.findMany({
+      const terms = await tx.examTerm.findMany({
         where: {
           schoolId,
           ...(classIdParam ? { classId: classIdParam } : {}),
@@ -180,9 +184,19 @@ export async function GET(req: Request) {
         orderBy: { createdAt: "desc" },
       });
 
-      return NextResponse.json({ terms, classes }, { status: 200 });
-    }
+      return { kind: "schooladmin" as const, terms, classes };
+    });
 
+    if (result.kind === "teacher") {
+      return NextResponse.json({ exams: result.exams }, { status: 200 });
+    }
+    if (result.kind === "studentNoClass") {
+      return NextResponse.json({ message: "Student class not assigned" }, { status: 400 });
+    }
+    if (result.kind === "student") {
+      return NextResponse.json({ terms: result.terms }, { status: 200 });
+    }
+    return NextResponse.json({ terms: result.terms, classes: result.classes }, { status: 200 });
   } catch (e: unknown) {
     logger.error("Exams terms GET:", e);
     return NextResponse.json(
