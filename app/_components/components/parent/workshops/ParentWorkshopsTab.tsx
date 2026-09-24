@@ -103,6 +103,7 @@ export default function ParentWorkshopsTab() {
     } finally {
       setLoadingEvents(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads only when the student changes; events.length only gates the loading flag
   }, [studentId]);
 
   useEffect(() => {

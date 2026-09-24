@@ -127,7 +127,7 @@ export default function RequireFeature({ requiredFeature, children }: RequireFea
     // For other roles (if any), deny by default unless explicitly allowed
     setIsAuthorized(false);
     router.replace("/unauthorized");
-  }, [status, session, allowedFeatures, requiredFeature]);
+  }, [status, session, allowedFeatures, requiredFeature, router]);
 
   // Show loading state while checking authentication or permissions
   if (status === "loading" || status === "unauthenticated" || isAuthorized === null) {

@@ -112,6 +112,8 @@ function ParentDashboardInner() {
     }
   };
 
+  const userMobile = (session?.user as any)?.mobile;
+  const userId = (session?.user as any)?.id;
   useEffect(() => {
     let cancelled = false;
     const studentId = session?.user?.studentId;
@@ -158,13 +160,14 @@ function ParentDashboardInner() {
     return () => {
       cancelled = true;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the individual session fields so a new session object does not refetch
   }, [
     session?.user?.studentId,
     session?.user?.name,
     session?.user?.image,
     session?.user?.email,
-    (session?.user as any)?.mobile,
-    (session?.user as any)?.id,
+    userMobile,
+    userId,
   ]);
 
   useEffect(() => {

@@ -49,6 +49,7 @@ export default function NewChatModal({ onClose, onSuccess }: Props) {
     } finally {
       setLoadingTeachers(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- load-once; selectedTeacherId is only read to keep an existing selection
   }, []);
 
   useEffect(() => {

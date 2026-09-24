@@ -210,6 +210,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
       (item) => item.action !== "logout" && item.tab !== "settings"
     );
     return { mainItems: main, bottomItems: bottom };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- isAllowed is an inline closure over isTeacher/allowedFeatures, which are listed
   }, [menuItems, isTeacher, allowedFeatures]);
 
   return (

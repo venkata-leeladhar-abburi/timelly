@@ -124,6 +124,7 @@ export default function FeesTab({ section }: FeesTabProps) {
         setLoadError(e instanceof Error ? e.message : "Failed to load fees data");
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setters is an object of stable React state setters, recreated each render
     [schoolId, section]
   );
 
@@ -148,6 +149,7 @@ export default function FeesTab({ section }: FeesTabProps) {
         setLoadError(err instanceof Error ? err.message : "Failed to load fees data");
       });
     return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- setters is an object of stable React state setters, recreated each render
   }, [schoolId, section, pettyCashOnly]);
 
   useEffect(() => {

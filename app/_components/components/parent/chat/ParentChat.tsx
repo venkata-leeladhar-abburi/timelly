@@ -65,6 +65,7 @@ export default function TeacherParentChatTab() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- load-once; chats.length is only read to skip a redundant loading flash
   }, []);
 
   useEffect(() => {

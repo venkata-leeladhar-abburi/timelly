@@ -101,6 +101,7 @@ export function useParentProfileState() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reloads only when the student changes; profile is merged via functional setState
   }, [studentId]);
 
   useEffect(() => {

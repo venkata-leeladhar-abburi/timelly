@@ -108,6 +108,7 @@ export function useFeeTransactionsReceiptPrinting({
         onAutoPrintDone?.();
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- auto-print fires once per autoPrintPaymentId; the builder is recreated each render
   }, [autoPrintPaymentId, onAutoPrintDone, transactionRows, transactionsLoading]);
 
   const toggleReceiptSelection = (id: string) => {

@@ -53,6 +53,7 @@ export function useScheduleExamState({
       }
     })();
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only load; selectedClassId is only read to avoid overriding an existing selection
   }, []);
 
   useEffect(() => {
@@ -164,7 +165,7 @@ export function useScheduleExamState({
       }
     })();
     return () => { cancelled = true; };
-  }, [mode, examId]);
+  }, [mode, examId, today]);
 
   const addUnit = () => setUnits([...units, { id: units.length ? Math.max(...units.map((u) => u.id), 0) + 1 : 1, name: "", status: "Pending", completion: 0 }]);
   const removeUnit = (id: number) => setUnits(units.filter(u => u.id !== id));

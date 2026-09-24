@@ -249,7 +249,7 @@ export function useOfflinePaymentFormState({
     });
 
     return { items };
-  }, [amount, dueByKey, dueHeads.length, headOptions, numericAmount, remainingFee, selectedHeads, studentId]);
+  }, [dueByKey, dueHeads, headOptions, numericAmount, remainingFee, selectedHeads, studentId]);
 
   return {
     showForm,

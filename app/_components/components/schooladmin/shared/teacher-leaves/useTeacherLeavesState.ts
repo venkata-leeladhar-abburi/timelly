@@ -27,20 +27,26 @@ export function useTeacherLeavesState() {
     return t;
   }, []);
 
-  const isToday = (date?: string | null) => {
-    if (!date) return false;
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() === today.getTime();
-  };
+  const isToday = useCallback(
+    (date?: string | null) => {
+      if (!date) return false;
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    },
+    [today]
+  );
 
-  const isTodayBetween = (from: string, to: string) => {
-    const f = new Date(from);
-    const t = new Date(to);
-    f.setHours(0, 0, 0, 0);
-    t.setHours(0, 0, 0, 0);
-    return today >= f && today <= t;
-  };
+  const isTodayBetween = useCallback(
+    (from: string, to: string) => {
+      const f = new Date(from);
+      const t = new Date(to);
+      f.setHours(0, 0, 0, 0);
+      t.setHours(0, 0, 0, 0);
+      return today >= f && today <= t;
+    },
+    [today]
+  );
 
   const currentMonthLabel = new Date().toLocaleString("en-US", {
     month: "short",
@@ -188,7 +194,7 @@ export function useTeacherLeavesState() {
             l.status === "CONDITIONALLY_APPROVED") &&
           isToday(l.approvedAt || l.updatedAt)
       ),
-    [allLeaves]
+    [allLeaves, isToday]
   );
 
   const currentMonthLeaves = useMemo(
@@ -202,7 +208,7 @@ export function useTeacherLeavesState() {
 
   const teachersOnLeaveToday = useMemo(
     () => allLeaves.filter((l) => isTodayBetween(l.fromDate, l.toDate)),
-    [allLeaves]
+    [allLeaves, isTodayBetween]
   );
 
   const approvedLeaves = useMemo(

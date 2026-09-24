@@ -105,6 +105,7 @@ export function usePortalSettingsState(portal: PortalVariant) {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the individual session fields so a new session object does not refetch
   }, [session?.user?.email, session?.user?.image, session?.user?.mobile, session?.user?.name, toast, portal]);
 
   useEffect(() => {
@@ -199,6 +200,7 @@ export function usePortalSettingsState(portal: PortalVariant) {
         event.target.value = "";
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- uploads use the form snapshot at click time; userId/address/email are read from session
     [toast, setForm, form.name, form.mobile, form.language]
   );
 
@@ -251,6 +253,7 @@ export function usePortalSettingsState(portal: PortalVariant) {
     } finally {
       setSaving(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- userId comes from the session and is stable for the lifetime of the page
   }, [canSave, form, passwords, passwordDirty, prefKey, prefs, toast, portal]);
 
   return {

@@ -128,6 +128,8 @@ function TeacherDashboardInner() {
     }
   };
 
+  const userMobile = (session?.user as { mobile?: string })?.mobile;
+  const userId = (session?.user as { id?: string })?.id;
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -154,12 +156,13 @@ function TeacherDashboardInner() {
     return () => {
       cancelled = true;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the individual session fields so a new session object does not refetch
   }, [
     session?.user?.name,
     session?.user?.image,
     session?.user?.email,
-    (session?.user as { mobile?: string })?.mobile,
-    (session?.user as { id?: string })?.id,
+    userMobile,
+    userId,
   ]);
 
   return (
