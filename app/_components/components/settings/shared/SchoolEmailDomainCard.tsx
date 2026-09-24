@@ -19,7 +19,7 @@ export function SchoolEmailDomainCard() {
         if (!cancelled && res.ok && data.settings) {
           setEmailDomain(data.settings.emailDomain ?? "");
         }
-      } catch (_) {
+      } catch {
         if (!cancelled) setMessage({ type: "error", text: "Failed to load email settings" });
       } finally {
         if (!cancelled) setLoading(false);
@@ -48,7 +48,7 @@ export function SchoolEmailDomainCard() {
       } else {
         setMessage({ type: "error", text: data?.message ?? "Failed to save" });
       }
-    } catch (_) {
+    } catch {
       setMessage({ type: "error", text: "Failed to save" });
     } finally {
       setSaving(false);

@@ -83,7 +83,7 @@ export function useAdmissionReceiptPrinting() {
               reader.readAsDataURL(blob);
               return;
             }
-          } catch(e) {}
+          } catch {}
         }
 
         setSchoolLogo(parsedLogo);

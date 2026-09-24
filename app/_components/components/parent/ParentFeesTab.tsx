@@ -33,7 +33,7 @@ export default function ParentFeesTab() {
         return;
       }
       setData(json as FeeData);
-    } catch (e) {
+    } catch {
       setError("Something went wrong");
     } finally {
       setLoading(false);

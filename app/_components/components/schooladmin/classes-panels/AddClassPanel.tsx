@@ -40,7 +40,7 @@ export default function AddClassPanel({ onCancel, onSuccess }: AddClassPanelProp
         if (isActive) {
           setTeachers(Array.isArray(data?.teachers) ? data.teachers : []);
         }
-      } catch (err) {
+      } catch {
         if (isActive) {
           setTeachers([]);
         }

@@ -128,7 +128,7 @@ export default function UploadCSVModal({
 
       onSuccess();
       onClose();
-    } catch (err) {
+    } catch {
       toast.error("Something went wrong during bulk upload");
     } finally {
       setLoading(false);

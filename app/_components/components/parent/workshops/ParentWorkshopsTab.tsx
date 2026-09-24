@@ -127,7 +127,7 @@ export default function ParentWorkshopsTab() {
             })
             .catch(console.error);
         }
-      } catch (_) {}
+      } catch {}
     }
   }, [fetchEvents]);
 

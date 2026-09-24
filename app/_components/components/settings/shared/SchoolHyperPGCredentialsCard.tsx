@@ -21,7 +21,7 @@ export function SchoolHyperPGCredentialsCard() {
           setHyperpgMerchantId(data.settings.hyperpgMerchantId ?? "");
           setHyperpgApiKey(data.settings.hyperpgApiKey ?? "");
         }
-      } catch (_) {
+      } catch {
         if (!cancelled) setMessage({ type: "error", text: "Failed to load payment settings" });
       } finally {
         if (!cancelled) setLoading(false);
@@ -49,7 +49,7 @@ export function SchoolHyperPGCredentialsCard() {
       } else {
         setMessage({ type: "error", text: data?.message ?? "Failed to save" });
       }
-    } catch (_) {
+    } catch {
       setMessage({ type: "error", text: "Failed to save" });
     } finally {
       setSaving(false);

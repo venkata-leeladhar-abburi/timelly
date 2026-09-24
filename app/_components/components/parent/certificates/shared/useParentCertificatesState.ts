@@ -89,7 +89,7 @@ export function useParentCertificatesState() {
       setShowRequestModal(false);
       await fetchData();
       setTimeout(() => setMessage(null), 3000);
-    } catch (err) {
+    } catch {
       setMessage({ text: "Something went wrong. Please try again.", type: "error" });
     } finally {
       setRequestLoading(false);

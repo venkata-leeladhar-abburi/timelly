@@ -110,7 +110,7 @@ export default function Page() {
             amountToVerify = parseFloat(amt);
             document.cookie = "hyperpg_pending=; path=/; max-age=0";
           }
-        } catch (_) {}
+        } catch {}
       }
     }
     if (orderIdToVerify && !isNaN(amountToVerify) && amountToVerify > 0) {
