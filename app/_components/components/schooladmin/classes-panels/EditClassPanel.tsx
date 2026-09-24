@@ -52,7 +52,7 @@ export default function EditClassPanel({
           const list = Array.isArray(data?.teachers) ? data.teachers : [];
           setTeachers(
             list
-              .map((t: any) => ({
+              .map((t) => ({
                 id: String(t?.id ?? ""),
                 name: String(t?.name ?? "Teacher"),
               }))

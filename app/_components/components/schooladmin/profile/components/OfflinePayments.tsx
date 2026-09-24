@@ -57,7 +57,7 @@ export const OfflinePayments = ({ studentId, studentName, remainingFee, onPaymen
           if (!cancelled && Array.isArray(data.dueHeads)) {
             setCurrentRemainingFee(Number(data.remainingFee) || 0);
             const opts: Array<{ key: string; label: string; dueBefore: number; head: SelectedHead } | null> =
-              data.dueHeads.map((h: any) => {
+              data.dueHeads.map((h) => {
                 const key: string = h.key;
                 const label: string = h.label;
                 const dueBefore: number = Number(h.dueBefore) || 0;

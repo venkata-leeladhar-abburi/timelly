@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import TableLayout from "../../common/TableLayout";
+import { Column } from "../../../types/superadmin";
 import { useStudents, StudentWithRelations } from "@/app/_components/hooks/useStudents";
 
 export default function StudentTable() {
@@ -16,7 +17,7 @@ export default function StudentTable() {
     [students, safePage]
   );
 
-  const columns = [
+  const columns: Column<StudentWithRelations>[] = [
     { header: "Admission No", accessor: "admissionNumber", align: "left" },
     {
       header: "Name",
@@ -55,7 +56,7 @@ export default function StudentTable() {
         <h2 className="text-xl font-semibold text-white mb-4">Students</h2>
 
         <TableLayout
-          columns={columns as any}
+          columns={columns}
           data={pagedStudents}
           loading={loading}
           emptyText={error ? `Error: ${error}` : "No students found"}

@@ -16,7 +16,7 @@ import RoleBadge from "./schooladmincomponents/RoleBadge";
 import StatusBadge from "./schooladmincomponents/StatusBadge";
 import UsersMobileList from "./schooladmincomponents/UsersMobileList";
 import InlinePagination from "./schooladmincomponents/InlinePagination";
-import { IUser } from "@/app/_components/constants/addUserTable";
+import { IUser, TableColumn } from "@/app/_components/constants/addUserTable";
 import { deleteUser } from "@/lib/api/user";
 import {
   fetchUserListPage,
@@ -186,11 +186,11 @@ export default function AddUser() {
     return date.toLocaleDateString();
   };
 
-  const tableColumns: any[] = [
+  const tableColumns: TableColumn[] = [
     {
       header: "USER",
       render: (row: IUser) => (
-        <UserBadge name={row.name} email={row.email} imageUrl={(row as any).photoUrl} />
+        <UserBadge name={row.name} email={row.email} imageUrl={row.photoUrl} />
       ),
     },
     {
