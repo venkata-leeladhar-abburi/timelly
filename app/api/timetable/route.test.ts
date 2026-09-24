@@ -43,6 +43,25 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+// GET's reads go through the app_tenant-connected, RLS-restricted client
+// (docs/SECURITY_REVIEW.md); POST still uses the plain prisma import.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      student: { findFirst: (...args: unknown[]) => mockStudentFindFirst(...args) },
+      class: { findFirst: (...args: unknown[]) => mockClassFindFirst(...args) },
+      timetable: {
+        findMany: (...args: unknown[]) => mockTimetableFindMany(...args),
+        findFirst: (...args: unknown[]) => mockTimetableFindFirst(...args),
+      },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeGetRequest(query = "") {
   return new Request(`http://localhost/api/timetable${query}`);
 }

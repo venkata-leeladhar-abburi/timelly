@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 
 const SCORE_BASELINE = 50;
@@ -52,47 +53,53 @@ export async function GET(req: Request) {
 
     const yearRange = academicYear ? academicYearRange(academicYear) : null;
 
-    const teachers = await prisma.user.findMany({
-      where: {
-        schoolId,
-        role: "TEACHER",
-        ...(q
-          ? {
-              OR: [
-                { name: { contains: q, mode: "insensitive" } },
-                { email: { contains: q, mode: "insensitive" } },
-                { teacherId: { contains: q, mode: "insensitive" } },
-                { subject: { contains: q, mode: "insensitive" } },
-                { subjects: { has: q } },
-              ],
-            }
-          : {}),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        photoUrl: true,
-        teacherId: true,
-        subject: true,
-      },
-      orderBy: { name: "asc" },
-      take: 50,
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const { teachers, scores } = await withTenantScopedClient(schoolId, async (tx) => {
+      const teacherRows = await tx.user.findMany({
+        where: {
+          schoolId,
+          role: "TEACHER",
+          ...(q
+            ? {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { email: { contains: q, mode: "insensitive" } },
+                  { teacherId: { contains: q, mode: "insensitive" } },
+                  { subject: { contains: q, mode: "insensitive" } },
+                  { subjects: { has: q } },
+                ],
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          photoUrl: true,
+          teacherId: true,
+          subject: true,
+        },
+        orderBy: { name: "asc" },
+        take: 50,
+      });
 
-    const teacherIds = teachers.map((t) => t.id);
-    const scores =
-      teacherIds.length > 0
-        ? await prisma.teacherAuditRecord.groupBy({
-            by: ["teacherId"],
-            where: {
-              teacherId: { in: teacherIds },
-              ...(yearRange ? { createdAt: { gte: yearRange.start, lte: yearRange.end } } : {}),
-            },
-            _sum: { scoreImpact: true },
-            _count: { _all: true },
-          })
-        : [];
+      const teacherIds = teacherRows.map((t) => t.id);
+      const scoreRows =
+        teacherIds.length > 0
+          ? await tx.teacherAuditRecord.groupBy({
+              by: ["teacherId"],
+              where: {
+                teacherId: { in: teacherIds },
+                ...(yearRange ? { createdAt: { gte: yearRange.start, lte: yearRange.end } } : {}),
+              },
+              _sum: { scoreImpact: true },
+              _count: { _all: true },
+            })
+          : [];
+      return { teachers: teacherRows, scores: scoreRows };
+    });
 
     const scoreMap = new Map(
       scores.map((s) => [
