@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -47,14 +48,19 @@ export async function GET(
     }
 
     const { id } = await params;
-    const term = await prisma.examTerm.findFirst({
-      where: { id, schoolId },
-      select: {
-        id: true,
-        name: true,
-        sections: { orderBy: { order: "asc" } },
-      },
-    });
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const term = await withTenantScopedClient(schoolId, (tx) =>
+      tx.examTerm.findFirst({
+        where: { id, schoolId },
+        select: {
+          id: true,
+          name: true,
+          sections: { orderBy: { order: "asc" } },
+        },
+      })
+    );
     if (!term) {
       return NextResponse.json({ message: "Exam term not found" }, { status: 404 });
     }
