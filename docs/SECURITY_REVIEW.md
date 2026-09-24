@@ -189,7 +189,7 @@
 `0.84-0.91x of owner (the scope adds only BEGIN/set_config/COMMIT; round trips dominate), so the scope
 `is not slower per se. Absolute times here (12-47s) are dominated by ~1-3s per round trip on that link
 `and say nothing about the deployment region: rerun the script there before relying on the 30s cap.
-`Content was identical to the owner connection for every case checked; row order among ties (queries
+`Content was identical to the owner connection for every case checked. Row order among ties (queries
 `without a total ORDER BY, e.g. top teachers, fee allocation lines) can differ because RLS changes the
 `plan. Scopes slower than half the timeout log \`tenant_scope_slow\`; a timeout logs
 `\`tenant_scope_timeout (P2028)\` with the school and duration.
@@ -231,3 +231,10 @@ outlives the request. Techniques used instead of leaving a handler unscoped:
 Everything else that writes is inside a tenant scope. `lib/db/ownerConnectionRoutes.json` is the
 baseline of route files that still import the owner client (reads and writes); the test in
 `lib/db/ownerConnectionRoutes.test.ts` keeps it honest.
+
+**Order-tie fix (verified live).** The order differences above are removed: tiebreakers were added to
+top teachers / subject performance (`buildSchoolAnalysis.ts`), fee-head lines (`paymentFeeHeadLines.ts`),
+and total `ORDER BY`s on the payment, allocation and admission-payment queries
+(`loadDayFeeCollectionTransactions.ts`, `loadAdmissionFeeDayReportTx.ts`, `fees/transactions`). On the
+largest school, `school/analysis` and the 1298-row fee report are now byte-identical between the owner
+connection and a tenant scope, order included.

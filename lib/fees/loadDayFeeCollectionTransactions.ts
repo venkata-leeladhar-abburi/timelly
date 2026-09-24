@@ -94,7 +94,7 @@ async function loadFeeReportTransactionsInRange(
           },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     }),
     options?.collectedByUserId
       ? Promise.resolve([])
@@ -117,6 +117,8 @@ async function loadFeeReportTransactionsInRange(
             extraFeeId: true,
             allocatedAmount: true,
           },
+          // Total order: without it row order (hence head order) depends on the query plan.
+          orderBy: [{ paymentId: "asc" }, { id: "asc" }],
         })
       : [];
 
@@ -174,7 +176,9 @@ async function loadFeeReportTransactionsInRange(
   const paymentTxs: DayReportTx[] = payments.map((p) => {
     const perHead = allocationLabelAmountByPayment.get(p.id);
     const feeAllocations = perHead
-      ? Array.from(perHead.entries()).map(([name, amount]) => ({ name, amount }))
+      ? Array.from(perHead.entries())
+          .map(([name, amount]) => ({ name, amount }))
+          .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name))
       : [];
     const dominant = dominantFeeTypeByPayment.get(p.id);
     return {

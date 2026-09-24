@@ -150,7 +150,8 @@ export async function buildSchoolAnalysisFast(
       subject,
       percentage: total > 0 ? Math.round((sum / total) * 10) / 10 : 0,
     }))
-    .sort((a, b) => b.percentage - a.percentage)
+    // Tie-break on subject so equal percentages order the same on every connection/plan.
+    .sort((a, b) => b.percentage - a.percentage || a.subject.localeCompare(b.subject))
     .slice(0, 10);
 
   const topTeachers = Object.entries(teacherScores)
@@ -161,7 +162,8 @@ export async function buildSchoolAnalysisFast(
       rating: count > 0 ? Math.round((sum / count / 20) * 10) / 10 : 0,
     }))
     .filter((t) => t.rating > 0)
-    .sort((a, b) => b.rating - a.rating);
+    // Tie-break (name, then id) so equal ratings order deterministically.
+    .sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
   const avgTeacherRating =
     topTeachers.length > 0

@@ -65,7 +65,8 @@ export function feeHeadLinesFromMap(
   if (!headMap) return [];
   return Array.from(headMap.entries())
     .filter(([, amount]) => amount > 0.00001)
-    .sort((a, b) => b[1] - a[1])
+    // Tie-break on head name so equal amounts order deterministically.
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([name, amount]) => ({
       name,
       amount: Math.round(amount * 100) / 100,

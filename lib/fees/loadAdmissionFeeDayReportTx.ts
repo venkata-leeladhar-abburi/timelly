@@ -59,7 +59,7 @@ export async function loadAdmissionFeeDayReportTransactions(
       class: { select: { id: true, name: true, section: true } },
       student: { select: { admissionNumber: true } },
     },
-    orderBy: { admissionFeePaidAt: "asc" },
+    orderBy: [{ admissionFeePaidAt: "asc" }, { id: "asc" }],
   });
 
   for (const a of apps) {
@@ -102,7 +102,7 @@ export async function loadAdmissionFeeDayReportTransactions(
       user: { select: { name: true } },
       class: { select: { id: true, name: true, section: true } },
     },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
   });
 
   for (const s of students) {

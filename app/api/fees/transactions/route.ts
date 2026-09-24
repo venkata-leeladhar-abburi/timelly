@@ -120,6 +120,7 @@ export async function GET(req: Request) {
               extraFeeId: true,
               allocatedAmount: true,
             },
+            orderBy: [{ paymentId: "asc" }, { id: "asc" }],
           })
         : [];
     const extraFeeIds = Array.from(
