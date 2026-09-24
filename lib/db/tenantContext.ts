@@ -16,7 +16,7 @@ import { withTenantScopedClient } from "@/lib/db/tenantClient";
  *
  * Limits: one transaction runs its queries serially (no parallelism, no
  * read-collapsing from the shared prisma extension), the transaction cannot
- * open nested `$transaction`s, and it is bounded by TENANT_SCOPE_TIMEOUT_MS.
+ * open a real nested transaction (`tenantDb.$transaction` joins the scope's one), and it is bounded by TENANT_SCOPE_TIMEOUT_MS.
  */
 type TenantTx = Parameters<Parameters<typeof withTenantScopedClient>[1]>[0];
 
@@ -25,11 +25,15 @@ const scopeStorage = new AsyncLocalStorage<TenantTx>();
 export const TENANT_SCOPE_TIMEOUT_MS = Number(process.env.TENANT_SCOPE_TIMEOUT_MS) || 30_000;
 const TENANT_SCOPE_MAX_WAIT_MS = 10_000;
 
-export function runInTenantScope<T>(schoolId: string, fn: () => Promise<T>): Promise<T> {
+export function runInTenantScope<T>(
+  schoolId: string,
+  fn: (schoolId: string) => Promise<T>,
+  options?: { timeout?: number }
+): Promise<T> {
   // Already inside a scope (nested helper) - reuse it; never open a second tx.
-  if (scopeStorage.getStore()) return fn();
-  return withTenantScopedClient(schoolId, (tx) => scopeStorage.run(tx, fn), {
-    timeout: TENANT_SCOPE_TIMEOUT_MS,
+  if (scopeStorage.getStore()) return fn(schoolId);
+  return withTenantScopedClient(schoolId, (tx) => scopeStorage.run(tx, () => fn(schoolId)), {
+    timeout: options?.timeout ?? TENANT_SCOPE_TIMEOUT_MS,
     maxWait: TENANT_SCOPE_MAX_WAIT_MS,
   });
 }
@@ -40,6 +44,15 @@ export function isInTenantScope(): boolean {
 
 export const tenantDb: typeof prisma = new Proxy(prisma, {
   get(_target, prop) {
+    const store = scopeStorage.getStore();
+    // The scope IS already one transaction, so a nested `$transaction` joins it: callback
+    // form runs against the same tx, array form awaits the (lazy) queries together.
+    if (store && prop === "$transaction") {
+      return (arg: unknown) =>
+        typeof arg === "function"
+          ? (arg as (tx: unknown) => Promise<unknown>)(store)
+          : Promise.all(arg as Promise<unknown>[]);
+    }
     const active = (scopeStorage.getStore() ?? prisma) as unknown as Record<string | symbol, unknown>;
     const value = active[prop];
     return typeof value === "function" ? (value as (...a: unknown[]) => unknown).bind(active) : value;
@@ -56,5 +69,5 @@ export function runInOptionalTenantScope<T>(
   schoolId: string | null | undefined,
   fn: () => Promise<T>
 ): Promise<T> {
-  return schoolId ? runInTenantScope(schoolId, fn) : fn();
+  return schoolId ? runInTenantScope(schoolId, () => fn()) : fn();
 }

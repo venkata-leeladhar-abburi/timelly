@@ -175,6 +175,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const name =
@@ -224,6 +225,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ subject: { id, name, schoolId } }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Exam subjects POST:", e);
     return NextResponse.json(
@@ -248,6 +250,7 @@ export async function PATCH(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const from =
@@ -304,6 +307,7 @@ export async function PATCH(req: Request) {
     await setHiddenSubjects(schoolId, Array.from(new Set(nextHidden)));
 
     return NextResponse.json({ subject: { name: to } }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exam subjects PATCH:", e);
     return NextResponse.json(
@@ -328,6 +332,7 @@ export async function DELETE(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { searchParams } = new URL(req.url);
     const nameParam = searchParams.get("name");
@@ -360,6 +365,7 @@ export async function DELETE(req: Request) {
     await setHiddenSubjects(schoolId, nextHidden);
 
     return NextResponse.json({ success: true }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exam subjects DELETE:", e);
     return NextResponse.json(

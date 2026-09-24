@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify template belongs to school
     const template = await prisma.certificateTemplate.findFirst({
@@ -120,6 +121,7 @@ export async function POST(req: Request) {
       { message: "Certificate assigned successfully", certificate },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Assign certificate error:", error);
     return NextResponse.json(

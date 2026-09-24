@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
@@ -93,6 +93,7 @@ export async function PUT(
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const term = await prisma.examTerm.findFirst({
@@ -168,6 +169,7 @@ export async function PUT(
     });
 
     return NextResponse.json({ sections }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Term sections PUT:", e);
     return NextResponse.json(

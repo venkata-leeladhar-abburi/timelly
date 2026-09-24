@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { getServerSession } from "next-auth";
 import { logger } from "@/lib/logger";
 
@@ -59,6 +59,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const from = new Date(fromDate);
     const to = new Date(toDate);
@@ -97,6 +98,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(leave, { status: 201 });
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Internal Server Error";
     logger.error("Leaves apply error:", e);

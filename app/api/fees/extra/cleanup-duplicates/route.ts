@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { runWithDeferredCacheInvalidation } from "@/lib/db";
 import {
   cleanupDuplicateHostelMessExtraFees,
@@ -105,6 +105,7 @@ export async function POST() {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const beforeExtras = await loadSchoolExtras(schoolId);
     const classes = await prisma.class.findMany({
@@ -179,6 +180,7 @@ export async function POST() {
       remainingIssues: afterIssues,
       remainingDuplicateCount: afterCount,
       allocationNamesBackfilled,
+    });
     });
   } catch (error: unknown) {
     logger.error("POST cleanup-duplicates error:", error);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStructure";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
@@ -29,6 +29,7 @@ export async function PUT(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { studentId, classId } = await req.json();
 
@@ -117,6 +118,7 @@ export async function PUT(req: Request) {
       },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Assign student to class error:", error);
     return NextResponse.json(

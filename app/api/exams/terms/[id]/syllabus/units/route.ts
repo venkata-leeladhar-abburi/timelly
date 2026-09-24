@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 
@@ -32,6 +32,7 @@ export async function POST(
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id: termId } = await params;
     const term = await prisma.examTerm.findFirst({
@@ -73,6 +74,7 @@ export async function POST(
     });
 
     return NextResponse.json({ unit }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Exams syllabus units POST:", e);
     const err = e as { code?: string };

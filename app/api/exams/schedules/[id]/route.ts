@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
@@ -140,6 +140,7 @@ export async function PUT(
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const schedule = await prisma.examSchedule.findUnique({
@@ -173,6 +174,7 @@ export async function PUT(
       },
     });
     return NextResponse.json({ schedule: updated }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exams schedule PUT [id]:", e);
     return NextResponse.json(
@@ -195,6 +197,7 @@ export async function DELETE(
 
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const schedule = await prisma.examSchedule.findUnique({
@@ -208,6 +211,7 @@ export async function DELETE(
 
     await prisma.examSchedule.delete({ where: { id } });
     return NextResponse.json({ success: true }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exams schedule DELETE [id]:", e);
     return NextResponse.json(

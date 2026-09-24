@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { ExamTermStatus } from "@prisma/client";
 import { logger } from "@/lib/logger";
@@ -238,6 +238,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const term = await prisma.examTerm.create({
       data: { name, description, classId, status, schoolId },
@@ -247,6 +248,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ term }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Exams terms POST:", e);
     return NextResponse.json(

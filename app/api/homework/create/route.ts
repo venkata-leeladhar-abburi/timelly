@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotificationsForUserIds } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
@@ -37,6 +37,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify class belongs to school
     const classData = await prisma.class.findFirst({
@@ -96,6 +97,7 @@ export async function POST(req: Request) {
       { message: "Homework created successfully", homework },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Create homework error:", error);
     return NextResponse.json(

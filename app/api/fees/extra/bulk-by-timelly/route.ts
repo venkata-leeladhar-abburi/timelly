@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
 
@@ -109,6 +109,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json().catch(() => ({}));
     const cleanupDuplicates = Boolean(body.cleanupDuplicates);
@@ -359,6 +360,7 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
+    }, { timeout: 120_000 });
   } catch (error: unknown) {
     logger.error("POST /api/fees/extra/bulk-by-timelly error:", error);
     return NextResponse.json(

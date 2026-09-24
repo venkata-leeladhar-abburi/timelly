@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { name, email, password, mobile, allowedFeatures } = await req.json();
 
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
       { message: "Teacher created successfully", teacher },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Create teacher error:", error);
 

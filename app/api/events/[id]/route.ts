@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -38,6 +38,7 @@ export async function PUT(
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const {
       title,
@@ -125,6 +126,7 @@ export async function PUT(
       { message: "Event updated successfully", event: updated },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Update event error:", error);
     return NextResponse.json(
@@ -167,6 +169,7 @@ export async function DELETE(
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const existing = await prisma.event.findFirst({
       where: { id, schoolId },
@@ -182,6 +185,7 @@ export async function DELETE(
       { message: "Event deleted successfully" },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Delete event error:", error);
     return NextResponse.json(

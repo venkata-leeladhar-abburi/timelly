@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { assertTeacherCanEnterMarks } from "@/lib/teacher/teacherMarksScope";
 import { parseMarkComponents, sumComponents } from "@/lib/exams/markComponents";
@@ -89,6 +89,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const classData = await prisma.class.findFirst({
       where: {
@@ -233,6 +234,7 @@ export async function POST(req: Request) {
       { message: "Marks added successfully", mark },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Create marks error:", error);
     return NextResponse.json(

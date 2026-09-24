@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { getErrorCode, getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -38,6 +38,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify event exists and belongs to student's school
     const event = await prisma.event.findFirst({
@@ -140,6 +141,7 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Register event error:", error);
 

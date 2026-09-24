@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
@@ -40,6 +40,7 @@ export async function POST(
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify TC belongs to school
     const tc = await prisma.transferCertificate.findFirst({
@@ -156,6 +157,7 @@ export async function POST(
       },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Approve TC error:", error);
     return NextResponse.json(

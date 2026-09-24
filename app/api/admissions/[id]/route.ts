@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { getApplicationGateRow } from "@/lib/admission/admissionsListQuery";
 import { studentApplicationDetailSelect } from "@/lib/admission/studentApplicationSafeSelect";
@@ -89,6 +89,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
 
     const schoolId = await getSessionSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found in session" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await ctx.params;
     const body = await req.json();
@@ -228,6 +229,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
     }
 
     return NextResponse.json({ message: "Updated", id: updated.id }, { status: 200 });
+    });
   } catch (e: unknown) {
     if (getErrorCode(e) === "P2002") {
       const meta = getErrorMeta(e);
@@ -247,6 +249,7 @@ export async function DELETE(_: Request, ctx: { params: Promise<{ id: string }> 
 
     const schoolId = await getSessionSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found in session" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await ctx.params;
     const exists = await prisma.studentApplication.findFirst({
@@ -263,6 +266,7 @@ export async function DELETE(_: Request, ctx: { params: Promise<{ id: string }> 
 
     await prisma.studentApplication.delete({ where: { id } });
     return NextResponse.json({ message: "Deleted" }, { status: 200 });
+    });
   } catch (e: unknown) {
     return NextResponse.json({ message: getErrorMessage(e) ?? "Internal server error" }, { status: getErrorStatusCode(e) ?? 500 });
   }

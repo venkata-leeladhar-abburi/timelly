@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
@@ -47,6 +47,7 @@ export async function PATCH(req: Request, context: RouteParams) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id: paymentId } = await context.params;
     if (!paymentId?.trim()) {
@@ -219,6 +220,7 @@ export async function PATCH(req: Request, context: RouteParams) {
     const updated = await prisma.payment.findUnique({ where: { id: payment.id } });
     await invalidateStudentFeeReadCaches({ studentId: payment.studentId, schoolId });
     return NextResponse.json({ payment: updated, message: "Payment updated" }, { status: 200 });
+    });
   } catch (error: unknown) {
     logger.error("PATCH /api/fees/payment/[id] error:", error);
     return NextResponse.json(
@@ -250,6 +252,7 @@ export async function DELETE(req: Request, context: RouteParams) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found in session" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id: paymentId } = await context.params;
     if (!paymentId?.trim()) {
@@ -261,6 +264,7 @@ export async function DELETE(req: Request, context: RouteParams) {
 
     const result = await deleteFastFeePayment(paymentId, schoolId, expectedStudentId);
     return NextResponse.json({ success: true, ...result }, { status: 200 });
+    });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "Internal server error";
     const status = msg.includes("not found")

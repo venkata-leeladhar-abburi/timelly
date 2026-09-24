@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { isActiveStudent } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify class belongs to teacher's school
     const classData = await prisma.class.findFirst({
@@ -138,6 +139,7 @@ export async function POST(req: Request) {
       { message: "Attendance marked successfully", attendances: results },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Mark attendance error:", error);
     return NextResponse.json(

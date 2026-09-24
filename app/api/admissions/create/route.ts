@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 import { randomUUID } from "crypto";
 import type { Gender, BoardingType, Grade } from "@prisma/client";
@@ -49,6 +49,7 @@ export async function POST(req: Request) {
 
     const schoolId = await getSessionSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found in session" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const rawBody = await req.json();
     const input =
@@ -210,6 +211,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ message: "Admission saved", application: created }, { status: 201 });
+    });
   } catch (e: unknown) {
     if (getErrorCode(e) === "P2002") {
       const meta = getErrorMeta(e);

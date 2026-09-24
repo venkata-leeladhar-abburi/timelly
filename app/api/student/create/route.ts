@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     logger.info("Received student data:", {
@@ -638,6 +639,7 @@ export async function POST(req: Request) {
       { message: "Student created under your school", student },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Student creation error:", error);
     

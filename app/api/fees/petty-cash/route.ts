@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
@@ -110,6 +110,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const itemName = String(body?.itemName ?? "").trim();
@@ -151,6 +152,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ expense }, { status: 201 });
+    });
   } catch (error: unknown) {
     const err = error as { message?: string };
     logger.error("Petty cash POST error:", error);

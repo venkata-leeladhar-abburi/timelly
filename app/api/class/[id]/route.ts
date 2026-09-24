@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
@@ -103,6 +103,7 @@ export async function PUT(
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify class belongs to the school
     const existingClass = await prisma.class.findFirst({
@@ -159,6 +160,7 @@ export async function PUT(
       { message: "Class updated successfully", class: updatedClass },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Update class error:", error);
     return NextResponse.json(
@@ -189,6 +191,7 @@ export async function DELETE(
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     // Verify class belongs to the school
     const existingClass = await prisma.class.findFirst({
@@ -230,6 +233,7 @@ export async function DELETE(
       { message: "Class deleted successfully" },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Delete class error:", error);
     return NextResponse.json(

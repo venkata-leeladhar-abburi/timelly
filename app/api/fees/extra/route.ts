@@ -143,6 +143,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const { name, amount, targetType, targetClassId, targetSection, targetStudentId } = body;
@@ -242,6 +243,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ extraFee, extraFeeIds: ids }, { status: 201 });
+    });
   } catch (error: unknown) {
     logger.error("Extra fee POST error:", error);
     return NextResponse.json(

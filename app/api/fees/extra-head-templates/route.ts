@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { extraHeadTemplatesErrorResponse } from "./mapPrismaError";
 import { resolveFeesSchoolIdForSession } from "./resolveSchoolId";
@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
     });
     invalidateAssignCatalogServerCache(schoolId);
     return NextResponse.json({ template: created }, { status: 201 });
+    });
   } catch (error: unknown) {
     return extraHeadTemplatesErrorResponse(error, "extra-head-templates POST");
   }

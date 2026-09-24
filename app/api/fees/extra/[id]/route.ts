@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
 import { snapshotExtraFeeNameOnAllocations } from "@/lib/fees/backfillPaymentAllocationComponentNames";
@@ -103,6 +103,7 @@ export async function PATCH(
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const extraFee = await prisma.extraFee.findFirst({
@@ -167,6 +168,7 @@ export async function PATCH(
       splitApplied: result.splitApplied,
       migrated: result.migrated,
     });
+    });
   } catch (error: unknown) {
     const err = error as { message?: string };
     logger.error("Extra fee PATCH error:", error);
@@ -197,6 +199,7 @@ export async function DELETE(
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const extraFee = await prisma.extraFee.findFirst({
@@ -216,6 +219,7 @@ export async function DELETE(
 
     await invalidateSchoolFeeReadCaches(schoolId);
     return NextResponse.json({ success: true });
+    });
   } catch (error: unknown) {
     const err = error as { message?: string };
     logger.error("Extra fee DELETE error:", error);

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { hashStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
 import { invalidateTenant } from "@/lib/cache/tenantCache";
 import { logger } from "@/lib/logger";
@@ -62,6 +62,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     if (session.user.schoolIsActive === false) {
       return NextResponse.json({ message: "School is paused" }, { status: 403 });
@@ -125,6 +126,7 @@ export async function POST(req: Request) {
       },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Student credentials reset error:", error);
     return NextResponse.json(

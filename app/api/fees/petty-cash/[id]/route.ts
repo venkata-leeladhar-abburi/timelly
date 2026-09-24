@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
 
@@ -26,6 +26,7 @@ export async function PATCH(
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const existing = await prisma.pettyCashExpense.findFirst({
@@ -105,6 +106,7 @@ export async function PATCH(
       data: updates,
     });
     return NextResponse.json({ expense });
+    });
   } catch (error: unknown) {
     const err = error as { message?: string };
     logger.error("Petty cash PATCH error:", error);
@@ -136,6 +138,7 @@ export async function DELETE(
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await params;
     const existing = await prisma.pettyCashExpense.findFirst({
@@ -148,6 +151,7 @@ export async function DELETE(
 
     await prisma.pettyCashExpense.delete({ where: { id } });
     return NextResponse.json({ success: true });
+    });
   } catch (error: unknown) {
     const err = error as { message?: string };
     logger.error("Petty cash DELETE error:", error);

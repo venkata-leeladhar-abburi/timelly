@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const certificateTemplate = await prisma.certificateTemplate.create({
       data: {
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
       { message: "Certificate template created successfully", template: certificateTemplate },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Create certificate template error:", error);
     return NextResponse.json(

@@ -143,6 +143,7 @@ export async function DELETE(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { searchParams } = new URL(req.url);
     const classId = searchParams.get("classId");
@@ -206,6 +207,7 @@ export async function DELETE(req: Request) {
 
     await invalidateSchoolFeeReadCaches(schoolId);
     return NextResponse.json({ success: true });
+    });
   } catch (error: unknown) {
     logger.error("Fee structure DELETE error:", error);
     return NextResponse.json(

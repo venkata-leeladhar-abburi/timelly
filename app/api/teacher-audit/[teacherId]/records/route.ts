@@ -121,6 +121,7 @@ export async function POST(
     const { teacherId } = await params;
     const schoolId = await resolveSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const teacher = await prisma.user.findFirst({
       where: { id: teacherId, schoolId, role: "TEACHER" },
@@ -215,6 +216,7 @@ const category: TeacherAuditCategory =
     });
 
     return NextResponse.json({ record }, { status: 201 });
+    });
   } catch (e: unknown) {
     logger.error("Teacher audit records POST:", e);
     return NextResponse.json(

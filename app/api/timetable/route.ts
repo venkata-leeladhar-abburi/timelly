@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { schoolIdViaStudentId, schoolIdViaTeacherClass } from "@/lib/auth/tenant";
@@ -220,6 +220,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const classId = cleanText(body.classId, 120);
@@ -286,6 +287,7 @@ export async function POST(req: Request) {
     };
 
     return NextResponse.json({ message: "Timetable saved successfully", timetable }, { status: 200 });
+    });
   } catch (error: unknown) {
     logger.error("Save timetable error:", error);
     return NextResponse.json(

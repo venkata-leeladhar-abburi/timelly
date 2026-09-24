@@ -5,6 +5,7 @@ import { batchAssignStudentExtraFees } from "@/lib/fees/batchAssignStudentExtraF
 import { resolveFeesSchoolIdForSession } from "../../extra-head-templates/resolveSchoolId";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 
 function canManage(role: string | null | undefined) {
   return role === "SCHOOLADMIN" || role === "SUPERADMIN" || role === "TEACHER";
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const studentId = String(body?.studentId ?? "").trim();
@@ -40,6 +42,7 @@ export async function POST(req: Request) {
     const result = await batchAssignStudentExtraFees(schoolId, studentId, fees);
     invalidateStudentFeeReadCaches({ studentId, schoolId });
     return NextResponse.json(result, { status: 201 });
+    });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal server error";
     const status = message.includes("not found") ? 404 : 500;

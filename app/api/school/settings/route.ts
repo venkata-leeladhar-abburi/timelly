@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 
@@ -52,6 +52,7 @@ export async function PUT(req: Request) {
 
     const schoolId = await getSchoolId(session);
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const body = await req.json();
     const {
@@ -91,6 +92,7 @@ export async function PUT(req: Request) {
     });
 
     return NextResponse.json({ settings }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("School settings PUT:", e);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
@@ -335,6 +335,7 @@ export async function DELETE(req: Request) {
     if (!schoolId) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
+    return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { searchParams } = new URL(req.url);
     const nameParam = searchParams.get("name");
@@ -384,6 +385,7 @@ export async function DELETE(req: Request) {
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exam types DELETE:", e);
     return NextResponse.json(
