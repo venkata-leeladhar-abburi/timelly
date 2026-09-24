@@ -421,6 +421,10 @@ function computeStudentHeads(
     }
   }
 
+  // Legacy BASE:-1 payments are not tied to a head; seed them so they get spread like the profile does.
+  const legacyBasePaid = idKeyed.get("BASE:-1");
+  if (legacyBasePaid) netPaidByHead.set("BASE:-1", legacyBasePaid);
+
   redistributeBaseMinusOneAllocations(
     netPaidByHead,
     heads.map((h) => ({ key: h.headKey, snapshotDue: h.snapshotDue }))

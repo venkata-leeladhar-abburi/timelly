@@ -96,15 +96,10 @@ describe("buildFeeDueReportPayload base fees and payments", () => {
     expect(rows[0].feesPaid).toBe(0);
   });
 
-  // KNOWN ISSUE (needs approval to fix): computeAdminStudentFeeBreakdown and buildParentFeesMine
-  // seed their paid map from every allocation (including legacy BASE:-1) and then redistribute it
-  // across heads. This report only copies real head keys into netPaidByHead, so the BASE:-1 amount
-  // never reaches redistributeBaseMinusOneAllocations and is dropped: the due report shows the
-  // student as unpaid while their profile shows the payment. This pins today's behaviour.
-  it("currently ignores legacy BASE:-1 payments (known issue: profile and report disagree)", () => {
+  it("spreads legacy BASE:-1 payments across heads, matching the student profile", () => {
     const { rows } = build({ paid: { "st1|BASE:-1": 6000 } });
-    expect(rows[0].feesPaid).toBe(0);
-    expect(rows[0].feesDue).toBe(12000);
+    expect(rows[0].feesPaid).toBe(6000);
+    expect(rows[0].feesDue).toBe(6000);
   });
 
   it("has no base fee columns for a student without a class structure", () => {
