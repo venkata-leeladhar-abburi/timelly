@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { getApplicationGateRow } from "@/lib/admission/admissionsListQuery";
 import { studentApplicationDetailSelect } from "@/lib/admission/studentApplicationSafeSelect";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
@@ -50,15 +51,22 @@ export async function GET(_: Request, ctx: { params: Promise<{ id: string }> }) 
     if (!schoolId) return NextResponse.json({ message: "School not found in session" }, { status: 400 });
 
     const { id } = await ctx.params;
-    const application = await prisma.studentApplication.findFirst({
-      where: { id, schoolId },
-      select: {
-        ...studentApplicationDetailSelect,
-        class: { select: { id: true, name: true, section: true } },
-      },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): reads go
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const { application, gate } = await withTenantScopedClient(schoolId, async (tx) => {
+      const app = await tx.studentApplication.findFirst({
+        where: { id, schoolId },
+        select: {
+          ...studentApplicationDetailSelect,
+          class: { select: { id: true, name: true, section: true } },
+        },
+      });
+      if (!app) return { application: null, gate: null };
+      const g = await getApplicationGateRow(tx, id, schoolId);
+      return { application: app, gate: g };
     });
     if (!application) return NextResponse.json({ message: "Not found" }, { status: 404 });
-    const gate = await getApplicationGateRow(prisma, id, schoolId);
     return NextResponse.json(
       {
         application: {

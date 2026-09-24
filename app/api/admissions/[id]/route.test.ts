@@ -40,6 +40,20 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+// GET's reads go through the app_tenant-connected, RLS-restricted client
+// (docs/SECURITY_REVIEW.md); PUT/DELETE still use the plain prisma import.
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      studentApplication: { findFirst: (...args: unknown[]) => mockStudentApplicationFindFirst(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeGetRequest() {
   return new Request("http://localhost/api/admissions/app1");
 }
