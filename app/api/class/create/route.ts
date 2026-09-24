@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDashboardServerCache";
 import { requireSchoolId } from "@/lib/auth/tenant";
 import { logger } from "@/lib/logger";
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     }
     const schoolId = ctx.schoolId;
 
+    return await runInTenantScope(schoolId, async (schoolId) => {
     const { name, section, teacherId } = await req.json();
 
     if (!name) {
@@ -79,6 +80,7 @@ export async function POST(req: Request) {
       { message: "Class created successfully", class: classData },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Class creation error:", error);
     return NextResponse.json(

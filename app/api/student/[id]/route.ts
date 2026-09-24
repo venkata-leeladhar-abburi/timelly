@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
+import { tenantDb as prisma, runInOptionalTenantScope, runInTenantScope } from "@/lib/db/tenantContext";
 import { requireSchoolId, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 import { withRequestTiming } from "@/lib/cache/requestTiming";
 import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
@@ -799,6 +799,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
   }
 
   try {
+    return await runInTenantScope(schoolId, async (schoolId) => {
     const student = await prisma.student.findFirst({
       where: { id, schoolId },
       select: { id: true, userId: true },
@@ -813,6 +814,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
     invalidateStudentListCaches(schoolId);
 
     return NextResponse.json({ message: "Student deleted successfully" }, { status: 200 });
+    });
   } catch (error: unknown) {
     logger.error("Student delete error:", error);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { requireSchoolId } from "@/lib/auth/tenant";
 
@@ -21,6 +21,7 @@ export async function PATCH(
     const tenant = await requireSchoolId(session);
     if (!tenant.ok) return NextResponse.json({ message: tenant.message }, { status: tenant.status });
 
+    return await runInTenantScope(tenant.schoolId, async (schoolId) => {
     const { id } = await params;
     const owned = await prisma.syllabusUnit.findFirst({
       where: { id, tracking: { term: { schoolId: tenant.schoolId } } },
@@ -55,6 +56,7 @@ export async function PATCH(
     });
 
     return NextResponse.json({ unit }, { status: 200 });
+    });
   } catch (e: unknown) {
     logger.error("Exams unit PATCH:", e);
     return NextResponse.json(

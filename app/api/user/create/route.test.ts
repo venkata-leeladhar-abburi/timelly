@@ -4,6 +4,12 @@
 import { NextRequest } from "next/server";
 import { POST } from "@/app/api/user/create/route";
 
+jest.mock("@/lib/db/tenantContext", () => ({
+  runInTenantScope: (schoolId: string, fn: (id: string) => unknown) => fn(schoolId),
+  runInOptionalTenantScope: (_schoolId: unknown, fn: () => unknown) => fn(),
+  tenantDb: new Proxy({}, { get: (_t, p) => (jest.requireMock("@/lib/db").default as Record<string | symbol, unknown>)[p] }),
+}));
+
 const mockGetServerSession = jest.fn();
 const mockSchoolFindUnique = jest.fn();
 const mockSchoolSettingsFindUnique = jest.fn();

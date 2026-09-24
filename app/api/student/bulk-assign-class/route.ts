@@ -11,6 +11,7 @@ import {
   buildStudentFeeRecalcPayload,
 } from "@/lib/fees/studentTuitionFromStructure";
 import { logger } from "@/lib/logger";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 
 const STAFF_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN", "TEACHER"]);
 const MAX_BULK_ASSIGN = 500;
@@ -34,6 +35,7 @@ export async function PUT(req: Request) {
     }
     const schoolId = ctx.schoolId;
 
+    return await runInTenantScope(schoolId, async (schoolId) => {
     const body = await req.json();
     const studentIds: string[] = Array.isArray(body?.studentIds)
       ? body.studentIds
@@ -175,6 +177,7 @@ export async function PUT(req: Request) {
       },
       { status: 200 }
     );
+    }, { timeout: 120_000 });
   } catch (error: unknown) {
     logger.error("Bulk assign student to class error:", error);
     return NextResponse.json(

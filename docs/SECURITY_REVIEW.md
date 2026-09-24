@@ -193,3 +193,29 @@
 `without a total ORDER BY, e.g. top teachers, fee allocation lines) can differ because RLS changes the
 `plan. Scopes slower than half the timeout log \`tenant_scope_slow\`; a timeout logs
 `\`tenant_scope_timeout (P2028)\` with the school and duration.
+
+### 3.1 Write handlers deliberately left on the owner connection
+
+Wrapping a write handler in one scope makes it a single transaction, which is wrong when the
+handler (a) catches a DB error and carries on (a failed statement aborts the whole Postgres
+transaction, so the final COMMIT would fail and everything would be lost), (b) runs before any
+tenant exists, or (c) must commit independently of a caller or gateway. Fire-and-forget helpers
+also matter: `lib/notificationService.ts` and `lib/newsfeedRetention.ts` were moved back to the
+owner client because a `createNotification(...).catch(() => {})` started inside a scope would
+otherwise run on a transaction that has already closed and silently drop the notification.
+
+| Group | Routes | Why it stays on the owner connection |
+|---|---|---|
+| No tenant context yet | `auth/[...nextauth]`, `school/create` | Login and school creation happen before a school exists |
+| Payments / gateway | `payment/create-order`, `verify`, `refund`, `webhook`; `parent/subscription/create-order`, `verify`; `fees/offline-payment`; `student/offline-payment` | Webhooks have no session or tenant; multi-step external gateway calls with `$transaction`; SUPERADMIN paths; must commit independent of the HTTP response |
+| Bulk imports | `admissions/bulk-upload`, `student/bulk-upload`, `user/bulk-import` | Long-running, per-row error handling (unique violations) that continues after a failed row |
+| Catch-and-continue writes | `certificates/requests/apply`, `tc/apply` (P2002), `circular/create`, `events/create`, `newsfeed/create`, `newsfeed/[id]` PUT/DELETE, `exam-types` POST/PATCH, `student-leaves/apply`, `marks/[id]` PUT, `fees/structure` PUT, `fees/structure/bulk`, `teacher/attendance` POST, `student/[id]` PUT | Inner `catch` around DB work (unique-conflict handling, raw-SQL fallback, best-effort notification) |
+| Mixed SUPERADMIN / tenant | `fees/student/[id]` PATCH, `fees/discount-approvals/[id]` | Superadmin acts across tenants; scoping needs a per-caller split |
+| Self / participant scoped | `user/change-password`, `user/me`, `notifications*`, `communication/*`, `homework/submit`, `leaves/[id]` PUT/DELETE, `leaves/[id]/approve`, `leaves/[id]/reject`, `marks/[id]` DELETE, `newsfeed/[id]/like`, `student/parent-details`, `upload` | Ownership is enforced by the caller's own id (`userId`/`studentId`/`teacherId`) or an explicit school check, not a tenant filter |
+
+Migrated in this pass (no inner catches, clear school guard): `class/create`, `exams/units/[id]`
+PATCH, `student-leaves/[id]/approve|reject`, `student/bulk-assign-class`, `school/update`,
+`user/create`, `user/[id]` PUT/DELETE, `student/[id]` DELETE.
+
+Revisit the catch-and-continue group by moving the fallible/best-effort part outside the scope
+(do the main write in the scope, then notify or fall back after it commits).

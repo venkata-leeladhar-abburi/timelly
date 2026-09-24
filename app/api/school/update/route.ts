@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 export async function PUT(req: Request) {
@@ -25,6 +25,7 @@ export async function PUT(req: Request) {
       );
     }
 
+    return await runInTenantScope(user.schoolId, async (schoolId) => {
     const data: { name?: string; address?: string; location?: string } = {};
     if (name !== undefined) data.name = name;
     if (address !== undefined) data.address = address;
@@ -32,7 +33,7 @@ export async function PUT(req: Request) {
 
     // ✅ UPDATE school on primary
     const updated = await prisma.school.update({
-      where: { id: user.schoolId },
+      where: { id: user.schoolId as string },
       data,
     });
 
@@ -40,6 +41,7 @@ export async function PUT(req: Request) {
       { message: "School updated", updated },
       { status: 200 }
     );
+    });
   } catch (error) {
     logger.error("School update error:", error);
     return NextResponse.json(

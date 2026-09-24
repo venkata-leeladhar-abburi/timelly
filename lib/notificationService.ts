@@ -1,4 +1,4 @@
-import { tenantDb as prisma } from "@/lib/db/tenantContext";
+import prisma from "@/lib/db";
 import type { NotificationType, Role } from "@prisma/client";
 
 const STAFF_ROLES: Role[] = ["TEACHER", "SCHOOLADMIN"];

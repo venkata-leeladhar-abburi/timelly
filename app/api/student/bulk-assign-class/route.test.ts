@@ -3,6 +3,12 @@
  */
 import { PUT } from "@/app/api/student/bulk-assign-class/route";
 
+jest.mock("@/lib/db/tenantContext", () => ({
+  runInTenantScope: (schoolId: string, fn: (id: string) => unknown) => fn(schoolId),
+  runInOptionalTenantScope: (_schoolId: unknown, fn: () => unknown) => fn(),
+  tenantDb: new Proxy({}, { get: (_t, p) => (jest.requireMock("@/lib/db").default as Record<string | symbol, unknown>)[p] }),
+}));
+
 const mockGetServerSession = jest.fn();
 const mockRequireSchoolId = jest.fn();
 const mockClassFindFirst = jest.fn();

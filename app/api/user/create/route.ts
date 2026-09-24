@@ -8,6 +8,7 @@ import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDash
 import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+import { runInTenantScope } from "@/lib/db/tenantContext";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    return await runInTenantScope(session.user.schoolId, async () => {
     // Check if user has permission to create users
     const requesterRole = session.user.role as string;
     const isAdmin = ["SCHOOLADMIN", "SUPERADMIN"].includes(requesterRole);
@@ -188,6 +190,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
+    });
   } catch (error: unknown) {
     logger.error("User creation error:", error);
     return NextResponse.json(

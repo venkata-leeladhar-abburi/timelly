@@ -8,6 +8,7 @@ import { purgeSchoolDashboardServerCacheMatching } from "@/lib/school/schoolDash
 import { sanitizeTeachingClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+import { runInOptionalTenantScope } from "@/lib/db/tenantContext";
 
 type Params = Promise<{ id: string }>;
 
@@ -116,6 +117,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
 
     logger.info(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
 
+    return await runInOptionalTenantScope(session.user.schoolId, async () => {
     // Check if user exists and belongs to same school
     const user = await prisma.user.findUnique({
       where: { id },
@@ -233,6 +235,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
         assignedClassIds: updatedUser.teachingClassIds ?? [],
       },
     });
+    });
   } catch (error: unknown) {
     logger.error("User update error:", error);
     return NextResponse.json(
@@ -263,6 +266,7 @@ export async function DELETE(
 
     const { id } = await params;
 
+    return await runInOptionalTenantScope(session.user.schoolId, async () => {
     // Check if user exists and belongs to same school
     const user = await prisma.user.findUnique({
       where: { id },
@@ -298,6 +302,7 @@ export async function DELETE(
 
     return NextResponse.json({
       message: "User deleted successfully",
+    });
     });
   } catch (error: unknown) {
     logger.error("User deletion error:", error);
