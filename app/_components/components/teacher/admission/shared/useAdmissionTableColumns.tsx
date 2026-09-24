@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { CheckCircle, Pencil, Printer, Trash2, UserPlus, Loader2, IndianRupee } from "lucide-react";
 import { classLabel, displayResidencyType, formatBoardingLabel, formatInrCell } from "./utils";
+import type { Column } from "../../../../types/superadmin";
 import type { AdmissionRow, FeeType } from "./types";
 
 export function useAdmissionTableColumns({
@@ -125,7 +126,7 @@ export function useAdmissionTableColumns({
     [router, printFeeReceipt, enrollFromRow, workflowBusyId, warmAssignCatalog, openAssignFeesDialog, setDeleteRow, setPaymentForm, setPaymentDialog]
   );
 
-  const tableColumns: any[] = useMemo(
+  const tableColumns: Column<AdmissionRow>[] = useMemo(
     () => [
       { header: "Actions", render: renderAdmissionActions },
       {

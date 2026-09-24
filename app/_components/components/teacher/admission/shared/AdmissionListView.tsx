@@ -6,6 +6,7 @@ import InputField from "../../../schooladmin/schooladmincomponents/InputField";
 import { Select } from "./PresentationalBits";
 import { BOARDING, GRADES } from "./constants";
 import { classLabel, displayResidencyType, formatBoardingLabel, formatGradeLabel, formatInrCell } from "./utils";
+import type { Column } from "../../../../types/superadmin";
 import type { AdmissionRow, FeeType } from "./types";
 
 type Filters = { gradeSought: string; boardingType: string; from: string; to: string; classId: string };
@@ -52,7 +53,7 @@ export function AdmissionListView({
   onExport: (format: "xlsx" | "csv" | "print") => void;
   listPhase: ListPhase;
   onListPhaseChange: (phase: "all" | "pending" | "approved") => void;
-  tableColumns: any[];
+  tableColumns: Column<AdmissionRow>[];
   rows: AdmissionRow[];
   loading: boolean;
   page: number;

@@ -181,7 +181,7 @@ export function useAdmissionTabState() {
     try {
       const res = await fetch(`/api/admissions/${deleteRow.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error((data as any)?.message || "Failed to delete admission");
+      if (!res.ok) throw new Error(data?.message || "Failed to delete admission");
       setDeleteRow(null);
       setMessageTone("success");
       setMessage("Admission deleted successfully.");
@@ -205,7 +205,7 @@ export function useAdmissionTabState() {
       const firstName = nameParts[0] ?? "";
       const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(" ") : null;
       const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ".";
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         ...form,
         firstName,
         middleName,

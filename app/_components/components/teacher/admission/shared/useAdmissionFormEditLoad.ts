@@ -28,8 +28,8 @@ export function useAdmissionFormEditLoad({
         setForm({
           applicationNo: a.applicationNo ?? "",
           fedenaNo: a.fedenaNo ?? "",
-          penNumber: (a as any).penNumber ?? "",
-          apaarId: (a as any).apaarId ?? "",
+          penNumber: a.penNumber ?? "",
+          apaarId: a.apaarId ?? "",
           admissionNo: a.admissionNo ?? "",
           classId: a.classId ?? "",
           gradeSought: a.gradeSought,
@@ -57,16 +57,16 @@ export function useAdmissionFormEditLoad({
           parentAadharNo: a.parentAadharNo ?? "",
           parentWhatsapp: a.parentWhatsapp ?? "",
           bankAccountNo: a.bankAccountNo ?? "",
-          motherName: (a as any).motherName ?? "",
+          motherName: a.motherName ?? "",
           // Mother phone is stored on the application as `emergencyMotherNo` (same as student profile).
           motherPhone: (() => {
             const em = String((a as { emergencyMotherNo?: string | null }).emergencyMotherNo ?? "").trim();
             if (em && em !== "-") return em;
             return "";
           })(),
-          motherAadharNo: (a as any).motherAadharNo ?? "",
-          motherEmail: (a as any).motherEmail ?? "",
-          panNumber: (a as any).panNumber ?? "",
+          motherAadharNo: a.motherAadharNo ?? "",
+          motherEmail: a.motherEmail ?? "",
+          panNumber: a.panNumber ?? "",
           previousSchoolName: a.previousSchoolName ?? "",
           previousSchoolAddress: a.previousSchoolAddress ?? "",
           emergencyFatherNo: a.emergencyFatherNo ?? "",

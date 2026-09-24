@@ -16,7 +16,7 @@ export function useAdmissionReceiptPrinting() {
       .then((res) => res.json())
       .then(async (d) => {
         setSchoolName(typeof d?.school?.name === "string" ? d.school.name : "");
-        const address = [d?.school?.address, d?.school?.location].filter((v: any) => typeof v === "string" && v.trim()).join(", ");
+        const address = [d?.school?.address, d?.school?.location].filter((v: unknown) => typeof v === "string" && v.trim()).join(", ");
         setSchoolAddress(address);
 
         let parsedLogo = null;
