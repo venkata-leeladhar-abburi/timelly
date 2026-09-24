@@ -33,6 +33,21 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      school: { findUnique: (...args: unknown[]) => mockSchoolFindUnique(...args) },
+      class: { findMany: (...args: unknown[]) => mockClassFindMany(...args) },
+      student: { findMany: (...args: unknown[]) => mockStudentFindMany(...args) },
+      mark: { findMany: (...args: unknown[]) => mockMarkFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest(query = "") {
   return new Request(`http://localhost/api/marks/consolidated${query}`);
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import {
   parentPortalSwrRead,
   parentPortalSwrWrite,
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
       }
     }
 
-    const marks = await prisma.mark.findMany({
+    const marks = await withTenantScopedClient(schoolId, (tx) => tx.mark.findMany({
       where,
       include: {
         student: session.user.studentId
@@ -94,7 +94,7 @@ export async function GET(req: Request) {
       },
       orderBy: { createdAt: "desc" },
       take: session.user.studentId ? 500 : undefined,
-    });
+    }));
 
     // Distinct exam types already saved for this class (+ optional subject) so the UI can show prior entries
     let examTypesInUse: string[] = [];
@@ -109,17 +109,17 @@ export async function GET(req: Request) {
         examWhere.subject = { equals: subject.trim(), mode: "insensitive" };
       }
       const [distinctExams, latest] = await Promise.all([
-        prisma.mark.findMany({
+        withTenantScopedClient(schoolId, (tx) => tx.mark.findMany({
           where: examWhere,
           select: { examType: true },
           distinct: ["examType"],
           orderBy: { examType: "asc" },
-        }),
-        prisma.mark.findFirst({
+        })),
+        withTenantScopedClient(schoolId, (tx) => tx.mark.findFirst({
           where: examWhere,
           select: { examType: true },
           orderBy: { createdAt: "desc" },
-        }),
+        })),
       ]);
       examTypesInUse = distinctExams
         .map((r) => (r.examType || "").trim().toUpperCase())

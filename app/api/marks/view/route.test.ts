@@ -33,6 +33,21 @@ jest.mock("@/lib/parent/parentPortalSwr", () => ({
   PARENT_LIST_TTL: 60,
 }));
 
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      mark: {
+        findMany: (...args: unknown[]) => mockMarkFindMany(...args),
+        findFirst: (...args: unknown[]) => mockMarkFindFirst(...args),
+      },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest(query = "") {
   return new Request(`http://localhost/api/marks/view${query}`);
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation, schoolIdViaTeacherClass } from "@/lib/auth/tenant";
@@ -108,7 +108,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "classIds is required" }, { status: 400 });
     }
 
-    const school = await prisma.school.findUnique({
+    const school = await withTenantScopedClient(schoolId, (tx) => tx.school.findUnique({
       where: { id: schoolId },
       select: {
         id: true,
@@ -117,13 +117,13 @@ export async function GET(req: Request) {
         logoUrl: true,
         admins: { select: { photoUrl: true }, take: 1 },
       },
-    });
+    }));
 
-    const classes = await prisma.class.findMany({
+    const classes = await withTenantScopedClient(schoolId, (tx) => tx.class.findMany({
       where: { id: { in: classIds }, schoolId },
       select: { id: true, name: true, section: true },
       orderBy: [{ name: "asc" }, { section: "asc" }],
-    });
+    }));
 
     if (classes.length === 0) {
       return NextResponse.json({ message: "No classes found" }, { status: 404 });
@@ -131,7 +131,7 @@ export async function GET(req: Request) {
 
     const allowedClassIds = classes.map((c) => c.id);
 
-    const students = await prisma.student.findMany({
+    const students = await withTenantScopedClient(schoolId, (tx) => tx.student.findMany({
       where: {
         schoolId,
         classId: { in: allowedClassIds },
@@ -145,9 +145,9 @@ export async function GET(req: Request) {
         user: { select: { name: true } },
       },
       orderBy: { user: { name: "asc" } },
-    });
+    }));
 
-    const marks = await prisma.mark.findMany({
+    const marks = await withTenantScopedClient(schoolId, (tx) => tx.mark.findMany({
       where: {
         classId: { in: allowedClassIds },
         ...(examType ? { examType } : {}),
@@ -164,7 +164,7 @@ export async function GET(req: Request) {
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-    });
+    }));
 
     const latestByStudentSubject = new Map<string, MarkVal>();
 
