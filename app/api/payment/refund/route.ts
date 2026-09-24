@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 
@@ -239,7 +239,7 @@ export async function POST(req: Request) {
           })()
         : [];
 
-    await prisma.$transaction([
+    await runInTenantScope(payment.student.schoolId, () => prisma.$transaction([
       prisma.$executeRawUnsafe(
         'INSERT INTO "Refund" (id, "paymentId", amount, reason, status, "createdAt") VALUES ($1, $2, $3, $4, $5, NOW())',
         refundId,
@@ -259,7 +259,7 @@ export async function POST(req: Request) {
         where: { studentId: payment.studentId },
         data: { amountPaid: newAmountPaid, remainingFee: newRemaining },
       }),
-    ]);
+    ]));
 
     const refund = { id: refundId, paymentId, amount, reason: reasonVal, status: "SUCCESS" };
 

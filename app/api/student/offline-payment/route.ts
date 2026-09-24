@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveOfflinePaymentCollectorFromSession } from "@/lib/fees/offlinePaymentCollector";
 import { isActiveStudent } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
@@ -31,6 +31,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "School not found" }, { status: 400 });
         }
 
+        // Payment insert + fee update now commit atomically inside one RLS-scoped transaction.
+        return await runInTenantScope(schoolId, async () => {
         const body = await req.json();
         const { studentId, amount, method, referenceNumber, bankName, description } = body;
 
@@ -120,6 +122,7 @@ export async function POST(req: Request) {
                 amountPaid: updatedFee.amountPaid,
                 remainingFee: updatedFee.remainingFee,
             },
+        });
         });
     } catch (error: unknown) {
         logger.error("Error recording offline payment:", error);

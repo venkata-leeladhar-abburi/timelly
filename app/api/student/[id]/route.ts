@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
+import ownerPrisma from "@/lib/db";
 import { tenantDb as prisma, runInOptionalTenantScope, runInTenantScope } from "@/lib/db/tenantContext";
 import { requireSchoolId, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 import { withRequestTiming } from "@/lib/cache/requestTiming";
@@ -429,6 +430,10 @@ export async function PUT(req: Request, context: RouteParams) {
   }
 
   try {
+    // Reads/writes below run in ONE RLS-scoped transaction. Deliberately on the owner client: the
+    // reactivation password restore (its failure is reported, not rolled back) and the background
+    // sync tasks (they outlive the request, so they cannot share the scope's transaction).
+    return await runInTenantScope(schoolId, async () => {
     const student = await prisma.student.findFirst({
       where: { id, schoolId },
       include: {
@@ -619,7 +624,7 @@ export async function PUT(req: Request, context: RouteParams) {
       const effectiveDob = dob !== undefined ? dob : student.dob;
       try {
         const hashedPassword = await hashStudentPasswordFromDob(effectiveDob);
-        await prisma.user.update({
+        await ownerPrisma.user.update({
           where: { id: student.user.id },
           data: { password: hashedPassword },
         });
@@ -664,7 +669,7 @@ export async function PUT(req: Request, context: RouteParams) {
       void (async () => {
         try {
           const applicationId = await ensureStudentApplicationLink(
-            prisma as unknown as Pick<PrismaClient, "studentApplication">,
+            ownerPrisma as unknown as Pick<PrismaClient, "studentApplication">,
             {
               id: studentSnapshot.id,
               schoolId: studentSnapshot.schoolId,
@@ -691,7 +696,7 @@ export async function PUT(req: Request, context: RouteParams) {
             }
           );
           if (applicationId) {
-            await prisma.studentApplication.update({
+            await ownerPrisma.studentApplication.update({
               where: { id: applicationId },
               data: applicationPayload as Record<string, never>,
             });
@@ -715,16 +720,16 @@ export async function PUT(req: Request, context: RouteParams) {
     if (needsFeeSync) {
       void (async () => {
         try {
-          const refreshed = await prisma.student.findFirst({
+          const refreshed = await ownerPrisma.student.findFirst({
             where: { id, schoolId },
             include: { class: { select: { section: true } } },
           });
           if (!refreshed) return;
-          const fee = await prisma.studentFee.findUnique({
+          const fee = await ownerPrisma.studentFee.findUnique({
             where: { studentId: id },
             select: { discountPercent: true, amountPaid: true },
           });
-          await upsertStudentFeeFromStructure(prisma, {
+          await upsertStudentFeeFromStructure(ownerPrisma, {
             schoolId,
             studentId: id,
             classId: refreshed.classId,
@@ -770,6 +775,7 @@ export async function PUT(req: Request, context: RouteParams) {
       },
       { status: 200 }
     );
+    });
   } catch (error: unknown) {
     logger.error("Student update error:", error);
     return NextResponse.json(

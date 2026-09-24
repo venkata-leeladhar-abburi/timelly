@@ -217,16 +217,28 @@ outlives the request. Techniques used instead of leaving a handler unscoped:
   disable it), and the initial student lookup in `fees/student/[id]` PATCH (it discovers the
   student's school before scoping to it).
 
+**Payment and money paths (scoped at the commit points only).** The gateway HTTP calls stay outside
+any scope (a transaction must not be held open across a network call to a payment provider), and
+lookups that must discover the tenant stay on the owner client. What is scoped is the existing DB
+commit: `payment/verify` (transaction, payment create, fee update), `payment/create-order`
+(order transaction), `payment/refund` (allocation + fee transaction), `payment/webhook`
+(status/fee transaction, scoped to the paying student's school; `PaymentWebhookEvent` has no RLS
+policy and stays on the owner client, as does the order-id lookup, which has no session),
+`parent/subscription/create-order` and `verify` (payment create, subscription upsert),
+`fees/offline-payment` (its `$transaction`), `student/offline-payment` (payment insert and fee
+update, now atomic in one transaction), `fees/discount-approvals/[id]` (its transaction, scoped to
+the approval's school so SUPERADMIN still works cross-tenant), and `student/[id]` PUT (main body
+scoped; the reactivation password restore and the background sync tasks deliberately use the owner
+client because they either report-and-continue on failure or outlive the request).
+
 **Still on the owner connection, and why**
 
 | Group | Handlers | Reason |
 |---|---|---|
 | No tenant context yet | `auth/[...nextauth]`, `school/create` | Login and school creation happen before a school exists |
-| Payments / gateway | `payment/create-order`, `verify`, `refund`, `webhook`; `parent/subscription/create-order`, `verify`; `fees/offline-payment`; `student/offline-payment` | Webhooks have no session or tenant; multi-step external gateway calls with `$transaction`; SUPERADMIN paths; they must commit independently of the HTTP response. Money paths are the last place to change transaction semantics without a dedicated test plan |
-| Mixed SUPERADMIN / tenant | `fees/discount-approvals/[id]` (POST/PATCH, delegating handler) | Superadmin acts across tenants; needs a per-caller split |
-| Background work | `student/[id]` PUT | Starts `void` background tasks that outlive the request, and a reactivation `catch` that returns after a partial commit on purpose |
 | Not tenant data | `upload` | Object storage only |
 | Cross-tenant by design | `superadmin/*` | See the superadmin decision above |
+| Discovery lookups inside scoped routes | order-id lookup and `PaymentWebhookEvent` in the webhook; the student/fee lookup that finds the school in `fees/student/[id]` PATCH; the all-schools Aadhaar check in `student/bulk-upload` | They must see across tenants to find or validate the tenant |
 
 Everything else that writes is inside a tenant scope. `lib/db/ownerConnectionRoutes.json` is the
 baseline of route files that still import the owner client (reads and writes); the test in

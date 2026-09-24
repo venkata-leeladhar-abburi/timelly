@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       newEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     }
 
-    const subscription = await prisma.parentSubscription.upsert({
+    const subscription = await runInTenantScope(student.schoolId, () => prisma.parentSubscription.upsert({
       where: {
         // one active record per student; fallback to create when none
         id: existingActive?.id ?? "",
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
         amount,
         paymentId: payment.id,
       },
-    });
+    }));
 
     return NextResponse.json(
       { payment, subscription },

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
 import { redistributeBaseMinusOneAllocations } from "@/lib/fees/redistributeBaseMinusOneAllocations";
 import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
@@ -470,7 +470,7 @@ export async function POST(req: Request) {
             amount: allocAmount,
           }));
 
-    const paymentAndAllocations = await prisma.$transaction(
+    const paymentAndAllocations = await runInTenantScope(schoolId, () => prisma.$transaction(
       async (tx) => {
         if (txId) {
           const existing = await findExistingOfflinePaymentByRef(tx, studentId, txId);
@@ -582,7 +582,7 @@ export async function POST(req: Request) {
         return { payment, updatedFee, idempotent: false as const, appended: false as const };
       },
       FEE_MUTATION_TX
-    );
+    ));
 
     if (!paymentAndAllocations.idempotent) {
       await reconcileStudentFeeIntegrity(schoolId, studentId, {

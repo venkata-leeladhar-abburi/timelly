@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
 import { structureMultiplierAfterDiscount } from "@/lib/fees/studentTuitionFromStructure";
 import type { Prisma } from "@prisma/client";
@@ -473,7 +473,7 @@ export async function POST(req: Request) {
     }
 
     // Store Payment in DB (status PENDING) - will be updated on verify
-    const payment = await prisma.$transaction(async (tx) => {
+    const payment = await runInTenantScope(student.schoolId, () => prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           studentId: session.user.studentId,
@@ -504,7 +504,7 @@ export async function POST(req: Request) {
       }
 
       return payment;
-    });
+    }));
 
     return NextResponse.json({
       gateway: "HYPERPG",

@@ -3,6 +3,12 @@
  */
 import { POST } from "@/app/api/payment/webhook/route";
 
+jest.mock("@/lib/db/tenantContext", () => ({
+  runInTenantScope: (schoolId: string, fn: (id: string) => unknown) => fn(schoolId),
+  runInOptionalTenantScope: (_schoolId: unknown, fn: () => unknown) => fn(),
+  tenantDb: new Proxy({}, { get: (_t, p) => (jest.requireMock("@/lib/db").default as Record<string | symbol, unknown>)[p] }),
+}));
+
 const mockWebhookEventCreate = jest.fn();
 const mockPaymentFindFirst = jest.fn();
 const mockTransaction = jest.fn();
@@ -131,6 +137,7 @@ describe("POST /api/payment/webhook", () => {
     mockPaymentFindFirst.mockResolvedValue({
       id: "pay1",
       studentId: "stu1",
+      student: { schoolId: "s1" },
       status: "PENDING",
       amount: 500,
       eventRegistrationId: null,
@@ -167,6 +174,7 @@ describe("POST /api/payment/webhook", () => {
     mockPaymentFindFirst.mockResolvedValue({
       id: "pay1",
       studentId: "stu1",
+      student: { schoolId: "s1" },
       status: "PENDING",
       amount: 500,
       eventRegistrationId: "reg1",
@@ -190,6 +198,7 @@ describe("POST /api/payment/webhook", () => {
     mockPaymentFindFirst.mockResolvedValue({
       id: "pay1",
       studentId: "stu1",
+      student: { schoolId: "s1" },
       status: "PENDING",
       amount: 500,
       eventRegistrationId: "reg1",
@@ -217,6 +226,7 @@ describe("POST /api/payment/webhook", () => {
     mockPaymentFindFirst.mockResolvedValue({
       id: "pay1",
       studentId: "stu1",
+      student: { schoolId: "s1" },
       status: "SUCCESS",
       amount: 500,
       eventRegistrationId: null,

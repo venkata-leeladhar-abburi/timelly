@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import type { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -175,6 +175,7 @@ export async function POST(req: Request) {
       status: true,
       amount: true,
       eventRegistrationId: true,
+      student: { select: { schoolId: true } },
     },
   });
 
@@ -184,7 +185,7 @@ export async function POST(req: Request) {
   }
 
   // Apply updates and side-effects only on status transition.
-  await prisma.$transaction(async (tx) => {
+  await runInTenantScope(payment.student.schoolId, () => prisma.$transaction(async (tx) => {
     const before = await tx.payment.findUnique({
       where: { id: payment.id },
       select: { status: true },
@@ -238,7 +239,7 @@ export async function POST(req: Request) {
         data: { paymentStatus: "FAILED" },
       });
     }
-  });
+  }));
 
   return NextResponse.json({ ok: true, stored: true, updated: true }, { status: 200 });
 }

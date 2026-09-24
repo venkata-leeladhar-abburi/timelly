@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
@@ -189,9 +189,9 @@ export async function POST(req: Request) {
       );
     }
 
-    await prisma.payment.create({
+    await runInTenantScope(student.schoolId, () => prisma.payment.create({
       data: {
-        studentId: session.user.studentId,
+        studentId: student.id,
         amount: amountNumber,
         gateway: "HYPERPG",
         hyperpgOrderId: data.id || null,
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
         transactionId: orderId,
         purpose: "PARENT_SUBSCRIPTION",
       },
-    });
+    }));
 
     return NextResponse.json({
       gateway: "HYPERPG",

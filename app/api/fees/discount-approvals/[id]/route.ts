@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { invalidateDiscountApprovalsListCache } from "@/lib/fees/discountApprovalsListCache";
 
@@ -92,7 +92,7 @@ async function reviewDiscount(req: Request, context: RouteParams) {
     return NextResponse.json({ message: "Only approved discounts can be reverted" }, { status: 400 });
   }
 
-  await prisma.$transaction(async (tx) => {
+  await runInTenantScope(approval.schoolId, () => prisma.$transaction(async (tx) => {
     const recalculateStudentFee = async () => {
       const totalFee = Math.max(Number(approval.studentTotalFee || approval.totalFee || 0), 0);
       const approvedRows = await tx.$queryRaw<
@@ -179,7 +179,7 @@ async function reviewDiscount(req: Request, context: RouteParams) {
       WHERE id = ${id}
     `;
     await recalculateStudentFee();
-  });
+  }));
 
   await invalidateStudentFeeReadCaches({
     studentId: approval.studentId,

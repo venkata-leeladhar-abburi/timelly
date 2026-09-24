@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
+import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
     });
 
     if (existing) {
-      const payment = await prisma.$transaction(async (tx) => {
+      const payment = await runInTenantScope(student.schoolId, () => prisma.$transaction(async (tx) => {
         const before = await tx.payment.findUnique({
           where: { id: existing.id },
           select: { status: true, amount: true, studentId: true, eventRegistrationId: true },
@@ -188,7 +188,7 @@ export async function POST(req: Request) {
         }
 
         return updated;
-      });
+      }));
 
       // If workshop payment, return eventRegistration status
       if (existing.eventRegistrationId) {
@@ -234,7 +234,7 @@ export async function POST(req: Request) {
     const newAmountPaid = fee.amountPaid + amountNum;
     const newRemaining = Math.max(fee.finalFee - newAmountPaid, 0);
 
-    const payment = await prisma.payment.create({
+    const payment = await runInTenantScope(student.schoolId, () => prisma.payment.create({
       data: {
         studentId,
         amount: amountNum,
@@ -250,15 +250,15 @@ export async function POST(req: Request) {
         hyperpgLastUpdatedAt: new Date(),
         status: "SUCCESS",
       },
-    });
+    }));
 
-    const updatedFee = await prisma.studentFee.update({
+    const updatedFee = await runInTenantScope(student.schoolId, () => prisma.studentFee.update({
       where: { studentId },
       data: {
         amountPaid: newAmountPaid,
         remainingFee: newRemaining,
       },
-    });
+    }));
 
     const studentUser = await prisma.student.findUnique({
       where: { id: studentId },
