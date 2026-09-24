@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, ComponentType } from "react";
+import { useEffect, useRef, useState, ComponentType, type CSSProperties } from "react";
 import { LucideProps, Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 import { PRIMARY_COLOR, HOVER_COLOR } from "../../constants/colors";
@@ -154,11 +154,11 @@ export default function SearchInput({
           )}
           style={
             !isGlass
-              ? {
+              ? ({
                   backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  ["--primary-color" as any]: PRIMARY_COLOR,
-                  ["--hover-color" as any]: HOVER_COLOR,
-                }
+                  "--primary-color": PRIMARY_COLOR,
+                  "--hover-color": HOVER_COLOR,
+                } as CSSProperties)
               : undefined
           }
         />

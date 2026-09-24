@@ -2,11 +2,17 @@
 
 import { Trash2 } from "lucide-react";
 
+type StudentSummary = {
+  rollNo?: string | null;
+  phoneNo?: string | null;
+  user?: { name?: string | null; email?: string | null } | null;
+};
+
 export default function StudentMobileCard({
   student,
   index,
 }: {
-  student: any;
+  student: StudentSummary;
   index: number;
 }) {
   return (

@@ -11,7 +11,16 @@ interface Certificate {
   };
 }
 
-const CertificateCard = ({ data }: any) => {
+type FormattedCertificate = {
+  id: string;
+  name: string;
+  title: string;
+  date: string;
+  number: string;
+  url: string | null;
+};
+
+const CertificateCard = ({ data }: { data: FormattedCertificate }) => {
   return (
     <div className="relative group aspect-[1/1.35] bg-[#F3F4F6] rounded-xl overflow-hidden shadow-xl hover:-translate-y-2 transition duration-300">
 

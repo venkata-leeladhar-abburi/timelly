@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import type { CSSProperties } from "react";
 import { PRIMARY_COLOR, HOVER_COLOR } from "../../constants/colors";
 
 interface SelectOption {
@@ -59,9 +60,9 @@ export default function SelectInput({
             error && "border-red-500"
           )}
           style={{
-            ["--primary-color" as any]: PRIMARY_COLOR,
-            ["--hover-color" as any]: HOVER_COLOR,
-          }}
+            "--primary-color": PRIMARY_COLOR,
+            "--hover-color": HOVER_COLOR,
+          } as CSSProperties}
         >
           {options.map((option) => (
             <option

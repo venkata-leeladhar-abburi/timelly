@@ -128,7 +128,8 @@ function DataTable<T>({
 
   const getKey = (row: T, index: number) => {
     if (rowKey) return rowKey(row, index);
-    if ((row as any)?.id) return (row as any).id;
+    const id = (row as { id?: string | number })?.id;
+    if (id) return id;
     return `row-${index}`;
   };
 

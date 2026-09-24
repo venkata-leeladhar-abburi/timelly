@@ -167,7 +167,7 @@ export default function AppSidebar({ menuItems, profile, activeTab = "dashboard"
       : avatarUrlRaw;
 
   // Only filter menu items for TEACHER role. Other roles see full menu.
-  const allowedFeatures = (session?.user as any)?.allowedFeatures ?? [];
+  const allowedFeatures = session?.user?.allowedFeatures ?? [];
   const isTeacher = session?.user?.role === "TEACHER";
   const isStudent = session?.user?.role === "STUDENT";
 

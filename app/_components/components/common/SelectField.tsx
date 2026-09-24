@@ -1,8 +1,10 @@
+export type SelectFieldOption = { id: string; name: string };
+
 interface SelectFieldProps {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  options: any[];
+  options: SelectFieldOption[];
   placeholder?: string;
   disabled?: boolean;
 }

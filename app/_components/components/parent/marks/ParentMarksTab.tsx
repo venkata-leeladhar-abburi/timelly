@@ -63,8 +63,9 @@ function getGradeLabel(percentage: number): string {
 
 export default function ParentMarksTab() {
   const { data: session } = useSession();
+  const userWithSchoolName = session?.user as { schoolName?: unknown } | undefined;
   const sessionSchoolName =
-    typeof (session?.user as any)?.schoolName === "string" ? (session?.user as any).schoolName : "";
+    typeof userWithSchoolName?.schoolName === "string" ? userWithSchoolName.schoolName : "";
   const sessionStudentId = session?.user?.studentId ?? null;
   const peekedMarks = peekParentPortalAny<{ marks: Mark[] }>("marks", "all");
   const peekedAnalytics = peekParentAnalytics(sessionStudentId);

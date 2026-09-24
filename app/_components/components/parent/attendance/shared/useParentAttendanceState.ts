@@ -38,8 +38,9 @@ export type StatCardConfig = {
 export function useParentAttendanceState() {
   const { data: session } = useSession();
   const studentId = session?.user?.studentId ?? null;
+  const userWithSchoolName = session?.user as { schoolName?: unknown } | undefined;
   const sessionSchoolName =
-    typeof (session?.user as any)?.schoolName === "string" ? (session?.user as any).schoolName : "";
+    typeof userWithSchoolName?.schoolName === "string" ? userWithSchoolName.schoolName : "";
 
   const getAcademicYearRangeStatic = (seedDate = new Date()) => {
     const year = seedDate.getFullYear();

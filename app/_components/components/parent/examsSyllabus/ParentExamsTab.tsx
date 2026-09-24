@@ -34,7 +34,7 @@ interface TermData {
   name: string;
   status: "COMPLETED" | "UPCOMING" | "ONGOING";
   class: {
-    teacher: any; name: string; section: string
+    teacher: { name: string | null } | null; name: string; section: string
   };
   teacher?: { name: string };
   schedules: ExamSchedule[];
