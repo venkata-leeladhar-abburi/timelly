@@ -103,7 +103,7 @@ export default function CircularNoticeCard({
         <div className="flex items-center gap-2">
           <span className="h-7 w-7 rounded-full bg-lime-400/20 text-lime-300 flex items-center justify-center text-xs font-bold overflow-hidden">
             {issuedByPhoto ? (
-              // eslint-disable-next-line @next/next/no-img-element
+               
               <img src={issuedByPhoto} alt={issuer} className="h-full w-full object-cover" />
             ) : (
               getInitials(issuer)

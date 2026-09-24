@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import PageHeader from "../../common/PageHeader";
 import { TeacherDashboardContent } from "./dashboardComponents/TeacherDashboardSections";
 import { TeacherDashboardData } from "./dashboardComponents/types";
 import TimellyLoader from "../../common/TimellyLoader";

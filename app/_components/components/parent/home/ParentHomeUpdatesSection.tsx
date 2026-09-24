@@ -92,7 +92,7 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
               >
                 <header className="flex items-center justify-between p-3 sm:p-5 border-b border-white/[0.05] gap-2 min-h-[64px]">
                   <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img
                       src={feed.createdBy?.photoUrl || "https://i.pravatar.cc/120?img=11"}
                       alt={feed.createdBy?.name ?? "School"}
@@ -139,7 +139,7 @@ export default function ParentHomeUpdatesSection({ feeds, events }: Props) {
                       >
                         <Download className="w-4 h-4" />
                       </button>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      { }
                       <img
                         src={feed.photo}
                         alt={feed.title}

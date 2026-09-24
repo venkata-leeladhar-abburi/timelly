@@ -320,6 +320,15 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // Plain <img> is intentional here. Avatars, certificates and receipts come
+    // from arbitrary storage origins, blob:/data: previews and html2canvas/PDF
+    // rendering, where next/image (which needs a fixed host allow-list and
+    // width/height) adds breakage risk and no real optimisation.
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
