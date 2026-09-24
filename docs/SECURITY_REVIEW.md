@@ -250,3 +250,21 @@ and total `ORDER BY`s on the payment, allocation and admission-payment queries
 (`loadDayFeeCollectionTransactions.ts`, `loadAdmissionFeeDayReportTx.ts`, `fees/transactions`). On the
 largest school, `school/analysis` and the 1298-row fee report are now byte-identical between the owner
 connection and a tenant scope, order included.
+
+### 3.2 The four handlers that cannot move to the tenant connection
+
+They stay on the owner connection because RLS cannot express what they do, not because the work
+was skipped. What was done instead:
+
+- **`auth/[...nextauth]`**: runs before any session or school exists; nothing to scope by.
+- **`upload`**: no database access at all (object storage under `schools/<schoolId>/` taken from the
+  session); nothing to migrate.
+- **`school/create`**: creates the tenant itself. **Open authorization gap (not changed here, needs a
+  product decision):** it requires only *a* session, with no role check, and the "already has a
+  school" guard is commented out, so any signed-in user (including a STUDENT) can create a school and
+  attach themselves as its admin. Restrict it to the onboarding role(s) (e.g. SCHOOLADMIN) or to
+  SUPERADMIN.
+- **`superadmin/*`**: cross-tenant by design (decision in section 3). Compensating control added:
+  `lib/db/superadminRoutes.test.ts` fails if any handler under `app/api/superadmin/**` does not
+  itself authorize SUPERADMIN (directly or via an authorizing helper in the same file), so the
+  RLS-free connection cannot quietly serve a non-superadmin.
