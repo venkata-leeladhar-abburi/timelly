@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
+import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -45,7 +47,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const where: any = {
+    const where: Prisma.TransferCertificateWhereInput = {
       schoolId,
     };
 
@@ -57,30 +59,35 @@ export async function GET(req: Request) {
     if (status) {
       where.status = status;
     }
-    const certificateRequests = await prisma.transferCertificate.findMany({
-      where,
-      include: {
-        student: {
-          include: {
-            user: {
-              select: { id: true, name: true, email: true },
-            },
-            class: {
-              select: { id: true, name: true, section: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const certificateRequests = await withTenantScopedClient(schoolId, (tx) =>
+      tx.transferCertificate.findMany({
+        where,
+        include: {
+          student: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true },
+              },
+              class: {
+                select: { id: true, name: true, section: true },
+              },
             },
           },
+          requestedBy: {
+            select: { id: true, name: true, email: true },
+          },
+          approvedBy: {
+            select: { id: true, name: true, email: true },
+          },
         },
-        requestedBy: {
-          select: { id: true, name: true, email: true },
+        orderBy: {
+          createdAt: "desc",
         },
-        approvedBy: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+      })
+    );
     return NextResponse.json({ certificateRequests }, { status: 200 });
   } catch (error: unknown) {
     logger.error("List certificate requests error:", error);

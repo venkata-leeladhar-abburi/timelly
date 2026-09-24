@@ -23,8 +23,19 @@ jest.mock("@/lib/db", () => ({
       findUnique: (...args: unknown[]) => mockStudentFindUnique(...args),
     },
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
-    certificate: { findMany: (...args: unknown[]) => mockFindMany(...args) },
   },
+}));
+
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      certificate: { findMany: (...args: unknown[]) => mockFindMany(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
 }));
 
 function makeRequest(query = "") {

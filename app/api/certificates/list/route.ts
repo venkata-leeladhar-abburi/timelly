@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
+import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
@@ -51,7 +53,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const where: any = {
+    const where: Prisma.CertificateWhereInput = {
       schoolId,
     };
 
@@ -62,27 +64,32 @@ export async function GET(req: Request) {
       // For teachers/admins: filter by student if provided in query
       where.studentId = studentId;
     }
-    const certificates = await prisma.certificate.findMany({
-      where,
-      include: {
-        student: {
-          include: {
-            user: {
-              select: { id: true, name: true, email: true },
+    // Real DB-level tenant isolation (docs/SECURITY_REVIEW.md): read goes
+    // through the app_tenant connection, restricted by RLS, not just the
+    // `where: { schoolId }` filter above.
+    const certificates = await withTenantScopedClient(schoolId, (tx) =>
+      tx.certificate.findMany({
+        where,
+        include: {
+          student: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true },
+              },
             },
           },
+          template: {
+            select: { id: true, name: true, description: true },
+          },
+          issuedBy: {
+            select: { id: true, name: true, email: true },
+          },
         },
-        template: {
-          select: { id: true, name: true, description: true },
+        orderBy: {
+          issuedDate: "desc",
         },
-        issuedBy: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-      orderBy: {
-        issuedDate: "desc",
-      },
-    });
+      })
+    );
 
     return NextResponse.json({ certificates }, { status: 200 });
   } catch (error: unknown) {
