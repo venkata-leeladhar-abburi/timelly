@@ -134,3 +134,52 @@ Until one of these lands, tenant isolation depends entirely on every
 current and future route handler remembering to filter by `schoolId`.
 That's the single most important fact to carry into future work on this
 codebase — recorded here and in [`CLAUDE.md`](../CLAUDE.md).
+
+## 3. Real DB-level tenant isolation — rollout status and decisions
+
+**Mechanism.** Routes run their queries on a second Prisma connection that uses the
+restricted `app_tenant` Postgres role (`DATABASE_URL_TENANT`), inside one transaction
+with `app.current_school_id` set (`lib/db/tenantClient.ts`). RLS policies (migrations
+`20260923104652_*`, `20260923105153_*`) then restrict every read and write to that school,
+independent of the `schoolId` in application `where` clauses. Verified live: a connection
+with no context sees 0 rows; a school-A-scoped connection asking for school B sees 0 rows.
+
+Two entry points:
+
+- `withTenantScopedClient(schoolId, tx => ...)` — explicit `tx`, used by the simple routes.
+- `runInTenantScope(schoolId, fn)` + `tenantDb` (`lib/db/tenantContext.ts`) — request-scoped
+  (AsyncLocalStorage) so shared helpers in `lib/*` need no `tx` plumbing. Outside a scope
+  `tenantDb` falls back to the owner client (scripts, cron, unmigrated callers).
+  `tenantDb.$transaction` joins the scope's transaction.
+
+**Status.** 106 of 178 route files use a tenant scope (reads and, where safe, writes);
+11 are `superadmin/*`.
+
+**Decision — superadmin cross-tenant carve-out.** SUPERADMIN endpoints stay on the
+owner-role connection. They are cross-tenant by definition, the owner role already bypasses
+RLS, and adding a BYPASSRLS role or an `app.is_superadmin` policy branch would create a
+second, broader credential and a policy path every tenant table would have to honour.
+The carve-out is instead made explicit and auditable: `superadmin/*` routes, plus a small
+set of routes with a genuine unscoped path, use the owner client directly or
+`runInOptionalTenantScope(null, ...)`. `lib/db/ownerConnectionRoutes.test.ts` keeps a
+baseline of routes importing the owner `prisma` and fails when a new one appears.
+Consequence: a compromised SUPERADMIN session, or the owner DB credential, is still
+cross-tenant — RLS protects tenant users from each other, not from the platform operator.
+
+**Known limits.**
+
+- One scope = one transaction: queries run serially, the shared prisma extension's read
+  collapsing does not apply, and the transaction is capped at `TENANT_SCOPE_TIMEOUT_MS`
+  (default 30s; bulk routes use 120s). Time heavy fee/analysis routes on production-sized data.
+- A failed statement aborts the whole Postgres transaction, so write handlers that catch
+  DB errors (`P2002`/`P2025`) and carry on were NOT wrapped. They stay on the owner connection.
+- Tables with RLS enabled but no policy return 0 rows to `app_tenant`: `PaymentWebhookEvent`,
+  `SystemSubscription`, `Account`, `Session`, `VerificationToken`. Never touch them from a scope.
+- Not migrated: payment create/verify/webhook, auth, uploads, user/school create and
+  update, admissions bulk upload, and other handlers listed in
+  `lib/db/ownerConnectionRoutes.json`.
+
+**Deployment checklist.** (1) Set `DATABASE_URL_TENANT` (`app_tenant.<project-ref>` user on the
+pooler); `instrumentation.ts` logs an error at boot if it is missing. (2) Apply the RLS and
+`app_tenant` migrations to the target database. (3) Re-run the cross-tenant check against that
+database. (4) Watch latency and P2028 (transaction timeout) errors on fee/analysis routes.
