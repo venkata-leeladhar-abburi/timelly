@@ -434,7 +434,7 @@ export async function POST(req: Request) {
         if (j && typeof j.error_message === "string") details = j.error_message;
         else if (j && typeof j.error_code === "string") details = j.error_code;
         else if (j && typeof j.message === "string") details = j.message;
-      } catch (_) {}
+      } catch {}
       const hint =
         res.status === 403 || res.status === 401
           ? " Confirm with HyperPG: (1) This Merchant ID and API Key are for the correct account (e.g. school linked to your email). (2) HYPERPG_MERCHANT_ID and HYPERPG_API_KEY in .env match the credentials that work in Postman. (3) If they use whitelisting, your server IP or domain may need to be whitelisted."
@@ -473,7 +473,7 @@ export async function POST(req: Request) {
     }
 
     // Store Payment in DB (status PENDING) - will be updated on verify
-    const payment = await runInTenantScope(student.schoolId, () => prisma.$transaction(async (tx) => {
+    const _payment = await runInTenantScope(student.schoolId, () => prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
         data: {
           studentId: session.user.studentId,

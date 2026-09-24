@@ -6,7 +6,7 @@ import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await getServerSession(authOptions);
 

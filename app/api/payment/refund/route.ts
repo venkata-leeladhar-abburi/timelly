@@ -165,7 +165,7 @@ export async function POST(req: Request) {
           const errJson = JSON.parse(refundResText) as { error_message?: string; error_code?: string };
           if (errJson?.error_message) errMsg = errJson.error_message;
           else if (errJson?.error_code) errMsg = errJson.error_code;
-        } catch (_) {
+        } catch {
           if (refundResText.length < 200) errMsg = refundResText;
         }
         logger.error("HyperPG refund error:", refundRes.status, refundResText);
@@ -178,7 +178,7 @@ export async function POST(req: Request) {
       let refundPayload: { status?: string; refunds?: Array<{ status?: string }> } = {};
       try {
         refundPayload = JSON.parse(refundResText);
-      } catch (_) {}
+      } catch {}
       const refundStatus = refundPayload.refunds?.[0]?.status ?? refundPayload.status;
       if (refundStatus && refundStatus !== "PENDING" && refundStatus !== "SUCCESS") {
         return NextResponse.json(

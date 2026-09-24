@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
-import prisma from "@/lib/db";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import {
   parentPortalSwrRead,

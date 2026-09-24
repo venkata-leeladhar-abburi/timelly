@@ -56,7 +56,7 @@ function teacherCanWrite(session: { user: { role?: string | null; allowedFeature
   return (session.user.allowedFeatures ?? []).some((feature) => TIMETABLE_FEATURES.has(feature));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type ClassStudentLookupClient = {
   student: { findFirst: (args: any) => Promise<{ classId: string | null } | null> };
   class: { findFirst: (args: any) => Promise<{ id: string } | null> };

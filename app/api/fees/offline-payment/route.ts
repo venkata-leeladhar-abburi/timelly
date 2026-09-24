@@ -307,7 +307,7 @@ export async function POST(req: Request) {
 
     // Allocate: proportional on selected first, then spill remainder across unselected.
     const selectedDueSum = selectedHeads.reduce((s, h) => s + h.dueBefore, 0);
-    const unselectedDueSum = unselectedHeads.reduce((s, h) => s + h.dueBefore, 0);
+    const _unselectedDueSum = unselectedHeads.reduce((s, h) => s + h.dueBefore, 0);
     const totalDueSum = headsWithDueBefore.reduce((s, h) => s + h.dueBefore, 0);
 
     if (amount > totalDueSum + 0.01) {

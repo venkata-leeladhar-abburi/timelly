@@ -25,7 +25,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    return await runInTenantScope(user.schoolId, async (schoolId) => {
+    return await runInTenantScope(user.schoolId, async (_schoolId) => {
     const data: { name?: string; address?: string; location?: string } = {};
     if (name !== undefined) data.name = name;
     if (address !== undefined) data.address = address;

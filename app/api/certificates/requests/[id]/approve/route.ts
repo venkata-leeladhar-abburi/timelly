@@ -34,7 +34,7 @@ export async function POST(
           const { supabaseAdmin, SUPABASE_BUCKET } = await import("@/lib/supabase");
           
           if (supabaseAdmin) {
-            const ext = file.name.split(".").pop() || "pdf";
+            const _ext = file.name.split(".").pop() || "pdf";
             const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 80);
             const path = `certificates/${Date.now()}-${safeName}`;
             

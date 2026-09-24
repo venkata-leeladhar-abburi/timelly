@@ -24,7 +24,7 @@ export async function PATCH(
       return NextResponse.json({ message: ctx.message }, { status: ctx.status });
     }
 
-    return await runInTenantScope(ctx.schoolId, async (schoolId) => {
+    return await runInTenantScope(ctx.schoolId, async (_schoolId) => {
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const remarks = typeof body.remarks === "string" ? body.remarks : null;

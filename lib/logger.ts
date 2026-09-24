@@ -34,12 +34,12 @@ function emit(level: LogLevel, args: unknown[]) {
       ...(typeof message !== "string" ? { args: args.map(serializeArg) } : {}),
       ...(rest.length ? { context: rest.map(serializeArg) } : {}),
     };
-    // eslint-disable-next-line no-console -- sanctioned console call site
+     
     console[method](JSON.stringify(entry));
     return;
   }
 
-  // eslint-disable-next-line no-console -- sanctioned console call site
+   
   console[method](`[${time}] ${level.toUpperCase()}`, ...args);
 }
 

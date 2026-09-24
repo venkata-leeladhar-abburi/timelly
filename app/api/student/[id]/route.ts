@@ -561,7 +561,7 @@ export async function PUT(req: Request, context: RouteParams) {
     if (fatherName !== undefined) studentUpdate.fatherName = fatherName;
     if (motherName !== undefined) studentUpdate.motherName = motherName;
     if (occupation !== undefined) studentUpdate.occupation = occupation;
-    const effectiveStatus = status ?? student.status ?? "Active";
+    const _effectiveStatus = status ?? student.status ?? "Active";
     if (classId !== undefined) {
       studentUpdate.classId = classId;
     }

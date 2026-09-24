@@ -20,14 +20,14 @@ export async function POST(req: Request) {
     let body;
     try {
       body = await req.json();
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { message: "Invalid request body" },
         { status: 400 }
       );
     }
 
-    const { certificateType, reason } = body;
+    const { certificateType: _certificateType, reason } = body;
 
     // Resolve student: use session.studentId or find student linked to this user (e.g. parent dashboard uses same user as student)
     let studentId = session.user.studentId ?? null;

@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         // Payment insert + fee update now commit atomically inside one RLS-scoped transaction.
         return await runInTenantScope(schoolId, async () => {
         const body = await req.json();
-        const { studentId, amount, method, referenceNumber, bankName, description } = body;
+        const { studentId, amount, method, referenceNumber: _referenceNumber, bankName: _bankName, description: _description } = body;
 
         if (!studentId || typeof studentId !== "string") {
             return NextResponse.json({ message: "Student ID is required" }, { status: 400 });

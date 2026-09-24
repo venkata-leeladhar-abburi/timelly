@@ -21,7 +21,7 @@ export async function PATCH(
     const tenant = await requireSchoolId(session);
     if (!tenant.ok) return NextResponse.json({ message: tenant.message }, { status: tenant.status });
 
-    return await runInTenantScope(tenant.schoolId, async (schoolId) => {
+    return await runInTenantScope(tenant.schoolId, async (_schoolId) => {
     const { id } = await params;
     const owned = await prisma.syllabusUnit.findFirst({
       where: { id, tracking: { term: { schoolId: tenant.schoolId } } },

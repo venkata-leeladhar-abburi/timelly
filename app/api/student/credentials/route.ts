@@ -160,7 +160,7 @@ export async function GET(req: Request) {
     }
 
     if (format === "csv") {
-      const wb = XLSX.utils.book_new();
+      const _wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(toExportRows(rows));
       const csv = XLSX.utils.sheet_to_csv(ws);
       const suffix = className || section || classId ? "filtered" : "all";

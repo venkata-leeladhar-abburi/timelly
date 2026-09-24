@@ -1,5 +1,4 @@
 [
-  "app/api/attendance/view/route.ts",
   "app/api/certificates/list/route.ts",
   "app/api/certificates/requests/list/route.ts",
   "app/api/certificates/template/list/route.ts",

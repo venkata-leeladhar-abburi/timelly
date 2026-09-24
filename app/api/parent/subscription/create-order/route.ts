@@ -85,7 +85,7 @@ export async function POST(req: Request) {
       "http://localhost:3000";
     const path = returnPath.startsWith("/") ? returnPath : `/${returnPath}`;
     const pathOnly = path.split("?")[0].replace(/\/$/, "") || "/parent?tab=profile";
-    const returnUrl = `${baseUrl.replace(/\/$/, "")}${pathOnly}`;
+    const _returnUrl = `${baseUrl.replace(/\/$/, "")}${pathOnly}`;
 
     const nameParts = (student.user?.name || student.fatherName || "Parent")
       .trim()

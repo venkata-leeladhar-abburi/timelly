@@ -16,14 +16,14 @@ export async function POST(req: Request) {
     let body;
     try {
       body = await req.json();
-    } catch (parseError) {
+    } catch {
       return NextResponse.json(
         { message: "Invalid request body" },
         { status: 400 }
       );
     }
 
-    const { certificateType, reason } = body;
+    const { certificateType: _certificateType, reason } = body;
 
     if (!session.user.studentId) {
       return NextResponse.json(
