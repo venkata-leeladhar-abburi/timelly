@@ -95,20 +95,26 @@ export async function GET(request: Request) {
     const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
 
+    // One interactive transaction is a single connection, so queries inside it run one after
+    // another. The fee totals and collection summary are the heavy reads: give each its own scope
+    // (own connection, own timeout) so they run in parallel instead of sharing one 30s budget.
     const [
-      classCount,
-      studentCount,
-      teacherCount,
-      classCountLastMonth,
-      studentCountLastMonth,
-      teacherCountLastMonth,
+      [
+        classCount,
+        studentCount,
+        teacherCount,
+        classCountLastMonth,
+        studentCountLastMonth,
+        teacherCountLastMonth,
+        todayAttendance,
+        leaves,
+        newsFeeds,
+        recentPayments,
+      ],
       feeTotals,
-      todayAttendance,
-      leaves,
-      newsFeeds,
-      recentPayments,
       collection,
-    ] = await runInTenantScope(schoolId, () => Promise.all([
+    ] = await Promise.all([
+      runInTenantScope(schoolId, () => Promise.all([
       prisma.class.count({ where: { schoolId } }),
       prisma.student.count({ where: { schoolId, ...activeStudentWhere } }),
       prisma.user.count({ where: { schoolId, role: "TEACHER" } }),
@@ -119,7 +125,6 @@ export async function GET(request: Request) {
       prisma.user.count({
         where: { schoolId, role: "TEACHER", createdAt: { lt: startOfMonth } },
       }),
-      getSchoolDashboardFeeTotals(schoolId),
       prisma.$queryRaw<Array<{ status: string; count: bigint }>>(Prisma.sql`
         SELECT a.status, COUNT(*)::bigint AS count
         FROM "Attendance" a
@@ -168,8 +173,10 @@ export async function GET(request: Request) {
         ORDER BY p."createdAt" DESC
         LIMIT 5
       `),
-      buildSchoolDashboardCollectionSummary(schoolId, dateParam),
-    ]));
+      ])),
+      runInTenantScope(schoolId, () => getSchoolDashboardFeeTotals(schoolId)),
+      runInTenantScope(schoolId, () => buildSchoolDashboardCollectionSummary(schoolId, dateParam)),
+    ]);
 
     const totalPaid = feeTotals.totalPaid;
     const totalFee = feeTotals.totalFee;
