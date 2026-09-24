@@ -165,7 +165,7 @@ export function AnalysisOverviewSection({
                 axisLine={false}
                 tickFormatter={(v) => `${v}%`}
               />
-              <Tooltip formatter={(value: any) => `${value}%`} />
+              <Tooltip formatter={(value) => `${value}%`} />
               <Line
                 type="monotone"
                 dataKey="students"

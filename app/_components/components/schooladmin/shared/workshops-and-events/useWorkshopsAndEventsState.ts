@@ -63,7 +63,7 @@ export function useWorkshopsAndEventsState() {
             index === -1
               ? [event as EventItem, ...prev]
               : prev.map((e) => (e.id === event.id ? { ...e, ...event } : e));
-          setEventsPageCache(next as any);
+          setEventsPageCache(next);
           return next;
         });
       }
@@ -169,7 +169,7 @@ export function useWorkshopsAndEventsState() {
     const snapshot = events;
     const nextEvents = events.filter((e) => e.id !== deletingEventId);
     setEvents(nextEvents);
-    setEventsPageCache(nextEvents as any);
+    setEventsPageCache(nextEvents);
     setDeleteTarget(null);
     try {
       setDeleteLoading(true);
@@ -178,9 +178,9 @@ export function useWorkshopsAndEventsState() {
         throw new Error(data?.message || "Failed to delete event");
       }
       void fetchEvents(true);
-    } catch (err: any) {
+    } catch (err) {
       setEvents(snapshot);
-      setEventsPageCache(snapshot as any);
+      setEventsPageCache(snapshot);
       console.error(err);
     } finally {
       setDeleteLoading(false);

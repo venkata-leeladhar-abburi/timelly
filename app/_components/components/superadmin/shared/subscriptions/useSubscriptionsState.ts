@@ -4,6 +4,17 @@ import { useDebounce } from "@/app/_components/hooks/useDebounce";
 import type { BillingMode, SubscriptionRow } from "../../Subscriptions";
 import { fetchSuperadminSchools, updateSchoolSubscription } from "@/lib/api/superadminSchools";
 
+type SchoolListItem = {
+  id: string;
+  name: string;
+  location: string;
+  createdAt: string;
+  billingMode?: string | null;
+  parentSubscriptionAmount?: unknown;
+  parentSubscriptionTrialDays?: unknown;
+  isActive?: unknown;
+};
+
 export function useSubscriptionsState() {
   const router = useRouter();
   const [rows, setRows] = useState<SubscriptionRow[]>([]);
@@ -24,7 +35,7 @@ export function useSubscriptionsState() {
       if (!ok) {
         throw new Error(data.message || "Failed to load schools");
       }
-      const list = ((data.schools as any[]) ?? []).map((s: any) => ({
+      const list = ((data.schools ?? []) as SchoolListItem[]).map((s) => ({
         id: s.id,
         name: s.name,
         location: s.location,
@@ -65,7 +76,7 @@ export function useSubscriptionsState() {
       if (!ok) {
         throw new Error(data.message || "Failed to update subscription");
       }
-      const u = data.school as any;
+      const u = data.school!;
       setRows((prev) =>
         prev.map((r) =>
           r.id === id
