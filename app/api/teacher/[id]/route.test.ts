@@ -27,6 +27,16 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({ user: { findUnique: (...args: unknown[]) => mockUserFindUnique(...args) } })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest() {
   return new Request("http://localhost/api/teacher/t1") as unknown as import("next/server").NextRequest;
 }

@@ -27,6 +27,20 @@ jest.mock("@/lib/db", () => ({
   },
 }));
 
+const mockWithTenantScopedClient = jest.fn(
+  async (_schoolId: string, fn: (tx: unknown) => unknown) =>
+    fn({
+      event: { findFirst: (...args: unknown[]) => mockEventFindFirst(...args) },
+      eventRegistration: { findUnique: (...args: unknown[]) => mockRegistrationFindUnique(...args) },
+      certificate: { findFirst: (...args: unknown[]) => mockCertificateFindFirst(...args) },
+    })
+);
+
+jest.mock("@/lib/db/tenantClient", () => ({
+  withTenantScopedClient: (...args: Parameters<typeof mockWithTenantScopedClient>) =>
+    mockWithTenantScopedClient(...args),
+}));
+
 function makeRequest() {
   return new Request("http://localhost/api/events/create/ev1");
 }

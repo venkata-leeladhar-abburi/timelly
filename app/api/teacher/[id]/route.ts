@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
+import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { schoolIdViaAdminRelation, schoolIdViaStudentId } from "@/lib/auth/tenant";
@@ -51,7 +52,9 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
 
     const { id } = await params;
 
-    const teacher = await prisma.user.findUnique({
+    // Real DB-level tenant isolation: read runs on the RLS-restricted connection.
+    const teacher = await withTenantScopedClient(schoolId, (tx) =>
+      tx.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -71,7 +74,8 @@ export async function GET(req: NextRequest, { params }: { params: Params }) {
         schoolId: true,
         assignedClasses: { select: { id: true, name: true, section: true } },
       },
-    });
+    })
+    );
 
     if (!teacher || teacher.role !== "TEACHER") {
       return NextResponse.json({ message: "Teacher not found" }, { status: 404 });
