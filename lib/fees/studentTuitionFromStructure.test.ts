@@ -123,17 +123,21 @@ describe("sumExtraFeesForStudent legacy duplicate handling", () => {
     expect(sumExtraFeesForStudent(fees, student)).toBe(1000);
   });
 
-  // KNOWN ISSUE (needs a product decision): with a lump row AND both installment rows, the
-  // "installment duplicates a lump" rule and the "lump duplicates an installment pair" rule
-  // each fire, so all three rows are omitted and the student is charged 0 for this fee.
-  // This pins today's behaviour; update it when the intended winner (lump vs pair) is decided.
-  it("currently omits ALL rows when a lump and both installments coexist (known issue)", () => {
+  it("charges the installment pair, not the lump, when a lump and both installments coexist", () => {
     const fees = [
       extra({ name: "Library", amount: 1000 }),
       extra({ name: "Library (1st Installment)", amount: 500 }),
       extra({ name: "Library (2nd Installment)", amount: 500 }),
     ];
-    expect(sumExtraFeesForStudent(fees, student)).toBe(0);
+    expect(sumExtraFeesForStudent(fees, student)).toBe(1000);
+  });
+
+  it("still lets a lump win over a single installment", () => {
+    const fees = [
+      extra({ name: "Library", amount: 1000 }),
+      extra({ name: "Library (1st Installment)", amount: 500 }),
+    ];
+    expect(sumExtraFeesForStudent(fees, student)).toBe(1000);
   });
 
   it("keeps both installments when there is no lump", () => {

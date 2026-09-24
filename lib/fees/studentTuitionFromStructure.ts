@@ -47,7 +47,10 @@ function isLegacyInstallmentDuplicate(ef: ExtraFeeRow, allSchoolExtras: ExtraFee
       other !== ef &&
       sameExtraScope(ef, other) &&
       !isInstallmentFeeName(other.name) &&
-      normName(other.name) === baseNorm
+      normName(other.name) === baseNorm &&
+      // When a full 1st+2nd pair exists the lump is the legacy row (see
+      // isLegacyLumpWhenInstallmentPairExists), so the pair wins and is not a duplicate.
+      !isLegacyLumpWhenInstallmentPairExists(other, allSchoolExtras)
   );
 }
 
