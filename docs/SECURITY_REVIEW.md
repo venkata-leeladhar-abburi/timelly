@@ -183,3 +183,13 @@ cross-tenant — RLS protects tenant users from each other, not from the platfor
 pooler); `instrumentation.ts` logs an error at boot if it is missing. (2) Apply the RLS and
 `app_tenant` migrations to the target database. (3) Re-run the cross-tenant check against that
 database. (4) Watch latency and P2028 (transaction timeout) errors on fee/analysis routes.
+
+**Benchmark results (2026-09-24, from a high-latency dev machine, largest school, 821 students).**
+`scripts/benchmark-tenant-scope.ts` compares owner vs scoped on the heavy helpers. Scoped time was
+0.84-0.91x of owner (the scope adds only BEGIN/set_config/COMMIT; round trips dominate), so the scope
+is not slower per se. Absolute times here (12-47s) are dominated by ~1-3s per round trip on that link
+and say nothing about the deployment region: rerun the script there before relying on the 30s cap.
+Content was identical to the owner connection for every case checked; row order among ties (queries
+without a total ORDER BY, e.g. top teachers, fee allocation lines) can differ because RLS changes the
+plan. Scopes slower than half the timeout log \`tenant_scope_slow\`; a timeout logs
+\`tenant_scope_timeout (P2028)\` with the school and duration.

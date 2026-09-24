@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "async_hooks";
 import prisma from "@/lib/db";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
+import { logger } from "@/lib/logger";
 
 /**
  * Request-scoped tenant transaction, for routes whose queries go through
@@ -25,17 +26,38 @@ const scopeStorage = new AsyncLocalStorage<TenantTx>();
 export const TENANT_SCOPE_TIMEOUT_MS = Number(process.env.TENANT_SCOPE_TIMEOUT_MS) || 30_000;
 const TENANT_SCOPE_MAX_WAIT_MS = 10_000;
 
-export function runInTenantScope<T>(
+export async function runInTenantScope<T>(
   schoolId: string,
   fn: (schoolId: string) => Promise<T>,
   options?: { timeout?: number }
 ): Promise<T> {
   // Already inside a scope (nested helper) - reuse it; never open a second tx.
   if (scopeStorage.getStore()) return fn(schoolId);
-  return withTenantScopedClient(schoolId, (tx) => scopeStorage.run(tx, () => fn(schoolId)), {
-    timeout: options?.timeout ?? TENANT_SCOPE_TIMEOUT_MS,
-    maxWait: TENANT_SCOPE_MAX_WAIT_MS,
-  });
+  const timeout = options?.timeout ?? TENANT_SCOPE_TIMEOUT_MS;
+  const startedAt = Date.now();
+  try {
+    const result = await withTenantScopedClient(
+      schoolId,
+      (tx) => scopeStorage.run(tx, () => fn(schoolId)),
+      { timeout, maxWait: TENANT_SCOPE_MAX_WAIT_MS }
+    );
+    const ms = Date.now() - startedAt;
+    // Early warning well before the hard timeout turns into a 500 (P2028).
+    if (ms > timeout * 0.5) {
+      logger.warn("tenant_scope_slow", { schoolId, ms, timeout });
+    }
+    return result;
+  } catch (error) {
+    if ((error as { code?: string })?.code === "P2028") {
+      logger.error("tenant_scope_timeout (P2028)", {
+        schoolId,
+        ms: Date.now() - startedAt,
+        timeout,
+        hint: "raise TENANT_SCOPE_TIMEOUT_MS or move this route's heavy reads out of the scope",
+      });
+    }
+    throw error;
+  }
 }
 
 export function isInTenantScope(): boolean {
