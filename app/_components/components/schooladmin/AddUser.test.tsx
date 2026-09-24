@@ -59,9 +59,9 @@ describe("AddUser", () => {
     render(<AddUser />);
     await waitFor(() => expect(screen.getAllByText("Admin Two").length).toBeGreaterThan(0));
     const edit = screen.getAllByTitle("Edit user");
-    expect(edit.length).toBeGreaterThan(0);
-    // SCHOOLADMIN rows have no pencil button at all
-    expect(screen.queryAllByTitle("Editing is currently available for teachers only")).toHaveLength(0);
+    const del = screen.getAllByTitle("Delete user");
+    // Every row (desktop + mobile lists) can be deleted, but only the teacher row can be edited.
+    expect(del.length).toBe(edit.length * 2);
     await userEvent.setup().click(edit[0]);
     expect(mockPush).toHaveBeenCalledWith("?tab=add-user&view=add&userId=u1");
   });
