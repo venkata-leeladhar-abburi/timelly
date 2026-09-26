@@ -19,6 +19,7 @@ import {
 import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaymentAllocationComponentNames";
 import { isMessCategoryExtraFeeName } from "@/lib/fees/extraFeeResidencyScope";
 import { logger } from "@/lib/logger";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 async function loadSchoolExtras(schoolId: string) {
   return prisma.extraFee.findMany({
@@ -167,6 +168,8 @@ export async function POST() {
     const afterExtras = await loadSchoolExtras(schoolId);
     const afterIssues = findMessFeeDuplicateIssues(afterExtras, classes);
     const afterCount = countMessDuplicateExtraFeeIds(afterIssues);
+
+    invalidateFeeListServerCaches(schoolId);
 
     return NextResponse.json({
       message:

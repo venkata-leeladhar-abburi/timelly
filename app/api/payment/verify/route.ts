@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -190,6 +191,8 @@ export async function POST(req: Request) {
         return updated;
       }));
 
+      invalidateFeeListServerCaches(student.schoolId);
+
       // If workshop payment, return eventRegistration status
       if (existing.eventRegistrationId) {
         return NextResponse.json(
@@ -272,6 +275,8 @@ export async function POST(req: Request) {
         `₹${amountNum.toLocaleString()} payment received successfully`
       ).catch(() => {});
     }
+
+    invalidateFeeListServerCaches(student.schoolId);
 
     return NextResponse.json(
       { payment, fee: updatedFee },

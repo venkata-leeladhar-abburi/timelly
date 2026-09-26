@@ -10,6 +10,7 @@ import {
 import { roundRupee } from "@/lib/formatRupee";
 import { storedDiscountRupeeAmount } from "@/lib/fees/studentFeeHeadDiscount";
 import { logger } from "@/lib/logger";
+import { FEE_LIST_SERVER_CACHE_TTL_MS } from "@/lib/fees/feeListServerCache";
 
 /**
  * Fast fee records list for the Fees Records table (no per-head allocation work).
@@ -97,7 +98,7 @@ export async function GET(req: Request) {
     });
 
     const payload = { fees, nextCursor };
-    setSchoolDashboardServerCached(memKey, payload, 25_000);
+    setSchoolDashboardServerCached(memKey, payload, FEE_LIST_SERVER_CACHE_TTL_MS);
     return NextResponse.json(payload, { status: 200 });
   } catch (error: unknown) {
     logger.error("Fee records list error:", error);

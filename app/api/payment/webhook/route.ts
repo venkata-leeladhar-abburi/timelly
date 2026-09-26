@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import type { Prisma } from "@prisma/client";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 export const runtime = "nodejs";
 
@@ -240,6 +241,8 @@ export async function POST(req: Request) {
       });
     }
   }));
+
+  invalidateFeeListServerCaches(payment.student.schoolId);
 
   return NextResponse.json({ ok: true, stored: true, updated: true }, { status: 200 });
 }

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -277,6 +278,8 @@ export async function POST(req: Request) {
       payment.gateway === "HYPERPG"
         ? "Refund initiated with payment gateway; amount will be credited back to the customer. Fee record updated."
         : "Refund processed successfully (offline payment).";
+
+    invalidateFeeListServerCaches(schoolId);
 
     return NextResponse.json(
       { refund, message },

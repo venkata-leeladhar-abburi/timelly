@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 const MAX_ROWS = 800;
 const WRITE_BATCH_SIZE = 100;
@@ -350,6 +351,8 @@ export async function POST(req: Request) {
 
       created += batch.length;
     }
+
+    invalidateFeeListServerCaches(schoolId);
 
     return NextResponse.json(
       {

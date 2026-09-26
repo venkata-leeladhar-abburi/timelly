@@ -12,6 +12,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { logger } from "@/lib/logger";
+import { FEE_LIST_SERVER_CACHE_TTL_MS } from "@/lib/fees/feeListServerCache";
 import { runInTenantScope } from "@/lib/db/tenantContext";
 
 export async function GET(req: Request) {
@@ -61,7 +62,7 @@ export async function GET(req: Request) {
           const stats = await computeCurrentAndPreviousFeeStats(schoolId);
 
           const payload = { fees: [] as unknown[], stats, nextCursor: null };
-          setSchoolDashboardServerCached(memKey, payload, 20_000);
+          setSchoolDashboardServerCached(memKey, payload, FEE_LIST_SERVER_CACHE_TTL_MS);
           return NextResponse.json(payload, { status: 200 });
         }
 

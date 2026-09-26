@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import { GET } from "@/app/api/fees/summary/route";
+import { FEE_LIST_SERVER_CACHE_TTL_MS } from "@/lib/fees/feeListServerCache";
 
 jest.mock("@/lib/db/tenantContext", () => ({
   runInTenantScope: (schoolId: string, fn: (id: string) => unknown) => fn(schoolId),
@@ -108,7 +109,7 @@ describe("GET /api/fees/summary", () => {
     expect(mockSetSchoolDashboardServerCached).toHaveBeenCalledWith(
       "fees:summary:stats:active:s1",
       expect.objectContaining({ stats: { totalDue: 250 } }),
-      20_000
+      FEE_LIST_SERVER_CACHE_TTL_MS
     );
   });
 

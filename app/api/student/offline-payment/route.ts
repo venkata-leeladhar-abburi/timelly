@@ -5,6 +5,7 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveOfflinePaymentCollectorFromSession } from "@/lib/fees/offlinePaymentCollector";
 import { isActiveStudent } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 export async function POST(req: Request) {
     try {
@@ -106,6 +107,8 @@ export async function POST(req: Request) {
                 },
             },
         });
+
+        invalidateFeeListServerCaches(schoolId);
 
         return NextResponse.json({
             success: true,

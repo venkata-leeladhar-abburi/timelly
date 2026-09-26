@@ -8,6 +8,7 @@ import {
   setStudentDetailsCoreCached,
 } from "@/lib/students/studentDetailsCoreCache";
 import { invalidateTenant } from "@/lib/cache/tenantCache";
+import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 
 export { CORE_BUNDLE_TTL_MS, getStudentDetailsCoreCached, setStudentDetailsCoreCached };
 
@@ -96,6 +97,7 @@ export function invalidateStudentFeeReadCaches(options: {
 }): void {
   const { schoolId = null } = options;
   invalidateStudentFeeReadCachesSync(options);
+  invalidateFeeListServerCaches(schoolId);
   // Never block API responses on Redis — in-memory caches are already cleared.
   if (schoolId) void invalidateTenant(schoolId).catch(() => {});
 }
@@ -106,5 +108,6 @@ export function invalidateSchoolFeeReadCaches(schoolId: string): void {
   invalidateExtraFeesScopeCacheForStudent();
   breakdownMemCache.clear();
   shellCache.clear();
+  invalidateFeeListServerCaches(schoolId);
   void invalidateTenant(schoolId).catch(() => {});
 }
