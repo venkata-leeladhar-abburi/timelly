@@ -2,6 +2,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import sharp from "sharp";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
+import { getInternalSecret } from "@/lib/internalSecret";
 
 export type PdfLogoAsset = {
   data: string;
@@ -113,7 +114,7 @@ async function loadSingleLogo(trimmed: string, origin: string): Promise<PdfLogoA
 
   // /api/media now requires a session or this internal secret — never sent to
   // third-party URLs, only to our own media proxy.
-  const internalSecret = process.env.NEXTAUTH_SECRET;
+  const internalSecret = getInternalSecret();
   const headers =
     viaMediaProxy && internalSecret ? { "x-internal-secret": internalSecret } : undefined;
 

@@ -93,4 +93,57 @@ describe("GET /api/media", () => {
     expect(res.status).toBe(403);
     expect(mockDownload).not.toHaveBeenCalled();
   });
+
+  it("blocks a session from reading another school's prefix", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1", role: "TEACHER" } });
+    const req = makeRequest("http://localhost/api/media?path=schools/s2/logo/a.png");
+    const res = await GET(req);
+    expect(res.status).toBe(403);
+    expect(mockDownload).not.toHaveBeenCalled();
+  });
+
+  it("allows a session to read its own school's prefix", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1", role: "TEACHER" } });
+    mockDownload.mockResolvedValue({
+      data: { arrayBuffer: async () => new ArrayBuffer(4), type: "image/png" },
+      error: null,
+    });
+    const req = makeRequest("http://localhost/api/media?path=schools/s1/logo/a.png");
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+  });
+
+  it("allows SUPERADMIN to read any school's prefix", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: null, role: "SUPERADMIN" } });
+    mockDownload.mockResolvedValue({
+      data: { arrayBuffer: async () => new ArrayBuffer(4), type: "image/png" },
+      error: null,
+    });
+    const req = makeRequest("http://localhost/api/media?path=schools/s2/logo/a.png");
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects path traversal segments", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { id: "u1", schoolId: "s1", role: "TEACHER" } });
+    const req = makeRequest("http://localhost/api/media?path=schools/s1/../s2/a.png");
+    const res = await GET(req);
+    expect(res.status).toBe(403);
+    expect(mockDownload).not.toHaveBeenCalled();
+  });
+
+  it("prefers INTERNAL_API_SECRET over NEXTAUTH_SECRET when set", async () => {
+    process.env.INTERNAL_API_SECRET = "dedicated";
+    try {
+      mockGetServerSession.mockResolvedValue(null);
+      const res = await GET(
+        makeRequest("http://localhost/api/media?path=some/file.png", {
+          "x-internal-secret": "test-secret",
+        })
+      );
+      expect(res.status).toBe(401);
+    } finally {
+      delete process.env.INTERNAL_API_SECRET;
+    }
+  });
 });
