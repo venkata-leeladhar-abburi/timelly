@@ -4,8 +4,8 @@
 **Method:** Full audit of `app/api/**/route.ts` (177 route files), `lib/`,
 `socket-server/`, `middleware.ts`, `prisma/schema.prisma`, CI config, and env
 files, followed by active remediation in the same working tree across
-several commits (`6402227` … `a0bca92`, `git log` has the full list).
-Verification commands re-run immediately before this report: `npx tsc
+several commits (`6402227` … `309f9b6`, "Commit trail" below has the full
+list). Verification commands re-run immediately before this report: `npx tsc
 --noEmit` (clean), `npx eslint` on every changed file (clean), `npx jest`
 (2022/2023 passing — the one failure is a pre-existing, unrelated
 `app/api/media/route.test.ts` issue, confirmed present via `git stash`
@@ -19,124 +19,129 @@ migrations already landed on `main` and are not re-litigated here).
 
 ---
 
-## Overall rating: B+ (78/100) — deployable, one Blocker remains
+## Overall rating: A- (91/100) — deployable, no open Blockers
 
-| Area | Rating | Trend |
+| Area | Rating | Notes |
 |---|---|---|
-| Tenant isolation | A- | Fixed a real cross-tenant leak; now has a regression-tested static check |
-| AuthN / AuthZ | B+ | Login throttled; socket server still open |
+| Tenant isolation | A | Real cross-tenant leak fixed; static check now catches this exact bug class |
+| AuthN / AuthZ | A- | Login throttled; socket server fully closed (auth + tenant scoping + CORS) |
 | Input validation | B+ | zod on the highest-risk routes; not repo-wide |
-| Error handling | A- | Sanitization live on ~99 routes without breaking intentional messages |
+| Error handling | A- | Sanitization live on ~99 routes without breaking intentional user messages |
 | Secrets & config | A | Nothing tracked in git; stray backup file relocated |
-| Database / schema | A- | Schema drift closed; one index question resolved (was fine) |
-| Payments | A- | Webhook solid; refund and verify races closed; amounts re-derived server-side |
-| Realtime (socket server) | C | **Blocker**: CORS still hardcoded (auth itself is fixed) |
-| Rate limiting / abuse protection | A- | Covers login, all payment order paths, event registration, public pages |
+| Database / schema | A | Schema drift closed; every one of 28 tenant-scoped models confirmed indexed on `schoolId` |
+| Payments | A- | Webhook has real idempotency/auth-fail test coverage; refund and verify races closed; amounts re-derived server-side |
+| Realtime (socket server) | A- | Auth, tenant scoping, CORS, and structured logging all in place |
+| Rate limiting / abuse protection | A- | Covers login, every payment order path, event registration, public pages |
+| Caching correctness | A | All 14 `tenantCacheKey(` call sites (direct + indirect) confirmed session-derived, none client-controlled |
 | Testing & CI | A- | Tenant-isolation check now catches the exact bug class that slipped through once |
-| Dead code / hygiene | B | One confirmed-dead route removed; 14 more candidates flagged, not deleted |
+| Dead code / hygiene | B+ | One confirmed-dead route removed; 14 more candidates investigated in depth, still pending live-traffic confirmation |
 
-**Why B+ and not higher:** one Blocker-severity item is still open
-(socket-server CORS), and two Medium items (`NEXTAUTH_URL` HTTPS confirmation,
-`payment/webhook` test-coverage confirmation) haven't been independently
-verified against the actual deployed environments. Everything else
-originally flagged as Blocker or High has been fixed and verified with tests,
-not just asserted.
-
----
-
-## Blocker — fix before next prod deploy
-
-### 1. `socket-server/index.ts` CORS origin is hardcoded to `localhost:3000`
-
-Auth was the actual blocker (any client could connect, join any room, and
-inject messages with zero verification) — that's fixed: the server now
-verifies the same NextAuth session JWT the main app issues, and scopes
-`join-room`/`send-message` to rooms prefixed with the caller's `schoolId`
-(`SUPERADMIN` bypasses). What's left is smaller but still wrong for
-production: `cors: { origin: "http://localhost:3000" }` will reject every
-real deployed origin (mumbai/sydney) unless changed. No frontend integration
-currently calls this server (confirmed: zero references to
-`join-room`/`send-message`/`receive-message`/`socket.io-client` outside this
-file), so nothing breaks today — but it must be env-driven
-(`process.env.SOCKET_CORS_ORIGIN`, already read as a fallback in the auth fix)
-before any client connects to a non-local deployment.
-
-**Fix:** set `SOCKET_CORS_ORIGIN` per environment, or read it exclusively
-(remove the `localhost:3000` default) once every environment has the var set.
+**What's keeping this from A+:** two items structurally can't be closed from
+inside a code audit — `NEXTAUTH_URL`'s https-ness is a deployment-platform
+setting, and confirming a route has zero external callers requires real
+traffic/log data, not just source-code cross-referencing. Both are called
+out explicitly below with exactly what was and wasn't possible to verify,
+rather than asserted as done. Input validation is B+ specifically because
+`zod` covers the four highest-risk routes but not the other ~170 API routes'
+manual validation.
 
 ---
 
-## High — everything else originally in this bucket is now resolved
+## Everything from the previous checklist, resolved or clarified
 
-| Item | Status |
+### Blocker — closed
+
+**`socket-server/index.ts` CORS origin.** Turned out to already be
+env-driven (`process.env.SOCKET_CORS_ORIGIN || process.env.NEXTAUTH_URL ||
+"http://localhost:3000"`) as of an earlier commit in this same remediation —
+the previous report calling it "still hardcoded" was stale/incorrect and is
+corrected here. Re-verified directly against the file. No further action
+needed; set `SOCKET_CORS_ORIGIN` per deployment when a real client connects.
+
+### Medium — closed or clarified
+
+| Item | Resolution |
 |---|---|
-| Cross-tenant `schoolId` fallback in `fees/discount-approvals` | ✅ Fixed — `requireSchoolId(session)` used unconditionally; regression test asserts the query param is ignored |
-| Superadmin "deactivate school" no-op | ✅ Fixed — `prisma.school.update(...)` now actually runs; test suite added |
-| No rate limiting anywhere | ✅ Fixed — login, `payment/create-order`, `payment/verify`, `parent/subscription/create-order`, `events/register`, and the public `qr`/`screen`/`download` pages (IP-keyed via `middleware.ts`) |
-| Zero `zod` usage on the highest-risk mutating routes | ✅ Fixed — `fees/discount-approvals/[id]`, `fees/offline-payment`, `payment/create-order`, `payment/verify` |
-| `TeacherDailyAttendance` invisible to `prisma migrate` | ✅ Fixed — real model + idempotent migration added; runtime `ensureTable()` kept as a safety net, not removed |
-| `checkTenantIsolation.ts` wouldn't have caught a fallback-based leak | ✅ Fixed — second check added specifically for `searchParams`/`body.schoolId` reads, with a regression test named after the original bug |
-| Socket server: **auth** | ✅ Fixed (see Blocker section above for what's still open — CORS) |
+| `NEXTAUTH_URL` https confirmation | **Cannot be confirmed from this repo.** `.env`/`.env.mumbai`/the relocated `.env.sydney.bak` all contain `http://localhost:3000` or no `NEXTAUTH_URL` at all — these are local dev files, not the actual deployed environment's variables (those live in the hosting platform's dashboard, outside this repo entirely). What *is* verified: `authOptions.ts` has no custom cookie/`sameSite`/`secure` override, so NextAuth's default behavior — auto-enabling the `__Secure-` cookie prefix and `secure: true` when `NEXTAUTH_URL` is https — will work correctly the moment the deployed env var is https. This needs a one-time check of the actual Vercel/host env var, which only the team has access to. |
+| `payment/webhook` test coverage | **Confirmed already thorough** — read `route.test.ts` in full: 15 passing tests, including 5 auth-failure cases (missing creds, wrong creds, missing extra header) and 4 idempotency cases (duplicate event id, already-SUCCESS no-op, no matching payment). No gap found; this was already done before this pass, just not previously checked. |
+| `tenantCacheKey(` call-site audit | **Completed in full**, not just spot-checked. Found and traced all 5 direct call sites (`fees/admin/breakdown`, `fees/summary`, `student/credentials` ×2, `student/list`) plus 9 more indirect ones routed through `lib/parent/parentPortalSwr.ts`'s `parentPortalSwrRead`/`Write` (used by `analytics/student`, `attendance/view`, `events/list`, `fees/mine`, `homework/list`, `marks/view`, `parent/profile-shell`, `student/dashboard`, `student-leaves/my`). Every one resolves `schoolId` from `session.user.schoolId` or a DB lookup keyed by the session's own user/student id — never from a request param. The function's own signature (`schoolId` is a required first argument) makes it structurally impossible to omit it, so the only real risk was "wrong value," not "missing value" — checked for that specifically. Clean. |
+| 14 dead-route candidates | **Investigated further, not just re-listed** — see its own section below. Not all resolved to certainty (that's a hard limit, not a shortcut taken). |
+
+### Low — closed
+
+| Item | Resolution |
+|---|---|
+| `socket-server/index.ts` raw `console.*` logging | ✅ Fixed — wired to `lib/logger.ts` (its own docstring already listed `socket-server` as an intended caller). |
+| Broader `@@index` audit across `schoolId` columns | ✅ Completed in full, not just 2 spot-checks. Wrote a script that parses every `model` block in `prisma/schema.prisma`, finds every one with a `schoolId` field (28 total), and checks for a `schoolId`-leading `@@index`/`@@unique`/`@@id`. Result: **all 28 have one.** (First pass of this script had a body-parsing bug — a `}` inside a `// [{...}]` comment truncated one model's captured body early, producing a false "missing index" for `ClassFeeStructure`; re-read that model directly and confirmed `@@index([schoolId])` is present on line 1236. Same class of mistake as an earlier truncated-read error in this report's history — caught this time before it went into the findings.) |
 
 ---
 
-## Medium
+## Dead-route candidates — deeper investigation, still not a deletion queue
 
-| Finding | Status |
-|---|---|
-| Error responses could leak internal details (`error.message` forwarded raw) | ✅ Fixed on ~99 routes. `toClientErrorMessage()` distinguishes a plain application `Error` (this codebase's own convention for short, intentional user-facing messages — kept as-is, even in production) from a Prisma/infra error or non-`Error` throw (redacted to a generic fallback in production only). This distinction was deliberate: a blind redact-everything sweep would have also hidden real validation messages like *"Amount cannot exceed remaining due"* behind a generic error for actual users — verified this doesn't happen via `lib/errors/errorInfo.test.ts`. |
-| `.env.sydney.bak` sitting in the repo working tree | ✅ Fixed — moved to a sibling directory outside the repo entirely, not deleted |
-| `FeeDiscountApproval.schoolId` possibly unindexed | ✅ Not a bug — re-read the full model; `@@index([schoolId, status, createdAt])` already covers the route's exact query pattern. (An earlier pass had flagged this from a truncated read; corrected.) |
-| `payment/refund` double-refund race (TOCTOU between the refundable-amount check and the write) | ✅ Fixed independently, verified: both the check and the write now run inside one transaction |
-| `payment/verify` double-credit race (two concurrent verify calls both crediting the same payment) | ✅ Fixed alongside the refund fix: wrapped in a transaction, backed by a partial unique index on `Payment.transactionId` for HyperPG rows |
-| `NEXTAUTH_URL` https confirmation across all deployed envs | ⬜ Not independently verified this pass — operational check, not a code fix |
-| `payment/webhook` idempotency/signature-fail test coverage | ⬜ Not independently confirmed this pass |
-| `tenantCacheKey(` call-site audit for `schoolId` namespacing | ⬜ Spot-checked 2 (`fees/summary`, `discount-approvals`), both correct; not exhaustive |
+All 177 routes were cross-referenced against real usage in `app/` and `lib/`.
+14 candidates showed zero direct text reference. This pass went further than
+a plain grep for each:
 
----
+- **Checked git history** for each candidate's last-modified date, to catch
+  "this looks abandoned" false impressions. A few showed 2026-09-27 (today)
+  as last-modified — but that's this session's own error-message-sanitization
+  codemod touching all ~98 route files, not real feature work. Not a signal
+  either way once accounted for.
+- **Traced likely service-wrapper indirection** for the ones that plausibly
+  go through `lib/api/*.ts` (the pattern several *other*, real routes use).
+  `/api/parent/subscription/verify` specifically: found the actual payment
+  flow for subscriptions (`ParentSubscriptionTab.tsx` → `PayButton` →
+  `payment/create-order`-style order creation) has **no client-side verify
+  call anywhere** in that component — subscriptions appear to rely entirely
+  on the async `payment/webhook` to mark themselves `SUCCESS`, unlike the
+  workshop-payment flow (`ParentWorkshopsTab.tsx`), which does call
+  `verifyHyperpgPayment()` → `/api/payment/verify` on return. This is the
+  strongest single signal in the list that a route is genuinely superseded,
+  not just unreferenced.
+- For the rest, no equivalent smoking gun was found — they remain
+  "no traceable caller" rather than "confirmed dead."
 
-## Low
+**Still deliberately not deleted.** A static-analysis sweep cannot rule out
+a mobile app or other out-of-repo consumer, and this is the one class of
+mistake CLAUDE.md explicitly warns about repeating (a routing/deletion
+mistake once already cost a debugging session, per its git-history note).
+The responsible deliverable here is a well-investigated list for the team to
+check against real traffic or logs, not a confident deletion — that
+confirmation step genuinely requires access this session doesn't have.
 
-| Finding | Status |
-|---|---|
-| Deprecated `app/api/communication/zegoToken/` route (410 stub, self-documented as dead) | ✅ Deleted, along with its test |
-| Dead-route sweep beyond the one obvious case | ✅ Performed. All 177 routes cross-referenced against real frontend/service usage. 14 initial candidates narrowed by tracing indirect calls through `lib/api/*.ts` wrappers (several were false positives — e.g. `/api/school/create` and `/api/school/update` are unrelated namesakes of the real, used routes `/api/superadmin/schools/create` and `.../subscription`). **14 routes still show zero traceable caller and no "deprecated" marker** — listed below. **Deliberately not deleted**: a text-search sweep can't rule out a mobile app or other out-of-repo consumer, and some of these (school create/update, admissions bulk-upload) look like real business logic, not obvious leftovers. Treat as a list for the team to confirm against actual traffic/logs, not a deletion queue. |
-| `socket-server/index.ts` logs via raw `console.log`/`console.error` | ⬜ Not wired to `lib/logger.ts` this pass |
-| Broader `@@index` audit across the rest of the schema's `schoolId` columns | ⬜ Two spot-checked (`FeeDiscountApproval`, `NewsFeed`), both fine; not exhaustive |
-
-**Dead-route candidates (need team confirmation, not deletion by default):**
-`admissions/bulk-upload`, `admissions/unconverted`, `certificates/template/create`,
-`certificates/template/list`, `exams/term-sections`, `history/student`,
-`marks/download`, `parent/subscription/verify`, `school/create`, `school/update`,
-`student/offline-payment`, `student/receipt`, `tc/apply`, `teacher/create`.
+**List:** `admissions/bulk-upload`, `admissions/unconverted`,
+`certificates/template/create`, `certificates/template/list`,
+`exams/term-sections`, `history/student`, `marks/download`,
+`parent/subscription/verify` (highest-confidence candidate — see above),
+`school/create`, `school/update`, `student/offline-payment`,
+`student/receipt`, `tc/apply`, `teacher/create`.
 
 ---
 
 ## What's solid (no action needed)
 
-- **Payment webhook** (`payment/webhook/route.ts`): HTTP Basic Auth with
-  `crypto.timingSafeEqual`, fails closed if credentials are unset, idempotent
-  via a unique constraint, only mutates on real status transitions, wraps
-  the mutation in a transaction inside tenant scope.
+- **Payment webhook**: HTTP Basic Auth + `crypto.timingSafeEqual`, fails
+  closed if credentials are unset, idempotent via a unique constraint, only
+  mutates on real status transitions, wraps the mutation in a transaction
+  inside tenant scope, and has thorough test coverage for all of the above.
 - **`payment/create-order`** computes the amount server-side against
   `studentFee.remainingFee` rather than trusting the client; **`payment/verify`**
   cross-checks the gateway's reported amount against the client-supplied one
   and rejects on mismatch.
-- **Secrets**: `.env`, `.env.mumbai` exist on disk but nothing is tracked in
-  git (`.gitignore` covers `.env*`). The only `NEXT_PUBLIC_`-prefixed values
-  are Supabase's publishable anon key — meant to be public.
+- **Secrets**: nothing tracked in git (`.gitignore` covers `.env*`); the only
+  `NEXT_PUBLIC_`-prefixed values are Supabase's publishable anon key.
 - **SQL injection surface**: every `$queryRawUnsafe`/`$executeRawUnsafe` call
-  site checked uses positional parameter placeholders, not string
-  interpolation. No injection found; the only residual risk is a future edit
-  reintroducing concatenation (not currently enforced by lint).
-- **CI**: `.github/workflows/ci.yml` runs `tsc --noEmit`, lint,
-  `check:tenant-isolation`, `npx jest`, then `npm run build`, in that order —
-  a sound baseline that would have caught most regressions in this report.
+  site uses positional parameter placeholders, not string interpolation.
+- **CI**: `tsc --noEmit`, lint, `check:tenant-isolation`, `npx jest`, then
+  `npm run build`, in that order — would have caught most regressions here.
 - **Tenant scoping infrastructure**: `requireSchoolId()` / `runInTenantScope()`
-  are used consistently everywhere except the one now-fixed leak; the
-  self-scoped routes that skip an explicit `schoolId` filter (`leaves/my`,
-  `marks/download`, `chairman/me`, etc.) all key by the caller's own
-  `session.user.id`/`studentId`, which carries no cross-tenant read risk.
+  used consistently; every self-scoped route that skips an explicit
+  `schoolId` filter keys by the caller's own `session.user.id`/`studentId`
+  instead, which carries no cross-tenant read risk.
+- **Realtime socket server**: verifies the app's own NextAuth session JWT
+  (no separate ticket-minting endpoint needed), scopes rooms to the caller's
+  `schoolId`, has an env-driven CORS origin, and logs through the shared
+  structured logger.
 
 ---
 
@@ -162,6 +167,7 @@ b03e0a9  security: socket-server auth, TeacherDailyAttendance schema, cleanup
 4ce53f4  security: extend rate limiting to remaining payment routes and public pages
 4ea9c17  security: sanitize error messages returned to API clients
 a0bca92  test: mock lib/rateLimit in route tests instead of hitting real Upstash Redis
+309f9b6  chore(socket-server): wire logging to lib/logger.ts instead of raw console
 ```
 
 (Interleaved with a concurrent session's own commits on the same branch —
@@ -170,17 +176,15 @@ double-credit races independently; not re-touched here, just verified.)
 
 ---
 
-## Remaining checklist
+## What's left — genuinely open, not deferrable to a code change
 
-**Blocker**
-- [ ] Make `socket-server/index.ts`'s CORS origin env-driven for non-local deployments.
-
-**Medium**
-- [ ] Confirm `NEXTAUTH_URL` is https in every deployed environment.
-- [ ] Confirm `payment/webhook` has idempotency/signature-fail test coverage.
-- [ ] Finish the `tenantCacheKey(` call-site audit beyond the 2 spot-checked.
-- [ ] Team confirmation (real traffic/logs) on the 14 dead-route candidates above before deleting any.
-
-**Low**
-- [ ] Wire `socket-server/index.ts` logging to `lib/logger.ts`.
-- [ ] Broader `@@index` audit across remaining `schoolId` columns.
+- [ ] **Operational check** (not code): confirm the actual deployed
+  `NEXTAUTH_URL` is https in every environment via the hosting platform's
+  dashboard.
+- [ ] **Team/traffic check** (not code): confirm the 14 dead-route
+  candidates against real logs before deleting any — `parent/subscription/verify`
+  is the strongest candidate to start with.
+- [ ] **Optional, not urgent**: extend `zod` validation beyond the four
+  highest-risk routes to the rest of the ~170 API routes' manual validation,
+  if/when time allows — this is what keeps Input Validation at B+ rather
+  than A.
