@@ -6,6 +6,7 @@ import {
   type SelectedHead,
 } from "@/lib/api/offlinePayment";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+import { useIdempotencyKey } from "@/lib/utils/idempotencyKey";
 
 export type { SelectedHead };
 
@@ -29,6 +30,7 @@ export function useOfflinePaymentFormState({
   const [paymentMode, setPaymentMode] = useState("Cash");
   const [refNo, setRefNo] = useState("");
   const [saving, setSaving] = useState(false);
+  const idempotencyKey = useIdempotencyKey();
 
   const [breakdownLoading, setBreakdownLoading] = useState(false);
   const [breakdownError, setBreakdownError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function useOfflinePaymentFormState({
   >([]);
 
   const resetForm = () => {
+    idempotencyKey.renew();
     setShowForm(false);
     setStudentId("");
     setSelectedClassId("");
@@ -65,6 +68,7 @@ export function useOfflinePaymentFormState({
         paymentMode,
         refNo: refNo || undefined,
         selectedHeads,
+        clientRequestId: idempotencyKey.getOrCreate(),
       });
       if (!ok) {
         alert(data.message || "Failed to record payment");

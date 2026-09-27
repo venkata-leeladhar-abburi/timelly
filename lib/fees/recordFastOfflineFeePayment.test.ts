@@ -34,7 +34,7 @@ import {
 
 /** In-memory fake of the Prisma transaction client used inside $transaction. */
 const tx = {
-  payment: { findMany: jest.fn(), create: jest.fn(), update: jest.fn() },
+  payment: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
   paymentFeeAllocation: { findMany: jest.fn(), createMany: jest.fn() },
   extraFee: { findMany: jest.fn() },
   studentFee: { updateMany: jest.fn() },
@@ -75,6 +75,7 @@ beforeEach(() => {
   mockExtraFeeFindMany.mockResolvedValue([]);
   mockTransaction.mockImplementation(async (fn: (t: typeof tx) => unknown) => fn(tx));
   tx.payment.findMany.mockResolvedValue([]);
+  tx.payment.findUnique.mockResolvedValue(null);
   tx.payment.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "pay1", ...data }));
   tx.paymentFeeAllocation.createMany.mockResolvedValue({ count: 2 });
   tx.studentFee.updateMany.mockResolvedValue({ count: 1 });
@@ -168,6 +169,7 @@ describe("recordFastOfflineFeePayment new payment", () => {
         gateway: "OFFLINE_CASH",
         status: "SUCCESS",
         transactionId: null,
+        clientRequestId: null,
         collectedByUserId: "u9",
         collectedByName: "Clerk",
       },
@@ -391,6 +393,37 @@ describe("recordFastOfflineFeePayment reused reference", () => {
     await expect(recordFastOfflineFeePayment(input({ refNo: "UTR1" }))).rejects.toThrow(
       "Fee record was updated concurrently"
     );
+  });
+});
+
+describe("recordFastOfflineFeePayment clientRequestId idempotency", () => {
+  it("stores the clientRequestId on a new payment", async () => {
+    await recordFastOfflineFeePayment(input({ clientRequestId: "  attempt-1  " }));
+    expect(tx.payment.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ clientRequestId: "attempt-1" }) })
+    );
+  });
+
+  it("returns the existing payment as idempotent on a retry with the same clientRequestId, without writing again", async () => {
+    const existing = { id: "pay1", amount: 2000, gateway: "OFFLINE_CASH", clientRequestId: "attempt-1" };
+    tx.payment.findUnique.mockResolvedValue(existing);
+    tx.paymentFeeAllocation.findMany.mockResolvedValue([
+      { headType: "BASE_COMPONENT", componentIndex: 0, extraFeeId: null, componentName: "Tuition", allocatedAmount: 1500 },
+    ]);
+
+    const res = await recordFastOfflineFeePayment(input({ clientRequestId: "attempt-1" }));
+
+    expect(tx.payment.findUnique).toHaveBeenCalledWith({ where: { clientRequestId: "attempt-1" } });
+    expect(tx.payment.create).not.toHaveBeenCalled();
+    expect(tx.studentFee.updateMany).not.toHaveBeenCalled();
+    expect(res.idempotent).toBe(true);
+    expect(res.payment).toBe(existing);
+    expect(res.updatedFee).toEqual({ amountPaid: 1000, remainingFee: 4000, finalFee: 5000, totalFee: 5000 });
+  });
+
+  it("does not look up by clientRequestId when none is provided", async () => {
+    await recordFastOfflineFeePayment(input());
+    expect(tx.payment.findUnique).not.toHaveBeenCalled();
   });
 });
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { roundRupee } from "@/lib/formatRupee";
 import { isPreviousYearFeeHeadName } from "@/lib/fees/feeYearClassification";
+import { useIdempotencyKey } from "@/lib/utils/idempotencyKey";
 import { baseComponentIndexFromHead, type HeadCard } from "./feesBreakdownHelpers";
 
 type FeePaymentSuccess = {
@@ -81,9 +82,11 @@ export function useHeadPayment({
   });
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const idempotencyKey = useIdempotencyKey();
 
   const openHeadPaymentModal = (head: PayingHead) => {
     if (feesRecordingDisabled) return;
+    idempotencyKey.renew();
     setPayingHead(head);
     setPaymentError(null);
     setPaymentForm({
@@ -135,6 +138,7 @@ export function useHeadPayment({
           selectedHeads: [selectedHead],
           paymentDate: paymentForm.paymentDate,
           explicitAllocations: [{ key: allocationKey, amount, label: payingHead.label }],
+          clientRequestId: idempotencyKey.getOrCreate(),
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -150,6 +154,7 @@ export function useHeadPayment({
       }
       const paidCardKey = payingHead.key;
       const paidPreviousYear = isPreviousYearFeeHeadName(payingHead.label);
+      idempotencyKey.renew();
       setPayingHead(null);
       setPaymentSaving(false);
       setHeadCards((prev) =>

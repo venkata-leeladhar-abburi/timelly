@@ -56,8 +56,12 @@ jest.mock("@/lib/fees/loadExtraFeesForStudentScope", () => ({
   loadExtraFeesForStudentScope: (...args: unknown[]) => mockLoadExtraFeesForStudentScope(...args),
 }));
 
+const mockFindExistingPaymentByClientRequestId = jest.fn().mockResolvedValue(null);
+
 jest.mock("@/lib/fees/offlinePaymentIdempotency", () => ({
   findExistingOfflinePaymentByRef: (...args: unknown[]) => mockFindExistingOfflinePaymentByRef(...args),
+  findExistingPaymentByClientRequestId: (...args: unknown[]) =>
+    mockFindExistingPaymentByClientRequestId(...args),
   resolveOfflinePaymentTransactionId: (transactionId?: string | null, refNo?: string | null) =>
     (typeof transactionId === "string" && transactionId.trim()) ||
     (typeof refNo === "string" && refNo.trim()) ||
@@ -157,6 +161,7 @@ describe("POST /api/fees/offline-payment", () => {
     mockRecordFastOfflineFeePayment.mockReset();
     mockLoadExtraFeesForStudentScope.mockReset().mockResolvedValue([]);
     mockFindExistingOfflinePaymentByRef.mockReset().mockResolvedValue(null);
+    mockFindExistingPaymentByClientRequestId.mockReset().mockResolvedValue(null);
     mockPlanSameRefPayment.mockReset();
     mockReconcileStudentFeeIntegrity.mockReset().mockResolvedValue(undefined);
     mockInvalidateStudentFeeReadCaches.mockReset();
@@ -353,6 +358,33 @@ describe("POST /api/fees/offline-payment", () => {
         repairAllocations: true,
         apply: true,
       });
+    });
+
+    it("returns the existing payment as idempotent on a retry with the same clientRequestId, without writing again", async () => {
+      mockGetServerSession.mockResolvedValue(adminSession);
+      mockStudentFindUnique.mockResolvedValue(studentWithOneComponent);
+      mockClassFeeStructureFindUnique.mockResolvedValue({
+        components: [{ name: "Tuition", amount: 1000 }],
+      });
+      const tx = txMockFor();
+      mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) => cb(tx));
+      const existingPayment = { id: "pay-existing", amount: 500, status: "SUCCESS" };
+      mockFindExistingPaymentByClientRequestId.mockResolvedValue(existingPayment);
+      tx.studentFee.findUnique.mockResolvedValue({
+        amountPaid: 500,
+        remainingFee: 500,
+        finalFee: 1000,
+        totalFee: 1000,
+      });
+
+      const res = await POST(request({ ...validBody, amount: 500, clientRequestId: "attempt-1" }));
+
+      expect(mockFindExistingPaymentByClientRequestId).toHaveBeenCalledWith(tx, "attempt-1");
+      expect(tx.payment.create).not.toHaveBeenCalled();
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.payment).toEqual(existingPayment);
+      expect(json.message).toMatch(/already recorded/i);
     });
   });
 });

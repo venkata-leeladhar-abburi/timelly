@@ -11,6 +11,7 @@ import type { AdminStudentFeeBreakdownResult } from "@/lib/fees/computeAdminStud
 import type { FeePaymentSuccess } from "../types";
 import { buildConfirmedPaymentResult, dueToPayInputString, sanitizeMoneyInput } from "../studentDetailHelpers";
 import { recordOfflinePayment } from "@/lib/api/offlinePayment";
+import { useIdempotencyKey } from "@/lib/utils/idempotencyKey";
 
 export function useStudentFeesPaymentModalState({
   studentId,
@@ -41,6 +42,7 @@ export function useStudentFeesPaymentModalState({
   const [referenceNo, setReferenceNo] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
+  const idempotencyKey = useIdempotencyKey();
 
   useEffect(() => {
     const next = dueHeadRowsFromBreakdown(initialFeeBreakdown);
@@ -222,6 +224,7 @@ export function useStudentFeesPaymentModalState({
           amount: Number(r.payAmount),
           label: r.label,
         })),
+        clientRequestId: idempotencyKey.getOrCreate(),
       });
       if (!ok) {
         throw new Error(typeof data.message === "string" ? data.message : "Payment failed");
@@ -233,6 +236,7 @@ export function useStudentFeesPaymentModalState({
             : "This UTR / reference was already recorded for these fee heads."
         );
       }
+      idempotencyKey.renew();
       const confirmedResult = buildConfirmedPaymentResult(
         data,
         total,

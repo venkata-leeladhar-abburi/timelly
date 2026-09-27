@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -16,6 +17,7 @@ import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte"
 import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
 import {
   findExistingOfflinePaymentByRef,
+  findExistingPaymentByClientRequestId,
   resolveOfflinePaymentTransactionId,
 } from "@/lib/fees/offlinePaymentIdempotency";
 import {
@@ -72,7 +74,13 @@ export async function POST(req: Request) {
       paymentDate,
       selectedHeads: rawSelectedHeads,
       explicitAllocations: rawExplicitAllocations,
+      clientRequestId: rawClientRequestId,
     } = body;
+
+    const clientRequestId =
+      typeof rawClientRequestId === "string" && rawClientRequestId.trim()
+        ? rawClientRequestId.trim().slice(0, 128)
+        : null;
 
     const amount = typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
     if (!studentId || typeof amount !== "number" || isNaN(amount) || amount <= 0) {
@@ -128,6 +136,7 @@ export async function POST(req: Request) {
           paymentDate,
           selectedHeads: normalizedSelectedHeads,
           explicitAllocations: normalizedExplicitAllocations,
+          clientRequestId,
           collectedByUserId: collector?.collectedByUserId,
           collectedByName: collector?.collectedByName,
         });
@@ -470,8 +479,19 @@ export async function POST(req: Request) {
             amount: allocAmount,
           }));
 
-    const paymentAndAllocations = await runInTenantScope(schoolId, () => prisma.$transaction(
+    const runOfflinePaymentTx = () => runInTenantScope(schoolId, () => prisma.$transaction(
       async (tx) => {
+        const byClientRequestId = await findExistingPaymentByClientRequestId(tx, clientRequestId);
+        if (byClientRequestId) {
+          const updatedFee = await tx.studentFee.findUnique({ where: { studentId } });
+          return {
+            payment: byClientRequestId,
+            updatedFee,
+            idempotent: true as const,
+            appended: false as const,
+          };
+        }
+
         if (txId) {
           const existing = await findExistingOfflinePaymentByRef(tx, studentId, txId);
           if (existing) {
@@ -553,6 +573,7 @@ export async function POST(req: Request) {
             gateway: offlineGateway,
             status: "SUCCESS",
             transactionId: txId,
+            clientRequestId,
             ...(collector?.collectedByUserId ? { collectedByUserId: collector.collectedByUserId } : {}),
             ...(collector?.collectedByName ? { collectedByName: collector.collectedByName } : {}),
             ...(selectedPaymentDate ? { createdAt: selectedPaymentDate } : {}),
@@ -583,6 +604,32 @@ export async function POST(req: Request) {
       },
       FEE_MUTATION_TX
     ));
+
+    let paymentAndAllocations: Awaited<ReturnType<typeof runOfflinePaymentTx>>;
+    try {
+      paymentAndAllocations = await runOfflinePaymentTx();
+    } catch (txError: unknown) {
+      // Two truly concurrent requests carrying the same clientRequestId can both pass the
+      // pre-check above and race on the unique index at insert time. Whichever loses just
+      // re-reads the row the winner created and returns it as idempotent, instead of 500ing.
+      const isClientRequestIdRace =
+        clientRequestId &&
+        txError instanceof Prisma.PrismaClientKnownRequestError &&
+        txError.code === "P2002" &&
+        Array.isArray((txError.meta as { target?: unknown } | undefined)?.target) &&
+        ((txError.meta as { target?: string[] }).target ?? []).includes("clientRequestId");
+      if (!isClientRequestIdRace) throw txError;
+
+      const racedPayment = await findExistingPaymentByClientRequestId(prisma, clientRequestId);
+      const updatedFee = await prisma.studentFee.findUnique({ where: { studentId } });
+      if (!racedPayment) throw txError;
+      paymentAndAllocations = {
+        payment: racedPayment,
+        updatedFee,
+        idempotent: true as const,
+        appended: false as const,
+      };
+    }
 
     if (!paymentAndAllocations.idempotent) {
       await reconcileStudentFeeIntegrity(schoolId, studentId, {

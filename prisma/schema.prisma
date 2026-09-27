@@ -1297,6 +1297,12 @@ model Payment {
 
   transactionId String? // Our order_id (TMLxxx) for lookups
 
+  // Per-submit-attempt idempotency key from the client (offline/manual entry form).
+  // Distinct from transactionId (the business reference/UTR shown in reports):
+  // this exists purely to collapse a double-click or a retried request into one
+  // Payment, even for cash entries that have no UTR at all.
+  clientRequestId String? @unique
+
   eventRegistrationId String? // When paying for workshop, links to EventRegistration
 
   // Staff who recorded an offline collection (snapshot name for reports)

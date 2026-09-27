@@ -1,7 +1,9 @@
 import prisma from "@/lib/db";
 import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
+import { Prisma } from "@prisma/client";
 import {
   findExistingOfflinePaymentByRef,
+  findExistingPaymentByClientRequestId,
   resolveOfflinePaymentTransactionId,
 } from "@/lib/fees/offlinePaymentIdempotency";
 import {
@@ -37,6 +39,7 @@ type FastOfflinePaymentInput = {
   explicitAllocations: OfflineExplicitAllocation[];
   collectedByUserId?: string;
   collectedByName?: string;
+  clientRequestId?: string | null;
 };
 
 function normalizeAllocationKey(raw: string): string {
@@ -84,7 +87,12 @@ export async function recordFastOfflineFeePayment(input: FastOfflinePaymentInput
     explicitAllocations,
     collectedByUserId,
     collectedByName,
+    clientRequestId: rawClientRequestId,
   } = input;
+  const clientRequestId =
+    typeof rawClientRequestId === "string" && rawClientRequestId.trim()
+      ? rawClientRequestId.trim().slice(0, 128)
+      : null;
 
   const selectedByKey = new Map<string, OfflineSelectedHead>();
   for (const h of selectedHeads) {
@@ -214,8 +222,45 @@ export async function recordFastOfflineFeePayment(input: FastOfflinePaymentInput
     throw new Error("Invalid paymentDate");
   }
 
-  const result = await prisma.$transaction(
+  const runTx = () => prisma.$transaction(
     async (tx) => {
+      const byClientRequestId = await findExistingPaymentByClientRequestId(tx, clientRequestId);
+      if (byClientRequestId) {
+        const existingRows = await tx.paymentFeeAllocation.findMany({
+          where: { paymentId: byClientRequestId.id, allocationType: "PAYMENT" },
+          select: {
+            componentName: true,
+            allocatedAmount: true,
+            headType: true,
+            extraFeeId: true,
+            componentIndex: true,
+          },
+        });
+        const extraIds = existingRows
+          .filter((a) => a.headType === "EXTRA_FEE" && a.extraFeeId)
+          .map((a) => a.extraFeeId as string);
+        const extraNameByIdDup = new Map<string, string>();
+        if (extraIds.length > 0) {
+          const extras = await tx.extraFee.findMany({
+            where: { id: { in: extraIds }, schoolId },
+            select: { id: true, name: true },
+          });
+          for (const ef of extras) extraNameByIdDup.set(ef.id, ef.name);
+        }
+        return {
+          payment: byClientRequestId,
+          idempotent: true as const,
+          feeAllocations: existingRows.map((a) => ({
+            name:
+              a.headType === "EXTRA_FEE"
+                ? extraNameByIdDup.get(a.extraFeeId as string) ?? "Extra Fee"
+                : String(a.componentName ?? "Fee"),
+            amount: a.allocatedAmount,
+            key: allocationKeyFromRecord(a as ExistingPaymentAllocation) ?? undefined,
+          })),
+        };
+      }
+
       if (txId) {
         const existing = await findExistingOfflinePaymentByRef(tx, studentId, txId);
         if (existing) {
@@ -321,6 +366,7 @@ export async function recordFastOfflineFeePayment(input: FastOfflinePaymentInput
           gateway: offlineGateway,
           status: "SUCCESS",
           transactionId: txId,
+          clientRequestId,
           ...(collectedByUserId ? { collectedByUserId } : {}),
           ...(collectedByName ? { collectedByName } : {}),
           ...(selectedPaymentDate ? { createdAt: selectedPaymentDate } : {}),
@@ -358,6 +404,26 @@ export async function recordFastOfflineFeePayment(input: FastOfflinePaymentInput
     },
     FEE_MUTATION_TX
   );
+
+  let result: Awaited<ReturnType<typeof runTx>>;
+  try {
+    result = await runTx();
+  } catch (txError: unknown) {
+    // Two truly concurrent requests with the same clientRequestId can both pass the
+    // pre-check and race on the unique index at insert time. The loser re-reads the
+    // row the winner created and returns it as idempotent instead of failing.
+    const isClientRequestIdRace =
+      clientRequestId &&
+      txError instanceof Prisma.PrismaClientKnownRequestError &&
+      txError.code === "P2002" &&
+      Array.isArray((txError.meta as { target?: unknown } | undefined)?.target) &&
+      ((txError.meta as { target?: string[] }).target ?? []).includes("clientRequestId");
+    if (!isClientRequestIdRace) throw txError;
+
+    const racedPayment = await findExistingPaymentByClientRequestId(prisma, clientRequestId);
+    if (!racedPayment) throw txError;
+    result = { payment: racedPayment, idempotent: true as const, feeAllocations: [] };
+  }
 
   const appliedAmount = result.idempotent
     ? 0

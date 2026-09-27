@@ -38,6 +38,8 @@ export type RecordOfflinePaymentPayload = {
   paymentDate?: string;
   selectedHeads: SelectedHead[];
   explicitAllocations?: Array<{ key: string; amount: number; label: string }>;
+  /** Per-submit-attempt key so a double-click or retried request collapses into one Payment. */
+  clientRequestId?: string;
 };
 
 export async function recordOfflinePayment(payload: RecordOfflinePaymentPayload) {

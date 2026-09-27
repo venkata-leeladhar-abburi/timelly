@@ -5,6 +5,23 @@ import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
 import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
 import { computeCurrentAndPreviousFeeStats } from "@/lib/fees/computeFeeSummaryStats";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
+import {
+  getSchoolDashboardServerCached,
+  setSchoolDashboardServerCached,
+} from "@/lib/school/schoolDashboardServerCache";
+import { FEE_LIST_SERVER_CACHE_TTL_MS } from "@/lib/fees/feeListServerCache";
+
+// School-wide stats scan every active student's fee + allocations, so share the
+// statsOnly route's cache (same key, purged by invalidateFeeListServerCaches)
+// instead of recomputing on every page/cursor.
+async function loadStatsCached(schoolId: string) {
+  const memKey = `fees:summary:stats:active:${schoolId}`;
+  const hit = getSchoolDashboardServerCached<{ stats: Awaited<ReturnType<typeof computeCurrentAndPreviousFeeStats>> }>(memKey);
+  if (hit) return hit.stats;
+  const stats = await computeCurrentAndPreviousFeeStats(schoolId);
+  setSchoolDashboardServerCached(memKey, { fees: [], stats, nextCursor: null }, FEE_LIST_SERVER_CACHE_TTL_MS);
+  return stats;
+}
 
 /**
  * One cursor-paginated page of the active-student fee summary list, with each
@@ -70,7 +87,7 @@ export async function loadFeeSummaryPage(schoolId: string, take: number, cursor:
       orderBy: [{ studentId: "asc" }, { createdAt: "desc" }],
       select: { id: true, studentId: true },
     }),
-    computeCurrentAndPreviousFeeStats(schoolId),
+    loadStatsCached(schoolId),
   ]);
 
   const componentsByClassId = new Map<string, Array<{ name: string; amount: number }>>(
