@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
+import { rateLimit, rateLimitKey } from "@/lib/rateLimit";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -20,6 +22,18 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "STUDENT" || !session.user.studentId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const orderLimit = await rateLimit(
+    rateLimitKey("parent-subscription-create-order", session.user.studentId),
+    20,
+    10 * 60
+  );
+  if (!orderLimit.allowed) {
+    return NextResponse.json(
+      { error: `Too many payment attempts. Please try again in ${Math.ceil(orderLimit.resetInSeconds / 60)} minute(s).` },
+      { status: 429 }
+    );
   }
 
   try {
@@ -214,7 +228,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: "Failed to create subscription order",
-        details: err instanceof Error ? err.message : "Unknown error",
+        details: toClientErrorMessage(err, "Unknown error"),
       },
       { status: 500 }
     );

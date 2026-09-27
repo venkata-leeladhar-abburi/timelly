@@ -7,6 +7,8 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
+import { rateLimit, rateLimitKey } from "@/lib/rateLimit";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const verifyPaymentBodySchema = z.object({
   gateway: z.string().optional().nullable(),
@@ -30,6 +32,20 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { message: "Only students can verify their payments" },
       { status: 403 }
+    );
+  }
+
+  // Higher ceiling than order creation since a client may legitimately poll
+  // verify a few times while waiting on the gateway callback.
+  const verifyLimit = await rateLimit(
+    rateLimitKey("payment-verify", session.user.studentId),
+    30,
+    10 * 60
+  );
+  if (!verifyLimit.allowed) {
+    return NextResponse.json(
+      { message: `Too many requests. Please try again in ${Math.ceil(verifyLimit.resetInSeconds / 60)} minute(s).` },
+      { status: 429 }
     );
   }
 
@@ -319,7 +335,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message:
-          error instanceof Error ? error.message : "Internal server error",
+          toClientErrorMessage(error, "Internal server error"),
       },
       { status: 500 }
     );
