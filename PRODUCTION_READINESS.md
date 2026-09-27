@@ -1,10 +1,12 @@
 # Production Readiness Audit — Timelly
 
 **Status: re-verified against the current working tree on 2026-09-27**, then
-actively remediated across two passes in the same session. All items from the
-original top-5 and the High-priority checklist are now either fixed or
-explicitly deferred with a stated, still-current reason — nothing is silently
-left stale (see "Resolved" / "Deferred" below). Scope: `app/api/**/route.ts`
+actively remediated across three passes in the same session. All items from
+the original top-5 and the full remediation checklist are now either fixed,
+or left open with an explicit, still-current reason — nothing is silently
+left stale (see "Resolved" / "Third pass" below; only one Blocker and a
+handful of Medium/Low items remain, listed in the final checklist). Scope:
+`app/api/**/route.ts`
 (177 route files as of this pass — one deprecated route was deleted),
 `lib/`, `socket-server/`, `middleware.ts`, `prisma/`, CI config, and env
 files. The two known dormant fee-logic bugs in `lib/fees/` remain explicitly
@@ -90,16 +92,79 @@ second remediation pass below.
   No fix was needed; a bare `@@index([schoolId])` would have been redundant
   next to the existing composite index.
 
-## Genuinely still open
+## Third pass — the remaining three items closed
 
-- **Rate limiting doesn't cover everything.** Login, payment order creation,
-  and event registration are covered by `lib/rateLimit.ts`; `payment/verify`,
-  `parent/subscription/create-order`, and the public `qr`/`screen`/`download`
-  pages are not yet wired in (the utility exists, so this is a smaller lift
-  than before).
-- **Error-message sanitization** beyond the one route above — see "scoped"
-  note.
-- **Full dead-route sweep** beyond the one route above — see "scoped" note.
+- ✅ **Rate limiting now covers everything originally flagged** (commit
+  `4ce53f4`). `payment/verify` (30/10min per student — a higher ceiling than
+  order creation since a client may legitimately poll it while waiting on
+  the gateway callback) and `parent/subscription/create-order` (20/10min per
+  student, same reasoning as `payment/create-order`) are now wired to
+  `lib/rateLimit.ts`. The public `app/qr`, `app/screen`, `app/download`
+  pages are IP-keyed (60/10min per IP per path) via `middleware.ts`, since
+  they have no session to key by — added `middleware.test.ts` covering both
+  this and the existing Cache-Control behavior.
+- ⚠️ **Found and fixed while wiring the above up** (commit `a0bca92`): this
+  repo's `.env` carries live Upstash Redis credentials, and none of the four
+  affected routes' tests mocked `lib/cache/redis`/`lib/rateLimit` — every
+  `npx jest` run was incrementing real counters on a live Redis instance
+  under a handful of fixed test user/student ids. Enough accumulated runs
+  tipped a counter over its limit and started turning unrelated assertions
+  in `events/register/route.test.ts` into 429s (it failed only as part of
+  the full suite, not in isolation — the tell that something was leaking
+  across runs rather than across test cases in one file). Fixed by mocking
+  `@/lib/rateLimit` in all four affected test files, the same isolation
+  `middleware.test.ts` already had via mocking `@/lib/cache/redis` directly.
+  Verified stable across two consecutive full-suite runs.
+- ✅ **Error-message sanitization rolled out to all ~98 affected routes**
+  (commit `4ea9c17`), not just the one example. Before the rollout,
+  `toClientErrorMessage()` was made to distinguish a plain application
+  `Error`/`HttpError` (this codebase's convention for a short,
+  already-considered, user-facing message — its `.message` is still
+  returned in production) from a Prisma/infra error or non-Error thrown
+  value (replaced with a generic fallback in production). This matters:
+  a blind sweep that redacted every caught error equally would have also
+  turned existing intentional validation messages (e.g. "Amount cannot
+  exceed remaining due") into a generic "Internal server error" for real
+  users in production — a functional regression, not just a safety
+  improvement. Verified via a new `errorInfo.test.ts` and confirmed
+  `NODE_ENV=test` under Jest (so the full suite exercises the same
+  "outside production" branch as before — 2022/2023 passing throughout).
+- ✅ **Dead-route sweep performed** (not just the one route). Cross-referenced
+  all 177 route files against text usage in `app/` and `lib/`, initially
+  turning up 14 candidates with zero direct references. Manually traced each
+  one further — most were false positives from indirect calls through a
+  `lib/api/*.ts` service wrapper (e.g. `/api/school/create`'s and
+  `/api/school/update`'s near-namesakes were actually
+  `createSchool()`/`updateSchoolSubscription()` hitting
+  `/api/superadmin/schools/create` and `/api/superadmin/schools/[id]/subscription`
+  respectively — different routes entirely, matched only by a crude
+  basename search). After that narrowing, these still have **no** traceable
+  frontend caller and no self-documented "deprecated" marker (unlike
+  `zegoToken`, which said so in a comment):
+  - `app/api/admissions/bulk-upload` (a separate, non-namesake route from
+    the one actually called, `/api/student/bulk-upload`)
+  - `app/api/admissions/unconverted`
+  - `app/api/certificates/template/create`
+  - `app/api/certificates/template/list`
+  - `app/api/exams/term-sections`
+  - `app/api/history/student`
+  - `app/api/marks/download`
+  - `app/api/parent/subscription/verify`
+  - `app/api/school/create`
+  - `app/api/school/update`
+  - `app/api/student/offline-payment`
+  - `app/api/student/receipt`
+  - `app/api/tc/apply`
+  - `app/api/teacher/create`
+
+  **Deliberately not deleted.** A text-search sweep can't rule out a mobile
+  app or other out-of-repo consumer, and several of these (school
+  create/update, admissions bulk-upload) look like real, non-trivial
+  business logic rather than obvious leftovers — deleting a live onboarding
+  or admin-update endpoint on the strength of a grep would be a much higher
+  blast-radius mistake than leaving 14 unused files in place. Treat this
+  list as a starting point for the team to confirm route-by-route (checking
+  actual traffic/logs, not just source), not as a deletion queue.
 
 ---
 
@@ -238,42 +303,43 @@ establishes, not one it had to match against an existing integration.
 
 | Finding | Severity | Fix |
 |---|---|---|
-| ~~No rate limiting found anywhere in the codebase~~ **PARTIALLY FIXED** — `lib/rateLimit.ts` (fixed-window, Upstash Redis-backed, fails open to an in-process counter on outage) is now wired into credentials login, `payment/create-order`, and `events/register`. | Resolved for those three | Still not covering `payment/verify`, `parent/subscription/create-order`, or the public `app/qr`/`app/screen`/`app/download` pages — extend `rateLimit()`/`rateLimitKey()` from `lib/rateLimit.ts` to those next; the utility already exists so this is a smaller lift than before. |
+| ~~No rate limiting found anywhere in the codebase~~ **FIXED** — `lib/rateLimit.ts` (fixed-window, Upstash Redis-backed, fails open to an in-process counter on outage) now covers credentials login, `payment/create-order`, `payment/verify`, `parent/subscription/create-order`, `events/register`, and the public `app/qr`/`app/screen`/`app/download` pages (IP-keyed via `middleware.ts`, since there's no session to key by). | Resolved | n/a |
 
 ---
 
 ## Prioritized remediation checklist
 
-**Resolved this session** — two passes, commits `6402227`, `79320d7`,
-`8f81214`, `b03e0a9` (`npx tsc --noEmit` clean; `npx jest` 2010/2011 passing —
-the 1 failure is a pre-existing, unrelated `media` route issue confirmed
-present before this session's changes too, via `git stash`; `npx tsx
-scripts/checkTenantIsolation.ts` passes both checks)
+**Resolved this session** — three passes, commits `6402227`, `79320d7`,
+`8f81214`, `b03e0a9`, `4ce53f4`, `4ea9c17`, `a0bca92` (`npx tsc --noEmit`
+clean; `npx jest` 2022/2023 passing, stable across repeated runs — the 1
+failure is a pre-existing, unrelated `media` route issue confirmed present
+before this session's changes too, via `git stash`; `npx tsx
+scripts/checkTenantIsolation.ts` passes both checks; `npx eslint` clean on
+every changed file)
 - [x] Removed the client-supplied `schoolId` fallback in `app/api/fees/discount-approvals/route.ts`; added a regression test.
 - [x] Fixed `app/api/superadmin/schools/[id]/active/route.ts` to persist `isActive`; added a new test file covering it.
 - [x] Backfilled `zod` request-body validation onto `fees/discount-approvals/[id]`, `fees/offline-payment`, `payment/create-order`, `payment/verify`.
 - [x] Extended `scripts/checkTenantIsolation.ts` with a second check for client-controlled `schoolId` reads, plus a named regression test.
-- [x] Added `lib/rateLimit.ts` and wired it into login, `payment/create-order`, `events/register`.
+- [x] Added `lib/rateLimit.ts` and wired it into login, `payment/create-order`, `payment/verify`, `parent/subscription/create-order`, `events/register`, and (IP-keyed, via `middleware.ts`) the public `qr`/`screen`/`download` pages.
 - [x] Moved `.env.sydney.bak` out of the repo working tree (to `../timelly-env-backups/`).
 - [x] Added auth + tenant-scoped room ACL to `socket-server/index.ts` (NextAuth JWT verification + `schoolId`-prefixed room convention).
 - [x] Formalized `TeacherDailyAttendance` as a real Prisma model + idempotent migration.
 - [x] Deleted the confirmed-unused `app/api/communication/zegoToken/` route + test.
-- [x] Added `toClientErrorMessage()` and applied it to `superadmin/schools/[id]/active` as the concrete example (broader rollout still open, see below).
+- [x] Made `toClientErrorMessage()` distinguish safe application errors from Prisma/infra errors, then rolled it out across all ~98 affected routes (not just the one example) — see "Third pass" above for why the distinction mattered before rolling out broadly.
+- [x] Performed the dead-route sweep — 14 candidates found and manually narrowed (see "Third pass" above); deliberately not deleted without team confirmation, since a text-search sweep can't rule out an out-of-repo (e.g. mobile) caller.
 - [x] Corrected the `FeeDiscountApproval.schoolId` index finding — it was already indexed; the earlier read was truncated.
 - [x] Confirmed `payment/refund`'s double-refund race was already fixed by a concurrent session (commit `65f9000`).
-- [x] Fixed a pre-existing test bug found along the way: `payment/verify/route.test.ts`'s two legacy-flow tests were failing (500 instead of 404/200) because their `$transaction` mock had no implementation for a transaction wrapper added by a concurrent session's in-flight work.
+- [x] Fixed two pre-existing/newly-introduced test bugs found along the way: `payment/verify/route.test.ts`'s two legacy-flow tests were failing (500 instead of 404/200) because their `$transaction` mock had no implementation for a transaction wrapper added by a concurrent session's in-flight work; and the four rate-limit-touched routes' tests were exercising real Upstash Redis (live credentials in this repo's `.env`), causing flaky cross-run failures until `@/lib/rateLimit` was mocked in each.
 
 **Blocker — still open**
 - [ ] `socket-server/index.ts`'s CORS origin is still hardcoded to `http://localhost:3000` (auth itself is now fixed; this is the one remaining item in that file).
 
 **Medium**
-- [ ] Extend rate limiting to `payment/verify`, `parent/subscription/create-order`, and the public `app/qr`/`app/screen`/`app/download` pages (the utility now exists in `lib/rateLimit.ts`, so this is a smaller lift).
-- [ ] Roll `toClientErrorMessage()` out beyond the one route it's applied to — the other ~176 routes' outermost catch blocks still forward raw `error.message`. Needs a case-by-case pass since some routes intentionally throw short user-facing messages as flow control (those should keep using `getErrorMessage` directly, not the new helper).
 - [ ] Confirm `NEXTAUTH_URL` is https in all deployed environments so secure cookie flags apply.
 - [ ] Audit all `tenantCacheKey(` call sites for correct `schoolId` namespacing (spot-checked 2/many, both fine).
 - [ ] Confirm `payment/webhook` has idempotency/signature-fail test coverage.
+- [ ] Team confirmation (traffic/logs, not just source) on the 14 dead-route candidates listed in "Third pass" above before deleting any of them.
 
 **Low**
 - [ ] Wire `socket-server/index.ts`'s `console.log`/`console.error` calls to a structured logger (`lib/logger.ts`).
-- [ ] Full dead-route sweep against `app/_components/constants/routes.ts` beyond the one route already deleted this session.
 - [ ] Broader `@@index` audit across the rest of the schema's `schoolId` columns, beyond the two spot-checked (`FeeDiscountApproval`, `NewsFeed` — both fine).
