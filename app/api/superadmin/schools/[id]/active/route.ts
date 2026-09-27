@@ -32,9 +32,14 @@ export async function PATCH(
     if (!existing) {
       return NextResponse.json({ message: "School not found" }, { status: 404 });
     }
-    return NextResponse.json({
-      school: { id: existing.id, name: existing.name, isActive },
-    }, { status: 200 });
+
+    const updated = await prisma.school.update({
+      where: { id },
+      data: { isActive },
+      select: { id: true, name: true, isActive: true },
+    });
+
+    return NextResponse.json({ school: updated }, { status: 200 });
   } catch (e: unknown) {
     logger.error("Superadmin school active PATCH:", e);
     return NextResponse.json(

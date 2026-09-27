@@ -183,6 +183,15 @@ describe("POST /api/payment/verify", () => {
     });
     mockPaymentFindFirst.mockResolvedValue(null);
     mockStudentFeeFindUnique.mockResolvedValue(null);
+    mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
+      cb({
+        studentFee: {
+          findUnique: (...args: unknown[]) => mockStudentFeeFindUnique(...args),
+          update: (...args: unknown[]) => mockStudentFeeUpdate(...args),
+        },
+        payment: { create: (...args: unknown[]) => mockPaymentCreate(...args) },
+      })
+    );
     const res = await POST(request(validBody));
     expect(res.status).toBe(404);
     const json = await res.json();
@@ -202,6 +211,15 @@ describe("POST /api/payment/verify", () => {
       .mockResolvedValueOnce(null);
     mockPaymentCreate.mockResolvedValue({ id: "pay1", amount: 500 });
     mockStudentFeeUpdate.mockResolvedValue({ amountPaid: 500, remainingFee: 500 });
+    mockTransaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
+      cb({
+        studentFee: {
+          findUnique: (...args: unknown[]) => mockStudentFeeFindUnique(...args),
+          update: (...args: unknown[]) => mockStudentFeeUpdate(...args),
+        },
+        payment: { create: (...args: unknown[]) => mockPaymentCreate(...args) },
+      })
+    );
 
     const res = await POST(request(validBody));
     expect(res.status).toBe(200);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -15,6 +16,18 @@ const globalHyperpgApiKey = process.env.HYPERPG_API_KEY;
 const hyperpgClientId = process.env.HYPERPG_CLIENT_ID || "test";
 // JusPay/HyperPG Session API: Basic Base64(apiKey + ":") + mandatory x-merchantid header
 const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "api_key";
+
+const feeSelectionHeadSchema = z.union([
+  z.object({ headType: z.literal("BASE_COMPONENT"), componentIndex: z.number() }),
+  z.object({ headType: z.literal("EXTRA_FEE"), extraFeeId: z.string() }),
+]);
+
+const createOrderBodySchema = z.object({
+  amount: z.union([z.number(), z.string()]),
+  return_path: z.string().optional(),
+  event_registration_id: z.string().optional().nullable(),
+  fee_selection: z.array(feeSelectionHeadSchema).optional(),
+});
 
 /** HyperPG requires order_id: alphanumeric, max 20 chars */
 function generateOrderId(): string {
@@ -39,11 +52,16 @@ export async function POST(req: Request) {
   const studentAllocId = session.user.studentId as string;
 
   try {
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = createOrderBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const rawAmount = body.amount;
-    const returnPath = (body.return_path as string) || "/payments";
-    const eventRegistrationId = typeof body.event_registration_id === "string" && body.event_registration_id ? body.event_registration_id : null;
-    const feeSelection = Array.isArray(body.fee_selection) ? body.fee_selection : undefined;
+    const returnPath = body.return_path || "/payments";
+    const eventRegistrationId = body.event_registration_id || null;
+    const feeSelection = body.fee_selection;
 
     const amountNumber =
       typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;

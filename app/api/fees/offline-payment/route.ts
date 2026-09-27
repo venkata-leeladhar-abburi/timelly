@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
@@ -37,6 +38,36 @@ import { reconcileStudentFeeIntegrity } from "@/lib/fees/reconcileStudentFeeInte
 import { roundRupee } from "@/lib/formatRupee";
 import { logger } from "@/lib/logger";
 
+const selectedHeadSchema = z.union([
+  z.object({
+    headType: z.literal("BASE_COMPONENT"),
+    componentIndex: z.number(),
+    componentName: z.string().optional(),
+  }),
+  z.object({
+    headType: z.literal("EXTRA_FEE"),
+    extraFeeId: z.string(),
+  }),
+]);
+
+const explicitAllocationSchema = z.object({
+  key: z.string(),
+  amount: z.union([z.number(), z.string()]),
+  label: z.string().optional(),
+});
+
+const offlinePaymentBodySchema = z.object({
+  studentId: z.string().min(1),
+  amount: z.union([z.number(), z.string()]),
+  paymentMode: z.string().nullable().optional().transform((v) => v ?? undefined),
+  refNo: z.string().nullable().optional().transform((v) => v ?? undefined),
+  transactionId: z.string().nullable().optional().transform((v) => v ?? undefined),
+  paymentDate: z.string().nullable().optional().transform((v) => v ?? undefined),
+  selectedHeads: z.array(selectedHeadSchema).optional(),
+  explicitAllocations: z.array(explicitAllocationSchema).optional(),
+  clientRequestId: z.string().nullable().optional().transform((v) => v ?? undefined),
+});
+
 export async function POST(req: Request) {
   const [session, body] = await Promise.all([
     getServerSession(authOptions),
@@ -65,6 +96,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
     }
 
+    const parsedBody = offlinePaymentBodySchema.safeParse(body);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Invalid request body", issues: parsedBody.error.issues.map((i) => i.message) },
+        { status: 400 }
+      );
+    }
+
     const {
       studentId,
       amount: rawAmount,
@@ -75,7 +114,7 @@ export async function POST(req: Request) {
       selectedHeads: rawSelectedHeads,
       explicitAllocations: rawExplicitAllocations,
       clientRequestId: rawClientRequestId,
-    } = body;
+    } = parsedBody.data;
 
     const clientRequestId =
       typeof rawClientRequestId === "string" && rawClientRequestId.trim()

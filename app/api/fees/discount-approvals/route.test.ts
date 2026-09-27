@@ -89,11 +89,11 @@ describe("GET /api/fees/discount-approvals", () => {
     expect(res.status).toBe(400);
   });
 
-  it("falls back to the schoolId query param when the session has none", async () => {
+  it("ignores a client-supplied schoolId query param when the session has none (regression: prior fallback allowed cross-tenant reads)", async () => {
     mockGetServerSession.mockResolvedValue({ user: { id: "u1", role: "SUPERADMIN" } });
     const res = await GET(request("?schoolId=s2"));
-    expect(res.status).toBe(200);
-    expect(mockGetCached).toHaveBeenCalledWith("s2:PENDING");
+    expect(res.status).toBe(400);
+    expect(mockGetCached).not.toHaveBeenCalledWith("s2:PENDING");
   });
 
   it("returns cached approvals without querying the database", async () => {

@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { invalidateDiscountApprovalsListCache } from "@/lib/fees/discountApprovalsListCache";
+
+const reviewDiscountBodySchema = z.object({
+  action: z.enum(["APPROVE", "REJECT", "REVERT"]),
+  reviewRemarks: z.string().trim().min(1).optional().nullable(),
+});
 
 type RouteParams =
   | { params: { id: string } }
@@ -23,16 +29,17 @@ async function reviewDiscount(req: Request, context: RouteParams) {
     return NextResponse.json({ message: "Only chairman can approve discounts" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => ({}));
-  const action = typeof body.action === "string" ? body.action.toUpperCase() : "";
-  const reviewRemarks =
-    typeof body.reviewRemarks === "string" && body.reviewRemarks.trim()
-      ? body.reviewRemarks.trim()
-      : null;
-
-  if (action !== "APPROVE" && action !== "REJECT" && action !== "REVERT") {
-    return NextResponse.json({ message: "action must be APPROVE, REJECT or REVERT" }, { status: 400 });
+  const rawBody = await req.json().catch(() => ({}));
+  if (typeof rawBody.action === "string") rawBody.action = rawBody.action.toUpperCase();
+  const parsed = reviewDiscountBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { message: "action must be APPROVE, REJECT or REVERT" },
+      { status: 400 }
+    );
   }
+  const { action } = parsed.data;
+  const reviewRemarks = parsed.data.reviewRemarks?.trim() || null;
 
   const [approval] = await prisma.$queryRaw<
     Array<{
