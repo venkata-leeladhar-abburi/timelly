@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -11,6 +12,13 @@ import { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
 
 const STUDENT_FEE_UPDATE_CHUNK = 200;
+
+const patchExtraFeeBodySchema = z.object({
+  name: z.string().optional(),
+  amount: z.number().optional(),
+  splitIntoTwoInstallments: z.boolean().optional(),
+  combinedInstallmentTotal: z.number().optional(),
+});
 
 function getStudentWhere(
   targetType: string,
@@ -116,7 +124,8 @@ export async function PATCH(
       );
     }
 
-    const body = await req.json();
+    const parsedBody = patchExtraFeeBodySchema.safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     logger.info("\n========== EXTRA FEE PATCH ==========");
     logger.info("Fee ID:", id);
     logger.info("Current DB row:", {

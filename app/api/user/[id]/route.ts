@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "../../../../lib/db";
@@ -11,6 +12,25 @@ import { getErrorMessage } from "@/lib/errors/errorInfo";
 import { runInOptionalTenantScope } from "@/lib/db/tenantContext";
 
 type Params = Promise<{ id: string }>;
+
+const updateUserBodySchema = z.object({
+  name: z.string().optional().nullable(),
+  email: z.string().optional().nullable(),
+  role: z.string().optional().nullable(),
+  designation: z.string().optional().nullable(),
+  password: z.string().optional().nullable(),
+  allowedFeatures: z.array(z.string()).optional().nullable(),
+  teacherId: z.union([z.string(), z.number()]).optional().nullable(),
+  subjects: z.array(z.unknown()).optional().nullable(),
+  assignedClassIds: z.array(z.unknown()).optional().nullable(),
+  qualification: z.union([z.string(), z.number()]).optional().nullable(),
+  experience: z.union([z.string(), z.number()]).optional().nullable(),
+  joiningDate: z.string().optional().nullable(),
+  teacherStatus: z.string().optional().nullable(),
+  mobile: z.union([z.string(), z.number()]).optional().nullable(),
+  address: z.string().optional().nullable(),
+  photoUrl: z.string().optional().nullable(),
+});
 
 // GET /api/user/[id] - Fetch single user
 export async function GET(req: NextRequest, { params }: { params: Params }) {
@@ -95,7 +115,11 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
     }
 
     const { id } = await params;
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = updateUserBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
     const {
       name,
       email,
@@ -113,7 +137,7 @@ export async function PUT(req: NextRequest, { params }: { params: Params }) {
       mobile,
       address,
       photoUrl,
-    } = body;
+    } = parsedBody.data;
 
     logger.info(`[PUT] /api/user/${id} called by ${session.user?.id} (role=${session.user?.role})`);
 

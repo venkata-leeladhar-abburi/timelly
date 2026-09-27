@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -13,7 +14,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { eventTitle, imageUrl } = await req.json();
+    const workshopTemplateBodySchema = z.object({
+      eventTitle: z.string().optional(),
+      imageUrl: z.string().optional(),
+    });
+    const parsedBody = workshopTemplateBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Event title and certificate image URL are required" },
+        { status: 400 }
+      );
+    }
+    const { eventTitle, imageUrl } = parsedBody.data;
 
     if (!eventTitle || !imageUrl) {
       return NextResponse.json(

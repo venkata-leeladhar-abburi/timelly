@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -38,8 +39,20 @@ export async function POST(req: Request) {
     if (!student?.schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
     return await runInTenantScope(student.schoolId, async () => {
 
-    const body = await req.json();
-    const { leaveType, reason, fromDate, toDate } = body;
+    const applyStudentLeaveBodySchema = z.object({
+      leaveType: z.string().optional(),
+      reason: z.string().optional(),
+      fromDate: z.string().optional(),
+      toDate: z.string().optional(),
+    });
+    const parsedBody = applyStudentLeaveBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "reason, fromDate, and toDate are required" },
+        { status: 400 }
+      );
+    }
+    const { leaveType, reason, fromDate, toDate } = parsedBody.data;
     if (!reason || !fromDate || !toDate) {
       return NextResponse.json(
         { message: "reason, fromDate, and toDate are required" },
@@ -48,7 +61,7 @@ export async function POST(req: Request) {
     }
 
     const validTypes: LeaveType[] = ["CASUAL", "SICK", "PAID", "UNPAID"];
-    const type = validTypes.includes(leaveType) ? leaveType : "CASUAL";
+    const type: LeaveType = validTypes.includes(leaveType as LeaveType) ? (leaveType as LeaveType) : "CASUAL";
 
     const leave = await prisma.studentLeaveRequest.create({
       data: {

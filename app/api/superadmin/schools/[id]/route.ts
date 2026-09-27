@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
@@ -27,12 +28,9 @@ export async function DELETE(
 
     const { id: schoolId } = await params;
 
-    let body: { schoolName?: string } = {};
-    try {
-      body = (await req.json()) as { schoolName?: string };
-    } catch {
-      body = {};
-    }
+    const deleteSchoolBodySchema = z.object({ schoolName: z.string().optional() });
+    const parsedBody = deleteSchoolBodySchema.safeParse(await req.json().catch(() => ({})));
+    const body = parsedBody.success ? parsedBody.data : {};
     const confirmName = typeof body.schoolName === "string" ? body.schoolName.trim() : "";
 
     const school = await prisma.school.findUnique({

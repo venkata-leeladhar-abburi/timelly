@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -152,9 +153,13 @@ export async function PUT(
       return NextResponse.json({ message: "Exam schedule not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const subject = typeof body.subject === "string" ? body.subject.trim() : "";
-    const examDate = body.examDate ? new Date(body.examDate) : null;
+    const examDate = body.examDate ? new Date(body.examDate as string) : null;
     const startTime = typeof body.startTime === "string" ? body.startTime.trim() : "";
     const durationMin = Number(body.durationMin);
 

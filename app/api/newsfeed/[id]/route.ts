@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -25,7 +26,11 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const title = typeof body.title === "string" ? body.title.trim() : undefined;
     const description = typeof body.description === "string" ? body.description.trim() : undefined;
     const photo = typeof body.photo === "string" ? body.photo : typeof body.mediaUrl === "string" ? body.mediaUrl : undefined;

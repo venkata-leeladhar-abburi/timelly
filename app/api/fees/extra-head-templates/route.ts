@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -58,7 +59,8 @@ export async function POST(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const amount = Number(body.amount);
     const splitIntoTwoInstallments = Boolean(body.splitIntoTwoInstallments);

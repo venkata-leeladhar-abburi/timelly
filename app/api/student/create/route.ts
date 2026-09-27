@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -21,6 +22,11 @@ function normalizeResidencyType(value: unknown) {
   if (typeof value !== "string") return "Day Scholar";
   return canonicalizeResidencyType(value);
 }
+
+// Shape-only guard (this route already has thorough, field-by-field manual
+// validation with tailored error messages below — this just rejects a
+// non-object body early rather than duplicating that logic).
+const studentCreateBodySchema = z.record(z.string(), z.unknown());
 
 export async function POST(req: Request) {
   try {
@@ -59,7 +65,12 @@ export async function POST(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = studentCreateBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     logger.info("Received student data:", {
       name: body.name,
       fatherName: body.fatherName,

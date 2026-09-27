@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -67,7 +68,8 @@ export async function PATCH(req: Request, context: RouteParams) {
       );
     }
 
-    const body = await req.json().catch(() => ({}));
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const rawAmount = body.amount;
     const transactionId =
       body.transactionId === undefined ? undefined : body.transactionId === null ? null : String(body.transactionId).trim() || null;

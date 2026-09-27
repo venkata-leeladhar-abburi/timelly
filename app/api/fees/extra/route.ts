@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -145,7 +146,18 @@ export async function POST(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json();
+    const createExtraFeeBodySchema = z.object({
+      name: z.string().optional(),
+      amount: z.number().optional(),
+      targetType: z.string().optional(),
+      targetClassId: z.string().optional().nullable(),
+      targetSection: z.string().optional().nullable(),
+      targetStudentId: z.string().optional().nullable(),
+      splitIntoTwoInstallments: z.boolean().optional(),
+      residencyScope: z.unknown().optional(),
+    });
+    const parsedBody = createExtraFeeBodySchema.safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const { name, amount, targetType, targetClassId, targetSection, targetStudentId } = body;
     const splitIntoTwoInstallments = Boolean(body.splitIntoTwoInstallments);
     const parsedScope = parseExtraFeeResidencyScopeBody(body.residencyScope);

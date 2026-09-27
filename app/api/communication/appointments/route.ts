@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
@@ -123,7 +124,16 @@ export async function POST(req: Request) {
 
   try {
     return await runInOptionalTenantScope(session.user.schoolId, async () => {
-    const { teacherId, scheduledAt, note } = await req.json();
+    const createAppointmentBodySchema = z.object({
+      teacherId: z.string().optional(),
+      scheduledAt: z.string().optional().nullable(),
+      note: z.string().optional().nullable(),
+    });
+    const parsedBody = createAppointmentBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "teacherId is required" }, { status: 400 });
+    }
+    const { teacherId, scheduledAt, note } = parsedBody.data;
 
     if (!teacherId) {
       return NextResponse.json(

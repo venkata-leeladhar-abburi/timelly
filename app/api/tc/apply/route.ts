@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -13,17 +14,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    let body;
-    try {
-      body = await req.json();
-    } catch {
+    const applyTcBodySchema = z.object({
+      certificateType: z.unknown().optional(),
+      reason: z.string().optional().nullable(),
+    });
+    const parsedBody = applyTcBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
       return NextResponse.json(
         { message: "Invalid request body" },
         { status: 400 }
       );
     }
-
-    const { certificateType: _certificateType, reason } = body;
+    const { certificateType: _certificateType, reason } = parsedBody.data;
 
     if (!session.user.studentId) {
       return NextResponse.json(

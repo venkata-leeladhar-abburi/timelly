@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { getServerSession } from "next-auth";
@@ -6,6 +7,13 @@ import { logger } from "@/lib/logger";
 import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
+
+const applyLeaveBodySchema = z.object({
+  leaveType: z.string().optional(),
+  reason: z.string().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -16,14 +24,11 @@ export async function POST(req: Request) {
     }
 
     const user = session.user;
-    let body: { leaveType?: string; reason?: string; fromDate?: string; toDate?: string };
-    try {
-      body = await req.json();
-    } catch {
+    const parsedBody = applyLeaveBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
-
-    const { leaveType, reason, fromDate, toDate } = body;
+    const { leaveType, reason, fromDate, toDate } = parsedBody.data;
 
     if (!leaveType || !fromDate || !toDate) {
       return NextResponse.json(

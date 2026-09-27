@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -32,7 +33,24 @@ export async function POST(req: Request) {
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
     return await runInTenantScope(schoolId, async () => {
 
-    const body = await req.json();
+    const createCircularBodySchema = z.object({
+      referenceNumber: z.string().optional().nullable(),
+      date: z.string().optional().nullable(),
+      subject: z.string().optional(),
+      content: z.string().optional(),
+      attachments: z.array(z.string()).optional().nullable(),
+      importanceLevel: z.string().optional().nullable(),
+      recipients: z.array(z.string()).optional().nullable(),
+      classId: z.string().optional().nullable(),
+      publishStatus: z.string().optional().nullable(),
+    });
+    const parsedBody = createCircularBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Subject and content are required" },
+        { status: 400 }
+      );
+    }
     const {
       referenceNumber,
       date,
@@ -43,7 +61,7 @@ export async function POST(req: Request) {
       recipients,
       classId,
       publishStatus,
-    } = body;
+    } = parsedBody.data;
 
     if (!subject || !content) {
       return NextResponse.json(

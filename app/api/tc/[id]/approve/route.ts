@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -19,11 +20,11 @@ export async function POST(
 
     const { id } = await params;
     let tcDocumentUrl: string | undefined;
-    try {
-      const body = await req.json();
-      tcDocumentUrl = body?.tcDocumentUrl;
-    } catch {
-      // empty or invalid body
+    const parsedBody = z.object({ tcDocumentUrl: z.string().optional() }).safeParse(
+      await req.json().catch(() => null)
+    );
+    if (parsedBody.success) {
+      tcDocumentUrl = parsedBody.data.tcDocumentUrl;
     }
 
     let schoolId = session.user.schoolId;

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
@@ -54,12 +55,17 @@ export async function PUT(req: Request) {
     const auth = await requireSuperAdmin();
     if ("error" in auth && auth.error) return auth.error;
 
-    const body = (await req.json()) as {
-      enabled?: boolean;
-      scheduleTime?: string;
-      recipient?: string;
-      schoolId?: string | null;
-    };
+    const backupScheduleBodySchema = z.object({
+      enabled: z.boolean().optional(),
+      scheduleTime: z.string().optional(),
+      recipient: z.string().optional(),
+      schoolId: z.string().nullable().optional(),
+    });
+    const parsedBody = backupScheduleBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
 
     const existing = await getOrCreateBackupSchedule();
     const data: {

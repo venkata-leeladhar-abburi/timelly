@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { batchAssignStudentExtraFees } from "@/lib/fees/batchAssignStudentExtraFees";
@@ -29,7 +30,8 @@ export async function POST(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const studentId = String(body?.studentId ?? "").trim();
     const fees = Array.isArray(body?.fees) ? body.fees : [];
 

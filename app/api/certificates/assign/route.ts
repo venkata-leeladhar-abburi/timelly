@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -14,7 +15,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { templateId, studentId, title, description, certificateUrl, eventId } = await req.json();
+    const assignCertificateBodySchema = z.object({
+      templateId: z.string().optional(),
+      studentId: z.string().optional(),
+      title: z.string().optional(),
+      description: z.string().optional().nullable(),
+      certificateUrl: z.string().optional().nullable(),
+      eventId: z.string().optional().nullable(),
+    });
+    const parsedBody = assignCertificateBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Template ID, student ID, and title are required" },
+        { status: 400 }
+      );
+    }
+    const { templateId, studentId, title, description, certificateUrl, eventId } = parsedBody.data;
 
     if (!templateId || !studentId || !title) {
       return NextResponse.json(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -36,7 +37,8 @@ export async function PATCH(
       return NextResponse.json({ message: "Expense not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const itemName = body?.itemName !== undefined ? String(body.itemName).trim() : undefined;
     const headOfAccount = body?.headOfAccount !== undefined ? String(body.headOfAccount).trim() : undefined;
     const paymentTypeRaw = body?.paymentType !== undefined ? String(body.paymentType).trim().toUpperCase() : undefined;

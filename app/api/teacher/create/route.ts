@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -27,7 +28,18 @@ export async function POST(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const { name, email, password, mobile, allowedFeatures } = await req.json();
+    const teacherCreateBodySchema = z.object({
+      name: z.string().optional(),
+      email: z.string().optional().nullable(),
+      password: z.string().optional(),
+      mobile: z.string().optional().nullable(),
+      allowedFeatures: z.array(z.unknown()).optional().nullable(),
+    });
+    const parsedBody = teacherCreateBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Name and password are required" }, { status: 400 });
+    }
+    const { name, email, password, mobile, allowedFeatures } = parsedBody.data;
 
     if (!name || !password) {
       return NextResponse.json(

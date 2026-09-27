@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
@@ -20,7 +21,8 @@ export async function PATCH(
     if (session.user.role !== "SUPERADMIN") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
     const { id } = await params;
-    const body = await req.json();
+    const parsedBody = z.object({ isActive: z.boolean().optional() }).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const isActive = typeof body.isActive === "boolean" ? body.isActive : undefined;
     if (isActive === undefined) {
       return NextResponse.json({ message: "isActive (boolean) is required" }, { status: 400 });

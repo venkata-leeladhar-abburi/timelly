@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -6,6 +7,11 @@ import { upsertStudentFeeFromStructure } from "@/lib/fees/studentTuitionFromStru
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/errors/errorInfo";
+
+const assignClassBodySchema = z.object({
+  studentId: z.string().optional().nullable(),
+  classId: z.string().optional().nullable(),
+});
 
 export async function PUT(req: Request) {
   try {
@@ -31,7 +37,12 @@ export async function PUT(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const { studentId, classId } = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = assignClassBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const { studentId, classId } = parsedBody.data;
 
     if (!studentId) {
       return NextResponse.json(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -30,7 +31,11 @@ export async function PATCH(
     });
     if (!owned) return NextResponse.json({ message: "Unit not found" }, { status: 404 });
 
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const completedPercentRaw = Number(body.completedPercent ?? 0);
     const completedPercent = Math.max(0, Math.min(100, Math.trunc(completedPercentRaw)));
 

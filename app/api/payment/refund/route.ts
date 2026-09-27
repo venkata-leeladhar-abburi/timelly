@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -19,6 +20,12 @@ const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
 const globalHyperpgApiKey = process.env.HYPERPG_API_KEY;
 const hyperpgAuthStyle = process.env.HYPERPG_AUTH_STYLE || "api_key";
+
+const refundBodySchema = z.object({
+  paymentId: z.string().min(1),
+  amount: z.union([z.number(), z.string()]),
+  reason: z.string().optional().nullable(),
+});
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -53,8 +60,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { paymentId, amount: rawAmount, reason } = body;
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = refundBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "paymentId and amount (positive number) required" },
+        { status: 400 }
+      );
+    }
+    const { paymentId, amount: rawAmount, reason } = parsedBody.data;
 
     const amount = typeof rawAmount === "string" ? parseFloat(rawAmount) : rawAmount;
     if (!paymentId || typeof amount !== "number" || isNaN(amount) || amount <= 0) {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
@@ -10,6 +11,12 @@ import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
 import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const MAX_RESET = 5000;
+
+const resetCredentialsBodySchema = z.object({
+  classId: z.string().optional(),
+  className: z.string().optional(),
+  section: z.string().optional(),
+});
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null };
@@ -69,11 +76,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "School is paused" }, { status: 403 });
     }
 
-    const body = (await req.json().catch(() => ({}))) as {
-      classId?: string;
-      className?: string;
-      section?: string;
-    };
+    const parsedBody = resetCredentialsBodySchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
 
     const classId = body.classId?.trim() || "";
     const className = body.className?.trim() || "";

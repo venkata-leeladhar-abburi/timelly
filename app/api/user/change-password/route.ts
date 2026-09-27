@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import bcrypt from "bcryptjs";
 import { logger } from "@/lib/logger";
 import { toClientErrorMessage } from "@/lib/errors/errorInfo";
+
+const changePasswordBodySchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(1),
+});
 
 export async function POST(req: Request) {
   try {
@@ -14,14 +20,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { currentPassword, newPassword } = await req.json();
-
-    if (!currentPassword || !newPassword) {
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = changePasswordBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
       return NextResponse.json(
         { message: "currentPassword and newPassword are required" },
         { status: 400 }
       );
     }
+    const { currentPassword, newPassword } = parsedBody.data;
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },

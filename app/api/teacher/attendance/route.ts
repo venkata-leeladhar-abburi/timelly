@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -215,11 +216,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "School not found" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { date: dateStr, attendances } = body as {
-      date: string;
-      attendances: Array<{ teacherId: string; status: string }>;
-    };
+    const markTeacherAttendanceBodySchema = z.object({
+      date: z.string().optional(),
+      attendances: z.array(z.object({ teacherId: z.string(), status: z.string() })).optional(),
+    });
+    const parsedBody = markTeacherAttendanceBodySchema.safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
+    const { date: dateStr, attendances } = body;
     if (!dateStr || !Array.isArray(attendances)) {
       return NextResponse.json(
         { message: "date and attendances array required" },

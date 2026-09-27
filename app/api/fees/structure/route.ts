@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -83,7 +84,12 @@ export async function PUT(req: Request) {
     }
     return await runInTenantScope(schoolId, async () => {
 
-    const body = await req.json();
+    const structureBodySchema = z.object({
+      classId: z.string().optional(),
+      components: z.array(z.unknown()).optional(),
+    });
+    const parsedBody = structureBodySchema.safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const { classId, components } = body;
 
     if (!classId || !Array.isArray(components)) {

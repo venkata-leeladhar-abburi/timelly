@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { getServerSession } from "next-auth";
@@ -10,6 +11,11 @@ interface Params {
 }
 
 type ApproveType = "FULL" | "CONDITIONAL";
+
+const approveLeaveBodySchema = z.object({
+  type: z.unknown(),
+  remarks: z.string().optional(),
+});
 
 export async function PATCH(
   req: Request,
@@ -44,8 +50,14 @@ export async function PATCH(
     }
 
     // 2️⃣ Parse body
-    const { type, remarks }: { type: ApproveType; remarks?: string } =
-      await req.json();
+    const parsedBody = approveLeaveBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid approval type" }),
+        { status: 400 }
+      );
+    }
+    const { type, remarks } = parsedBody.data as { type: ApproveType; remarks?: string };
 
     if (!["FULL", "CONDITIONAL"].includes(type)) {
       return new Response(

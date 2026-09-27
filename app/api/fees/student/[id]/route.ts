@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope, runInTenantScope } from "@/lib/db/tenantContext";
@@ -117,7 +118,8 @@ export async function PATCH(req: Request, context: RouteParams) {
     // The initial lookup above is deliberately cross-tenant (it discovers the student's school).
     // Everything after the authorization check acts on that ONE school, RLS-scoped.
     return await runInTenantScope(schoolId, async () => {
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const {
       totalFee,
       discountPercent,

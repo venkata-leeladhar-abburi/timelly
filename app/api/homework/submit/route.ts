@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
@@ -22,7 +23,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const { homeworkId, content, fileUrl } = await req.json();
+    const submitHomeworkBodySchema = z.object({
+      homeworkId: z.string().optional(),
+      content: z.string().optional().nullable(),
+      fileUrl: z.string().optional().nullable(),
+    });
+    const parsedBody = submitHomeworkBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Homework ID is required" }, { status: 400 });
+    }
+    const { homeworkId, content, fileUrl } = parsedBody.data;
 
     if (!homeworkId) {
       return NextResponse.json(

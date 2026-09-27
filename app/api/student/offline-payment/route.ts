@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -35,7 +36,16 @@ export async function POST(req: Request) {
 
         // Payment insert + fee update now commit atomically inside one RLS-scoped transaction.
         return await runInTenantScope(schoolId, async () => {
-        const body = await req.json();
+        const offlinePaymentBodySchema = z.object({
+          studentId: z.string().optional(),
+          amount: z.union([z.number(), z.string()]).optional(),
+          method: z.string().optional().nullable(),
+          referenceNumber: z.string().optional().nullable(),
+          bankName: z.string().optional().nullable(),
+          description: z.string().optional().nullable(),
+        });
+        const parsedBody = offlinePaymentBodySchema.safeParse(await req.json().catch(() => null));
+        const body = parsedBody.success ? parsedBody.data : {};
         const { studentId, amount, method, referenceNumber: _referenceNumber, bankName: _bankName, description: _description } = body;
 
         if (!studentId || typeof studentId !== "string") {

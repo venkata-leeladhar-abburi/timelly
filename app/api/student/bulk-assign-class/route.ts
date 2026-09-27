@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma, { runWithDeferredCacheInvalidation } from "@/lib/db";
@@ -17,6 +18,11 @@ import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 const STAFF_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN", "TEACHER"]);
 const MAX_BULK_ASSIGN = 500;
 const FEE_UPSERT_BATCH = 10;
+
+const bulkAssignClassBodySchema = z.object({
+  studentIds: z.array(z.unknown()).optional(),
+  classId: z.unknown().optional(),
+});
 
 export async function PUT(req: Request) {
   try {
@@ -37,7 +43,12 @@ export async function PUT(req: Request) {
     const schoolId = ctx.schoolId;
 
     return await runInTenantScope(schoolId, async (schoolId) => {
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = bulkAssignClassBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const studentIds: string[] = Array.isArray(body?.studentIds)
       ? body.studentIds
           .filter(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
@@ -74,7 +75,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const createNotificationBodySchema = z.object({
+      userId: z.string().optional(),
+      title: z.string().optional(),
+      message: z.string().optional(),
+      type: z.string().optional(),
+    });
+    const parsedBody = createNotificationBodySchema.safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const userId = typeof body.userId === "string" ? body.userId : session.user.id;
     const title = typeof body.title === "string" ? body.title.trim() : "";
     const message = typeof body.message === "string" ? body.message.trim() : "";

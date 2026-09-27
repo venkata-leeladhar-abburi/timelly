@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -75,11 +76,11 @@ export async function POST(
       }
     } else {
       // Handle JSON body
-      try {
-        const body = await req.json();
-        documentUrl = body?.documentUrl || body?.tcDocumentUrl;
-      } catch {
-        // empty or invalid body
+      const parsedBody = z
+        .object({ documentUrl: z.string().optional(), tcDocumentUrl: z.string().optional() })
+        .safeParse(await req.json().catch(() => null));
+      if (parsedBody.success) {
+        documentUrl = parsedBody.data.documentUrl || parsedBody.data.tcDocumentUrl;
       }
     }
 

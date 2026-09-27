@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -16,7 +17,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const body = await req.json().catch(() => ({}));
+    const rawBody = await req.json().catch(() => ({}));
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(rawBody);
+    const body = parsedBody.success ? parsedBody.data : {};
     const schoolId = typeof body.schoolId === "string" ? body.schoolId.trim() : "";
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";

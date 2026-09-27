@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import type { Grade, BoardingType, Gender } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -92,7 +94,12 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
     const { id } = await ctx.params;
-    const body = await req.json();
+    const rawBody = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
 
     const classId = typeof body.classId === "string" && body.classId.trim() ? body.classId.trim() : null;
     if (classId) {
@@ -150,8 +157,8 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
         penNumber: optionalString(body.penNumber),
         apaarId: optionalString(body.apaarId),
         admissionNo: optionalString(body.admissionNo),
-        gradeSought: body.gradeSought,
-        boardingType: body.boardingType,
+        gradeSought: body.gradeSought as Grade,
+        boardingType: body.boardingType as BoardingType,
         residencyType: normalizeResidencyType(body.residencyType),
         totalFee: null,
         discountPercent: null,
@@ -170,7 +177,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
         firstName: requiredString(body.firstName, "firstName"),
         middleName: optionalString(body.middleName),
         lastName: requiredString(body.lastName, "lastName"),
-        gender: body.gender,
+        gender: body.gender as Gender,
         dateOfBirth: dob,
         aadharNo: aadharValue,
         firstLanguage: optionalString(body.firstLanguage) ?? "English",

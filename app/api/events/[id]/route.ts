@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -40,6 +41,29 @@ export async function PUT(
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
+    const updateEventBodySchema = z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      type: z.string().optional(),
+      level: z.string().optional(),
+      location: z.string().optional(),
+      mode: z.string().optional(),
+      additionalInfo: z.string().optional(),
+      photo: z.string().optional().nullable(),
+      eventDate: z.string().optional().nullable(),
+      maxSeats: z.union([z.number(), z.string()]).optional().nullable(),
+      amount: z.union([z.number(), z.string()]).optional().nullable(),
+    });
+    const parsedBody = updateEventBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          message:
+            "Title, description, type, level, location, mode and additionalInfo are required",
+        },
+        { status: 400 }
+      );
+    }
     const {
       title,
       description,
@@ -52,7 +76,7 @@ export async function PUT(
       eventDate,
       maxSeats,
       amount,
-    } = await req.json();
+    } = parsedBody.data;
 
     if (
       !title ||

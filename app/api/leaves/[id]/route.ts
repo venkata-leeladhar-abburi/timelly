@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
@@ -6,6 +7,13 @@ import { logger } from "@/lib/logger";
 import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
+
+const updateLeaveBodySchema = z.object({
+  leaveType: z.string().optional(),
+  reason: z.string().optional(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+});
 
 type Params = Promise<{ id: string }>;
 
@@ -37,14 +45,12 @@ export async function PUT(req: Request, { params }: { params: Params }) {
       return NextResponse.json({ error: "Only pending leave can be updated" }, { status: 409 });
     }
 
-    let body: { leaveType?: string; reason?: string; fromDate?: string; toDate?: string };
-    try {
-      body = await req.json();
-    } catch {
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = updateLeaveBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
-
-    const { leaveType, reason, fromDate, toDate } = body;
+    const { leaveType, reason, fromDate, toDate } = parsedBody.data;
     if (!fromDate || !toDate) {
       return NextResponse.json(
         { error: "Missing required fields: fromDate, toDate" },

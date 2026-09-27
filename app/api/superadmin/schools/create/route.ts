@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
@@ -16,7 +17,12 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     if (session.user.role !== "SUPERADMIN") return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const schoolName = typeof body.schoolName === "string" ? body.schoolName.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body.password === "string" ? body.password : "";

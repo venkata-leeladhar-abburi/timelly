@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+
+const createSchoolBodySchema = z.object({
+  name: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +25,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const { name, address, location } = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = createSchoolBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Name, Address, and Location are required" },
+        { status: 400 }
+      );
+    }
+    const { name, address, location } = parsedBody.data;
 
     if (!name || !address || !location) {
       return NextResponse.json(

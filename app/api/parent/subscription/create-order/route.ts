@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -37,9 +38,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const createOrderBodySchema = z.object({
+      amount: z.union([z.number(), z.string()]).optional(),
+      return_path: z.string().optional(),
+    });
+    const parsedBody = createOrderBodySchema.safeParse(await req.json().catch(() => ({})));
+    const body = parsedBody.success ? parsedBody.data : {};
     const requestedAmount = typeof body.amount === "number" ? body.amount : undefined;
-    const returnPath = (body.return_path as string) || "/parent?tab=profile";
+    const returnPath = body.return_path || "/parent?tab=profile";
 
     const student = await prisma.student.findUnique({
       where: { id: session.user.studentId },

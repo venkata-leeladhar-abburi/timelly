@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -13,7 +14,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, template, imageUrl } = await req.json();
+    const createTemplateBodySchema = z.object({
+      name: z.string().optional(),
+      description: z.string().optional().nullable(),
+      template: z.string().optional(),
+      imageUrl: z.string().optional().nullable(),
+    });
+    const parsedBody = createTemplateBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Name and template are required" },
+        { status: 400 }
+      );
+    }
+    const { name, description, template, imageUrl } = parsedBody.data;
 
     if (!name || !template) {
       return NextResponse.json(

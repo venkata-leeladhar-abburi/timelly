@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -19,7 +20,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const parsedBody = z
+      .object({ order_id: z.string().optional(), amount: z.union([z.number(), z.string()]).optional() })
+      .safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const orderId = typeof body.order_id === "string" ? body.order_id : "";
     const amount = typeof body.amount === "number" ? body.amount : NaN;
 

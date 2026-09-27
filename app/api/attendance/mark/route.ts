@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -15,7 +16,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const { classId, date, period, attendances } = await req.json();
+    const markAttendanceBodySchema = z.object({
+      classId: z.string().optional(),
+      date: z.string().optional(),
+      period: z.number().optional(),
+      attendances: z.array(z.object({ studentId: z.string(), status: z.string() })).optional(),
+    });
+    const parsedBody = markAttendanceBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        { message: "Missing required fields: classId, date, period, and attendances array" },
+        { status: 400 }
+      );
+    }
+    const { classId, date, period, attendances } = parsedBody.data;
 
     if (!classId || !date || !period || !attendances || !Array.isArray(attendances)) {
       return NextResponse.json(

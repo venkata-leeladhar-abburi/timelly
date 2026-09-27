@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { logger } from "@/lib/logger";
 import { toClientErrorMessage } from "@/lib/errors/errorInfo";
+
+const updateSettingsBodySchema = z.object({
+  admissionPrefix: z.string().optional(),
+  rollNoPrefix: z.string().optional(),
+  emailDomain: z.union([z.string(), z.null()]).optional(),
+  hyperpgMerchantId: z.union([z.string(), z.null()]).optional(),
+  hyperpgApiKey: z.union([z.string(), z.null()]).optional(),
+});
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -55,15 +64,18 @@ export async function PUT(req: Request) {
     if (!schoolId) return NextResponse.json({ message: "School not found" }, { status: 400 });
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json();
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = updateSettingsBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
     const {
       admissionPrefix,
       rollNoPrefix,
       emailDomain,
-
       hyperpgMerchantId,
       hyperpgApiKey,
-    } = body;
+    } = parsedBody.data;
 
     const data: {
       admissionPrefix?: string;

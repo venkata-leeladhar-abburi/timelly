@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
@@ -39,8 +40,20 @@ export async function PUT(req: Request, context: RouteContext) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json();
-    const { title, description, subject, classId, dueDate, assignedDate, file: fileUrl } = body;
+    const updateHomeworkBodySchema = z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      subject: z.string().optional(),
+      classId: z.string().optional(),
+      dueDate: z.string().optional().nullable(),
+      assignedDate: z.string().optional().nullable(),
+      file: z.string().optional().nullable(),
+    });
+    const parsedBody = updateHomeworkBodySchema.safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const { title, description, subject, classId, dueDate, assignedDate, file: fileUrl } = parsedBody.data;
 
     const existing = await prisma.homework.findFirst({
       where: { id, schoolId },

@@ -1,14 +1,25 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 
+const updateSchoolBodySchema = z.object({
+  name: z.string().optional(),
+  address: z.string().optional(),
+  location: z.string().optional(),
+});
+
 export async function PUT(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const body = await req.json();
-    const { name, address, location } = body;
+    const rawBody = await req.json().catch(() => null);
+    const parsedBody = updateSchoolBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const { name, address, location } = parsedBody.data;
 
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

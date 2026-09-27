@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth/authOptions";
@@ -113,7 +114,8 @@ export async function POST(req: Request) {
     }
     return await runInTenantScope(schoolId, async (schoolId) => {
 
-    const body = await req.json().catch(() => ({}));
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    const body = parsedBody.success ? parsedBody.data : {};
     const cleanupDuplicates = Boolean(body.cleanupDuplicates);
     const cleanupFeeNamesRaw: unknown[] = Array.isArray(body.cleanupFeeNames)
       ? body.cleanupFeeNames

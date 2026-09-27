@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import ownerPrisma from "@/lib/db";
@@ -446,7 +447,11 @@ export async function PUT(req: Request, context: RouteParams) {
       return NextResponse.json({ message: "Student not found" }, { status: 404 });
     }
 
-    const body = await req.json();
+    const parsedBody = z.record(z.string(), z.unknown()).safeParse(await req.json().catch(() => null));
+    if (!parsedBody.success) {
+      return NextResponse.json({ message: "Invalid request body" }, { status: 400 });
+    }
+    const body = parsedBody.data;
     const name = typeof body.name === "string" ? body.name.trim() : undefined;
     const fatherName = typeof body.fatherName === "string" ? body.fatherName.trim() : undefined;
     const motherName = typeof body.motherName === "string" ? body.motherName.trim() || null : undefined;
