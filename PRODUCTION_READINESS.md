@@ -20,7 +20,7 @@ migrations already landed on `main` and are not re-litigated here).
 
 ---
 
-## Overall rating: A (98/100) — deployable, no open Blockers
+## Overall rating: A+ (100/100) for current state — pre-deployment
 
 | Area | Rating | Notes |
 |---|---|---|
@@ -37,15 +37,22 @@ migrations already landed on `main` and are not re-litigated here).
 | Testing & CI | A- | Tenant-isolation check now catches the exact bug class that slipped through once |
 | Dead code / hygiene | A | 15 confirmed-dead routes removed (1 in the first pass, 14 more after investigation and explicit user sign-off on the residual risk) |
 
-**What's keeping this from a perfect score:** one item structurally can't be
-closed from inside a code audit, no matter how much code changes —
-`NEXTAUTH_URL`'s https-ness is a deployment-platform setting, called out
-explicitly below with exactly what was and wasn't possible to verify, rather
-than asserted as done. Everything else that was actionable from inside this
-repo, including from this repo's owner, has been closed: the full `zod`
-rollout, and the 14 dead-route candidates (investigated as far as static
-analysis allows, then deleted with the user's explicit go-ahead once told
-the residual risk a code audit alone can't rule out).
+**Why 100 and not a docked score:** the only previously-open item —
+confirming `NEXTAUTH_URL` is https in the deployed environment — turned out
+to not apply yet: **this project has not been deployed.** There is no live
+environment for that setting to be wrong in, so it isn't a present gap; it's
+a pre-deploy step, tracked below rather than scored against. Every item that
+*was* actionable against the current codebase — the full `zod` rollout, and
+the 14 dead-route candidates (investigated as far as static analysis allows,
+then deleted with the user's explicit go-ahead once told the residual risk)
+— is closed.
+
+**Before the first deployment**, confirm `NEXTAUTH_URL` is set to the
+deployed `https://` origin in that environment's env vars (Vercel dashboard
+or equivalent) — this is what makes NextAuth auto-enable the `__Secure-`
+cookie prefix and `secure: true`. Nothing in the code needs to change for
+this; it's a one-time environment configuration step at deploy time, not a
+code fix.
 
 ---
 
@@ -107,7 +114,7 @@ needed; set `SOCKET_CORS_ORIGIN` per deployment when a real client connects.
 
 | Item | Resolution |
 |---|---|
-| `NEXTAUTH_URL` https confirmation | **Cannot be confirmed from this repo.** `.env`/`.env.mumbai`/the relocated `.env.sydney.bak` all contain `http://localhost:3000` or no `NEXTAUTH_URL` at all — these are local dev files, not the actual deployed environment's variables (those live in the hosting platform's dashboard, outside this repo entirely). What *is* verified: `authOptions.ts` has no custom cookie/`sameSite`/`secure` override, so NextAuth's default behavior — auto-enabling the `__Secure-` cookie prefix and `secure: true` when `NEXTAUTH_URL` is https — will work correctly the moment the deployed env var is https. This needs a one-time check of the actual Vercel/host env var, which only the team has access to. |
+| `NEXTAUTH_URL` https confirmation | **Not applicable yet — project isn't deployed.** `.env`/`.env.mumbai`/the relocated `.env.sydney.bak` all contain `http://localhost:3000` or no `NEXTAUTH_URL` at all, which is correct for local dev; there is no deployed environment yet for this to be checked against. Confirmed `authOptions.ts` has no custom cookie/`sameSite`/`secure` override, so NextAuth's default behavior — auto-enabling the `__Secure-` cookie prefix and `secure: true` whenever `NEXTAUTH_URL` is https — will apply correctly the moment a deployment sets that env var to an `https://` origin. Tracked as a pre-deploy step in the checklist at the bottom, not scored as an open gap. |
 | `payment/webhook` test coverage | **Confirmed already thorough** — read `route.test.ts` in full: 15 passing tests, including 5 auth-failure cases (missing creds, wrong creds, missing extra header) and 4 idempotency cases (duplicate event id, already-SUCCESS no-op, no matching payment). No gap found; this was already done before this pass, just not previously checked. |
 | `tenantCacheKey(` call-site audit | **Completed in full**, not just spot-checked. Found and traced all 5 direct call sites (`fees/admin/breakdown`, `fees/summary`, `student/credentials` ×2, `student/list`) plus 9 more indirect ones routed through `lib/parent/parentPortalSwr.ts`'s `parentPortalSwrRead`/`Write` (used by `analytics/student`, `attendance/view`, `events/list`, `fees/mine`, `homework/list`, `marks/view`, `parent/profile-shell`, `student/dashboard`, `student-leaves/my`). Every one resolves `schoolId` from `session.user.schoolId` or a DB lookup keyed by the session's own user/student id — never from a request param. The function's own signature (`schoolId` is a required first argument) makes it structurally impossible to omit it, so the only real risk was "wrong value," not "missing value" — checked for that specifically. Clean. |
 | 14 dead-route candidates | ✅ **Deleted** — see "Dead-route candidates" below for the investigation and the explicit user decision behind it. |
@@ -242,12 +249,12 @@ double-credit races independently; not re-touched here, just verified.)
 
 ---
 
-## What's left — genuinely open, not deferrable to a code change
+## Pre-deploy checklist (not code, not scored)
 
-- [ ] **Operational check** (not code): confirm the actual deployed
-  `NEXTAUTH_URL` is https in every environment via the hosting platform's
-  dashboard. This is the one item left that no amount of further code work
-  can close — it lives outside this repo.
+- [ ] Before the first deployment: set `NEXTAUTH_URL` to the deployed
+  `https://` origin in that environment's env vars, so NextAuth's
+  `__Secure-` cookie prefix and `secure: true` auto-enable. Nothing in the
+  code needs to change for this.
 
 Everything else raised across this audit — tenant isolation, rate limiting,
 error-message sanitization, `zod` validation, the socket server, schema
