@@ -26,4 +26,22 @@ describe("tenant isolation safety net", () => {
       );
     }
   });
+
+  it("finds no route reading a client-supplied schoolId from the request instead of the session (regression: app/api/fees/discount-approvals/route.ts used to fall back to ?schoolId=)", () => {
+    const { clientSchoolIdOffenders } = checkTenantIsolation();
+
+    if (clientSchoolIdOffenders.length > 0) {
+      const details = clientSchoolIdOffenders
+        .map((o) => `  - ${o.file} (source: ${o.kind})`)
+        .join("\n");
+      throw new Error(
+        `${clientSchoolIdOffenders.length} route(s) read schoolId from the request instead ` +
+          `of the session:\n${details}\n\n` +
+          `Use requireSchoolId(session) (lib/auth/tenant.ts) instead. If the route is ` +
+          `deliberately cross-tenant and re-validates the id, add it to ` +
+          `CLIENT_SCHOOL_ID_ALLOWLIST in scripts/checkTenantIsolation.ts with a comment ` +
+          `explaining why.`
+      );
+    }
+  });
 });
