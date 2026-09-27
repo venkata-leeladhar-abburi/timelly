@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
+import { rateLimit, rateLimitKey } from "@/lib/rateLimit";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { FEE_ALLOCATION_PAYMENT_STATUSES } from "@/lib/fees/feePaymentStatuses";
@@ -50,6 +51,20 @@ export async function POST(req: Request) {
 
   // Guarded above: `studentId` is required for students.
   const studentAllocId = session.user.studentId as string;
+
+  // Repeated order creation can be used for gateway abuse (e.g. testing stolen
+  // cards); 20 orders per student per 10 minutes is well above legitimate use.
+  const orderLimit = await rateLimit(
+    rateLimitKey("payment-create-order", studentAllocId),
+    20,
+    10 * 60
+  );
+  if (!orderLimit.allowed) {
+    return NextResponse.json(
+      { error: `Too many payment attempts. Please try again in ${Math.ceil(orderLimit.resetInSeconds / 60)} minute(s).` },
+      { status: 429 }
+    );
+  }
 
   try {
     const rawBody = await req.json().catch(() => null);

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
 import { getErrorCode, getErrorMessage } from "@/lib/errors/errorInfo";
+import { rateLimit, rateLimitKey } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
@@ -11,6 +12,18 @@ export async function POST(req: Request) {
 
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const registerLimit = await rateLimit(
+      rateLimitKey("event-register", session.user.id),
+      20,
+      10 * 60
+    );
+    if (!registerLimit.allowed) {
+      return NextResponse.json(
+        { message: `Too many requests. Please try again in ${Math.ceil(registerLimit.resetInSeconds / 60)} minute(s).` },
+        { status: 429 }
+      );
     }
 
     const { eventId } = await req.json();

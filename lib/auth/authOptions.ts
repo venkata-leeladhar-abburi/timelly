@@ -6,6 +6,14 @@ import prisma from "@/lib/db";
 import { isActiveStudent } from "@/lib/students/studentStatus";
 import bcrypt from "bcryptjs";
 import { logger } from "@/lib/logger";
+import { rateLimit, rateLimitKey } from "@/lib/rateLimit";
+
+// Brute-force protection on the credentials login: 10 attempts per email per 5
+// minutes. Keyed by email (not IP — authorize() doesn't receive the request),
+// which still bounds password-guessing against a single account. See
+// PRODUCTION_READINESS.md's "No rate limiting" finding.
+const LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 10;
+const LOGIN_RATE_LIMIT_WINDOW_SECONDS = 5 * 60;
 
 // Hard ceiling on how long a session can keep running on a cached JWT while the
 // periodic DB re-sync keeps failing (see the jwt callback below). Bounds the
@@ -29,6 +37,19 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) {
           logger.info("Auth: Missing email or password");
           return null;
+        }
+
+        const loginKey = rateLimitKey("login", credentials.email);
+        const limitResult = await rateLimit(
+          loginKey,
+          LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+          LOGIN_RATE_LIMIT_WINDOW_SECONDS
+        );
+        if (!limitResult.allowed) {
+          logger.info("Auth: Rate limit exceeded for email:", credentials.email);
+          throw new Error(
+            `Too many login attempts. Please try again in ${Math.ceil(limitResult.resetInSeconds / 60)} minute(s).`
+          );
         }
 
         try {
