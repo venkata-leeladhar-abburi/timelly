@@ -3,6 +3,14 @@
  */
 import { POST } from "@/app/api/payment/verify/route";
 
+// Rate limiting has its own dedicated tests (lib/rateLimit.test.ts). Mocked here
+// so this suite doesn't exercise real Upstash Redis (this repo's .env carries a
+// live Upstash instance) and isn't affected by call-count state across test runs.
+jest.mock("@/lib/rateLimit", () => ({
+  rateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 29, resetInSeconds: 600 }),
+  rateLimitKey: (...parts: string[]) => parts.join(":"),
+}));
+
 jest.mock("@/lib/db/tenantContext", () => ({
   runInTenantScope: (schoolId: string, fn: (id: string) => unknown) => fn(schoolId),
   runInOptionalTenantScope: (_schoolId: unknown, fn: () => unknown) => fn(),
