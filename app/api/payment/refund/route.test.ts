@@ -30,9 +30,8 @@ jest.mock("@/lib/notificationService", () => ({
   createNotification: (...args: unknown[]) => mockCreateNotification(...args),
 }));
 
-jest.mock("@/lib/db", () => ({
-  __esModule: true,
-  default: {
+jest.mock("@/lib/db", () => {
+  const dbMock: Record<string, unknown> = {
     school: { findFirst: (...args: unknown[]) => mockSchoolFindFirst(...args) },
     payment: { findFirst: (...args: unknown[]) => mockPaymentFindFirst(...args) },
     schoolSettings: { findUnique: (...args: unknown[]) => mockSchoolSettingsFindUnique(...args) },
@@ -43,9 +42,12 @@ jest.mock("@/lib/db", () => ({
     studentFee: { update: (...args: unknown[]) => mockStudentFeeUpdate(...args) },
     $queryRawUnsafe: (...args: unknown[]) => mockQueryRawUnsafe(...args),
     $executeRawUnsafe: (...args: unknown[]) => mockExecuteRawUnsafe(...args),
-    $transaction: (ops: unknown[]) => Promise.all(ops),
-  },
-}));
+    // Callback-form transaction (route wraps the refund flow in one tx + advisory lock):
+    // run the callback against this same mock object, which exposes every method above.
+    $transaction: (fn: (tx: unknown) => unknown) => fn(dbMock),
+  };
+  return { __esModule: true, default: dbMock };
+});
 
 const request = (body: unknown) =>
   new Request("http://localhost/api/payment/refund", {

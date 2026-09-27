@@ -31,10 +31,10 @@ type FastOfflinePaymentInput = {
   schoolId: string;
   studentId: string;
   amount: number;
-  paymentMode?: string;
-  refNo?: string;
-  transactionId?: string;
-  paymentDate?: string;
+  paymentMode?: string | null;
+  refNo?: string | null;
+  transactionId?: string | null;
+  paymentDate?: string | null;
   selectedHeads: OfflineSelectedHead[];
   explicitAllocations: OfflineExplicitAllocation[];
   collectedByUserId?: string;
@@ -54,13 +54,13 @@ function headKeyFromSelected(h: OfflineSelectedHead): string {
   return `EXTRA:${h.extraFeeId}`;
 }
 
-function parsePaymentDate(paymentDate?: string): Date | null {
+function parsePaymentDate(paymentDate?: string | null): Date | null {
   if (!paymentDate?.trim()) return null;
   const d = new Date(`${paymentDate.trim()}T12:00:00.000Z`);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function resolveGateway(paymentMode?: string): string {
+function resolveGateway(paymentMode?: string | null): string {
   const token =
     typeof paymentMode === "string" && paymentMode.trim()
       ? paymentMode.trim().toUpperCase()
