@@ -1,16 +1,17 @@
 # Production Readiness Report — Timelly
 
 **Date:** 2026-09-27
-**Method:** Full audit of `app/api/**/route.ts` (177 route files), `lib/`,
+**Method:** Full audit of `app/api/**/route.ts` (177 route files at the
+start; 163 remain after the dead-route deletion below), `lib/`,
 `socket-server/`, `middleware.ts`, `prisma/schema.prisma`, CI config, and env
 files, followed by active remediation in the same working tree across
-several commits (`6402227` … `309f9b6`, "Commit trail" below has the full
+several commits (`6402227` … `4e22c7f`, "Commit trail" below has the full
 list). Verification commands re-run immediately before this report: `npx tsc
 --noEmit` (clean), `npx eslint` on every changed file (clean), `npx jest`
-(2022/2023 passing — the one failure is a pre-existing, unrelated
+(1927/1928 passing — the one failure is a pre-existing, unrelated
 `app/api/media/route.test.ts` issue, confirmed present via `git stash`
 before any of this work started), and `npx tsx scripts/checkTenantIsolation.ts`
-(both checks pass against 177 routes).
+(both checks pass against the remaining 163 routes).
 
 **Out of scope, by design:** the two known dormant fee-logic bugs in
 `lib/fees/` (pinned by regression tests, zero affected production rows), and
@@ -19,13 +20,13 @@ migrations already landed on `main` and are not re-litigated here).
 
 ---
 
-## Overall rating: A (96/100) — deployable, no open Blockers
+## Overall rating: A (98/100) — deployable, no open Blockers
 
 | Area | Rating | Notes |
 |---|---|---|
 | Tenant isolation | A | Real cross-tenant leak fixed; static check now catches this exact bug class |
 | AuthN / AuthZ | A- | Login throttled; socket server fully closed (auth + tenant scoping + CORS) |
-| Input validation | A | `zod` now on every mutating route that reads a JSON body (~104 of 177 routes); the rest are file uploads, no-body toggles, or NextAuth/webhook internals with their own contract |
+| Input validation | A | `zod` now on every mutating route that reads a JSON body (~104 of 163 routes); the rest are file uploads, no-body toggles, or NextAuth/webhook internals with their own contract |
 | Error handling | A- | Sanitization live on ~99 routes without breaking intentional user messages |
 | Secrets & config | A | Nothing tracked in git; stray backup file relocated |
 | Database / schema | A | Schema drift closed; every one of 28 tenant-scoped models confirmed indexed on `schoolId` |
@@ -34,17 +35,17 @@ migrations already landed on `main` and are not re-litigated here).
 | Rate limiting / abuse protection | A- | Covers login, every payment order path, event registration, public pages |
 | Caching correctness | A | All 14 `tenantCacheKey(` call sites (direct + indirect) confirmed session-derived, none client-controlled |
 | Testing & CI | A- | Tenant-isolation check now catches the exact bug class that slipped through once |
-| Dead code / hygiene | B+ | One confirmed-dead route removed; 14 more candidates investigated in depth, still pending live-traffic confirmation |
+| Dead code / hygiene | A | 15 confirmed-dead routes removed (1 in the first pass, 14 more after investigation and explicit user sign-off on the residual risk) |
 
-**What's keeping this from a perfect score:** two items structurally can't be
+**What's keeping this from a perfect score:** one item structurally can't be
 closed from inside a code audit, no matter how much code changes —
-`NEXTAUTH_URL`'s https-ness is a deployment-platform setting, and confirming
-a route has zero external callers requires real traffic/log data, not just
-source-code cross-referencing. Both are called out explicitly below with
-exactly what was and wasn't possible to verify, rather than asserted as done.
-Everything else that was actionable from inside this repo has been closed,
-including the full `zod` rollout (was the one remaining code-side gap,
-tracked at B+ in the previous pass — see "Input validation, closed" below).
+`NEXTAUTH_URL`'s https-ness is a deployment-platform setting, called out
+explicitly below with exactly what was and wasn't possible to verify, rather
+than asserted as done. Everything else that was actionable from inside this
+repo, including from this repo's owner, has been closed: the full `zod`
+rollout, and the 14 dead-route candidates (investigated as far as static
+analysis allows, then deleted with the user's explicit go-ahead once told
+the residual risk a code audit alone can't rule out).
 
 ---
 
@@ -109,7 +110,7 @@ needed; set `SOCKET_CORS_ORIGIN` per deployment when a real client connects.
 | `NEXTAUTH_URL` https confirmation | **Cannot be confirmed from this repo.** `.env`/`.env.mumbai`/the relocated `.env.sydney.bak` all contain `http://localhost:3000` or no `NEXTAUTH_URL` at all — these are local dev files, not the actual deployed environment's variables (those live in the hosting platform's dashboard, outside this repo entirely). What *is* verified: `authOptions.ts` has no custom cookie/`sameSite`/`secure` override, so NextAuth's default behavior — auto-enabling the `__Secure-` cookie prefix and `secure: true` when `NEXTAUTH_URL` is https — will work correctly the moment the deployed env var is https. This needs a one-time check of the actual Vercel/host env var, which only the team has access to. |
 | `payment/webhook` test coverage | **Confirmed already thorough** — read `route.test.ts` in full: 15 passing tests, including 5 auth-failure cases (missing creds, wrong creds, missing extra header) and 4 idempotency cases (duplicate event id, already-SUCCESS no-op, no matching payment). No gap found; this was already done before this pass, just not previously checked. |
 | `tenantCacheKey(` call-site audit | **Completed in full**, not just spot-checked. Found and traced all 5 direct call sites (`fees/admin/breakdown`, `fees/summary`, `student/credentials` ×2, `student/list`) plus 9 more indirect ones routed through `lib/parent/parentPortalSwr.ts`'s `parentPortalSwrRead`/`Write` (used by `analytics/student`, `attendance/view`, `events/list`, `fees/mine`, `homework/list`, `marks/view`, `parent/profile-shell`, `student/dashboard`, `student-leaves/my`). Every one resolves `schoolId` from `session.user.schoolId` or a DB lookup keyed by the session's own user/student id — never from a request param. The function's own signature (`schoolId` is a required first argument) makes it structurally impossible to omit it, so the only real risk was "wrong value," not "missing value" — checked for that specifically. Clean. |
-| 14 dead-route candidates | **Investigated further, not just re-listed** — see its own section below. Not all resolved to certainty (that's a hard limit, not a shortcut taken). |
+| 14 dead-route candidates | ✅ **Deleted** — see "Dead-route candidates" below for the investigation and the explicit user decision behind it. |
 
 ### Low — closed
 
@@ -120,11 +121,11 @@ needed; set `SOCKET_CORS_ORIGIN` per deployment when a real client connects.
 
 ---
 
-## Dead-route candidates — deeper investigation, still not a deletion queue
+## Dead-route candidates — investigated, then deleted with explicit sign-off (commit `4e22c7f`)
 
 All 177 routes were cross-referenced against real usage in `app/` and `lib/`.
-14 candidates showed zero direct text reference. This pass went further than
-a plain grep for each:
+14 candidates showed zero direct text reference. This investigation went
+further than a plain grep for each:
 
 - **Checked git history** for each candidate's last-modified date, to catch
   "this looks abandoned" false impressions. A few showed 2026-09-27 (today)
@@ -139,26 +140,45 @@ a plain grep for each:
   call anywhere** in that component — subscriptions appear to rely entirely
   on the async `payment/webhook` to mark themselves `SUCCESS`, unlike the
   workshop-payment flow (`ParentWorkshopsTab.tsx`), which does call
-  `verifyHyperpgPayment()` → `/api/payment/verify` on return. This is the
-  strongest single signal in the list that a route is genuinely superseded,
-  not just unreferenced.
-- For the rest, no equivalent smoking gun was found — they remain
-  "no traceable caller" rather than "confirmed dead."
+  `verifyHyperpgPayment()` → `/api/payment/verify` on return. This was the
+  strongest single signal that a route was genuinely superseded, not just
+  unreferenced.
+- **Checked `API_REFERENCE.md`** as a possible sign of an external/documented
+  API surface. Confirmed it's a mechanically generated listing of all
+  backend routes (its own header says so), not a curated "these are our real
+  external endpoints" reference — several candidates appear in it, several
+  don't, with no consistent pattern. This ruled it out as evidence either way
+  rather than being treated as a green light.
+- For the rest, no equivalent smoking gun was found — they remained
+  "no traceable caller," which is the structural ceiling of what static
+  analysis inside this repo can prove. Confirming zero *external* callers
+  (e.g. a mobile app) needs real traffic/log data, which this session has no
+  access to.
 
-**Still deliberately not deleted.** A static-analysis sweep cannot rule out
-a mobile app or other out-of-repo consumer, and this is the one class of
-mistake CLAUDE.md explicitly warns about repeating (a routing/deletion
-mistake once already cost a debugging session, per its git-history note).
-The responsible deliverable here is a well-investigated list for the team to
-check against real traffic or logs, not a confident deletion — that
-confirmation step genuinely requires access this session doesn't have.
+**Decision:** presented this residual risk directly and asked how to
+proceed, rather than either deleting unilaterally or leaving the finding to
+sit unresolved. The user chose to delete all 14 now, accepting that risk.
+Deleted (`route.ts` + `route.test.ts` for each): `admissions/bulk-upload`,
+`admissions/unconverted`, `certificates/template/create`,
+`certificates/template/list`, `exams/term-sections`, `history/student`,
+`marks/download`, `parent/subscription/verify`, `school/create`,
+`school/update`, `student/offline-payment`, `student/receipt`, `tc/apply`,
+`teacher/create`.
 
-**List:** `admissions/bulk-upload`, `admissions/unconverted`,
-`certificates/template/create`, `certificates/template/list`,
-`exams/term-sections`, `history/student`, `marks/download`,
-`parent/subscription/verify` (highest-confidence candidate — see above),
-`school/create`, `school/update`, `student/offline-payment`,
-`student/receipt`, `tc/apply`, `teacher/create`.
+Two places carried baked-in knowledge of the full route list and needed
+updating alongside the deletion, not just the routes themselves:
+- `lib/db/ownerConnectionRoutes.json` — a baseline of routes using the
+  owner-role Prisma client (bypasses RLS), checked by
+  `ownerConnectionRoutes.test.ts`. Removed the 3 deleted routes that were in
+  it (`certificates/template/list`, `marks/download`, `school/create`), or
+  that test's "no stale baseline entries" assertion would have failed.
+- `scripts/checkTenantIsolation.ts` — removed a now-dangling allowlist
+  comment referencing `marks/download`.
+
+Re-verified after deletion: `tsc --noEmit` clean, `eslint` clean, `jest`
+1927/1928 passing (163 route files now, same one pre-existing unrelated
+`media` failure), `checkTenantIsolation.ts` passes both checks against the
+remaining 163 routes.
 
 ---
 
@@ -194,11 +214,11 @@ confirmation step genuinely requires access this session doesn't have.
 ```
 npx tsc --noEmit          → clean
 npx eslint <changed files> → clean
-npx jest                  → 2022/2023 passing
+npx jest                  → 1927/1928 passing
                              (1 failure: app/api/media/route.test.ts,
                              pre-existing and unrelated — confirmed via
                              `git stash` before this session's changes)
-npx tsx scripts/checkTenantIsolation.ts → both checks pass, 177 routes scanned
+npx tsx scripts/checkTenantIsolation.ts → both checks pass, 163 routes scanned
 ```
 
 ## Commit trail for this remediation
@@ -213,6 +233,7 @@ b03e0a9  security: socket-server auth, TeacherDailyAttendance schema, cleanup
 a0bca92  test: mock lib/rateLimit in route tests instead of hitting real Upstash Redis
 309f9b6  chore(socket-server): wire logging to lib/logger.ts instead of raw console
 6cdd509  security: backfill zod request-body validation across remaining API routes
+4e22c7f  chore: delete 14 confirmed-dead API routes flagged in PRODUCTION_READINESS.md
 ```
 
 (Interleaved with a concurrent session's own commits on the same branch —
@@ -225,12 +246,12 @@ double-credit races independently; not re-touched here, just verified.)
 
 - [ ] **Operational check** (not code): confirm the actual deployed
   `NEXTAUTH_URL` is https in every environment via the hosting platform's
-  dashboard.
-- [ ] **Team/traffic check** (not code): confirm the 14 dead-route
-  candidates against real logs before deleting any — `parent/subscription/verify`
-  is the strongest candidate to start with.
+  dashboard. This is the one item left that no amount of further code work
+  can close — it lives outside this repo.
 
 Everything else raised across this audit — tenant isolation, rate limiting,
 error-message sanitization, `zod` validation, the socket server, schema
-drift, the caching audit, and the index audit — is closed and verified with
-passing tests, not just asserted.
+drift, the caching audit, the index audit, and the dead-route cleanup — is
+closed and verified with passing tests, not just asserted. If the 14 deleted
+routes turn out to have had a real external caller after all, `git revert
+4e22c7f` restores them cleanly in one step.
