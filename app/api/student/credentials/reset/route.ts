@@ -7,6 +7,7 @@ import { hashStudentPasswordFromDob } from "@/lib/students/studentDefaultPasswor
 import { invalidateTenant } from "@/lib/cache/tenantCache";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const MAX_RESET = 5000;
 
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     logger.error("Student credentials reset error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

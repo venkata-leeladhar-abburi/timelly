@@ -9,6 +9,7 @@ import {
   PARENT_LIST_TTL,
 } from "@/lib/parent/parentPortalSwr";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET(req: Request) {
   try {
@@ -163,7 +164,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("List homeworks error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

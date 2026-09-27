@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function verifyAndGetFeed(id: string, schoolId: string) {
   const rows = await prisma.$queryRawUnsafe<{ id: string }[]>(
@@ -94,7 +95,7 @@ export async function PUT(
   } catch (error: unknown) {
     logger.error("Update news feed error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -138,7 +139,7 @@ export async function DELETE(
   } catch (error: unknown) {
     logger.error("Delete news feed error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

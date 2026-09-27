@@ -10,6 +10,7 @@ import {
 import { loadFeeReportTransactions } from "@/lib/fees/loadDayFeeCollectionTransactions";
 import { buildFeeHeadAmountsByPaymentId, dominantFeeHead, feeHeadLinesFromMap } from "@/lib/fees/paymentFeeHeadLines";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /**
  * GET /api/fees/transactions
@@ -201,7 +202,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("Transactions error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/parent/parentPortalSwr";
 import { logger } from "@/lib/logger";
 import { schoolIdViaStudentId } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; studentId?: string | null };
@@ -146,7 +147,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("View marks error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

@@ -9,6 +9,7 @@ import {
   setSchoolDashboardServerCached,
 } from "@/lib/school/schoolDashboardServerCache";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 type TeacherAttendanceRow = {
   id: string;
@@ -181,7 +182,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("Get teacher attendance error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -287,7 +288,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     logger.error("Mark teacher attendance error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

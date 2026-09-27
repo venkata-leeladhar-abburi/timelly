@@ -55,17 +55,40 @@ export function getErrorName(err: unknown): string | undefined {
 }
 
 /**
- * Message to return to an API client for an unexpected/uncaught error, instead of
- * forwarding `error.message` directly (which can leak internal details — Prisma
- * constraint names, file paths, gateway response bodies — to whoever called the
- * route). See PRODUCTION_READINESS.md's error-handling finding.
+ * True for errors that are safe to show a client as-is: a plain `Error` (or
+ * `HttpError`) thrown directly by application code, which in this codebase's own
+ * convention means a short, already-considered, user-facing message (e.g.
+ * "Amount cannot exceed remaining due (₹500.00)") — not an infra/library error
+ * whose message can carry internal details.
  *
- * Not for the many places in this codebase that intentionally `throw new
- * Error("some short user-facing message")` as flow control for an expected,
- * already-validated failure (e.g. "Amount cannot exceed remaining due") — those
- * are written to be shown to the user and should keep using `getErrorMessage`
- * directly. This is specifically for the outermost catch block wrapping a whole
- * route handler, where the error could be anything.
+ * False for anything shaped like an infra error even if it happens to be an
+ * `Error` instance: Prisma client errors (constraint names, table/column names in
+ * `.message`), and non-Error thrown values (a rejected promise with a plain
+ * object, a raw string, etc. — application code in this repo doesn't throw those
+ * intentionally, so one showing up here means something unexpected happened).
+ */
+function isSafeApplicationError(err: unknown): err is Error {
+  if (!(err instanceof Error)) return false;
+  // Prisma errors are all named PrismaClientXxxError and often carry `code`/`meta`
+  // (constraint names, column names) baked into `.message` itself.
+  if (/^PrismaClient/.test(err.name)) return false;
+  if (getErrorCode(err) !== undefined) return false;
+  return true;
+}
+
+/**
+ * Message to return to an API client for an unexpected/uncaught error, instead of
+ * unconditionally forwarding `error.message` (which can leak internal details —
+ * Prisma constraint names, file paths, gateway response bodies — to whoever
+ * called the route). See PRODUCTION_READINESS.md's error-handling finding.
+ *
+ * This deliberately still returns the real message for a plain application
+ * `Error`/`HttpError` (see `isSafeApplicationError`), even outside development —
+ * this codebase's convention is `throw new Error("some short user-facing
+ * message")` as flow control for an expected, already-validated failure, and
+ * those are written to be shown to the user. It only substitutes `fallback` for
+ * errors that don't look like one of those: Prisma/infra errors, or anything not
+ * an `Error` instance at all.
  */
 export function toClientErrorMessage(
   err: unknown,
@@ -73,6 +96,9 @@ export function toClientErrorMessage(
 ): string {
   if (process.env.NODE_ENV !== "production") {
     return getErrorMessage(err) || fallback;
+  }
+  if (isSafeApplicationError(err)) {
+    return err.message || fallback;
   }
   return fallback;
 }

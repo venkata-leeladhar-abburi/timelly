@@ -15,6 +15,7 @@ import {
   PARENT_DASHBOARD_FULL_TTL,
 } from "@/lib/parent/parentPortalSwr";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 declare const globalThis: {
   parentDashboardPurgeLastRunAt?: number;
@@ -127,7 +128,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

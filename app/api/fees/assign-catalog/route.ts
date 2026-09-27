@@ -8,6 +8,7 @@ import {
   setAssignCatalogMemCached,
 } from "@/lib/fees/assignCatalogServerCache";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const extraFeeSelect = {
   id: true,
@@ -158,7 +159,7 @@ export async function GET(req: Request) {
     });
   } catch (error: unknown) {
     logger.error("assign-catalog GET error:", error);
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message = toClientErrorMessage(error, "Internal server error");
     return NextResponse.json({ message }, { status: 500 });
   }
 }

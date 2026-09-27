@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { getOrCreateBackupSchedule, sendFeesBackupEmail } from "@/lib/fees/sendFeesBackupEmail";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /**
  * POST /api/superadmin/backup/email
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     logger.error("Superadmin backup email error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

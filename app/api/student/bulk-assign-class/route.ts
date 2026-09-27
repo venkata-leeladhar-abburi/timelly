@@ -12,6 +12,7 @@ import {
 } from "@/lib/fees/studentTuitionFromStructure";
 import { logger } from "@/lib/logger";
 import { runInTenantScope } from "@/lib/db/tenantContext";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const STAFF_ROLES = new Set(["SCHOOLADMIN", "SUPERADMIN", "TEACHER"]);
 const MAX_BULK_ASSIGN = 500;
@@ -181,7 +182,7 @@ export async function PUT(req: Request) {
   } catch (error: unknown) {
     logger.error("Bulk assign student to class error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

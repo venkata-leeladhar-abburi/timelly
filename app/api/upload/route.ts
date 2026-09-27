@@ -5,6 +5,7 @@ import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const MAX_SIZE_MB = 10;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -184,7 +185,7 @@ export async function POST(req: Request) {
   } catch (e) {
     logger.error("Upload API error:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

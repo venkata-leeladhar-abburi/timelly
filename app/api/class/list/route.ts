@@ -11,6 +11,7 @@ import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function resolveSchoolId(session: { user: { id: string; schoolId?: string | null; role: string } }) {
   let schoolId = session.user.schoolId;
@@ -135,7 +136,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("List classes error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

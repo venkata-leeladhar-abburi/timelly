@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { buildParentBootstrap } from "@/lib/parent/buildParentBootstrap";
 import { getParentPortalServerCached } from "@/lib/parent/parentPortalServerCache";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET(request: Request) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
   } catch (error: unknown) {
     logger.error("Parent bootstrap error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

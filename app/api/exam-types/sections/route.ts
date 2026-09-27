@@ -5,6 +5,7 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -139,7 +140,7 @@ export async function PUT(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam type sections PUT:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

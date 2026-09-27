@@ -8,6 +8,7 @@ import {
   getSchoolUserIds,
 } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 function generateId(): string {
   const prefix = "c";
@@ -174,7 +175,7 @@ export async function POST(req: Request) {
     );
   } catch (error: unknown) {
     logger.error("Create news feed error:", error);
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg = toClientErrorMessage(error, "Internal server error");
     return NextResponse.json({ message: msg }, { status: 500 });
   }
 }

@@ -7,6 +7,7 @@ import { assertTeacherCanEnterMarks } from "@/lib/teacher/teacherMarksScope";
 import { parseMarkComponents, sumComponents } from "@/lib/exams/markComponents";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 function calculateGrade(marks: number, totalMarks: number): string {
   const percentage = (marks / totalMarks) * 100;
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
       components = parseMarkComponents(body.components);
     } catch (err) {
       return NextResponse.json(
-        { message: err instanceof Error ? err.message : "Invalid components" },
+        { message: toClientErrorMessage(err, "Invalid components") },
         { status: 400 }
       );
     }
@@ -240,7 +241,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message:
-          error instanceof Error ? error.message : "Internal server error",
+          toClientErrorMessage(error, "Internal server error"),
       },
       { status: 500 }
     );

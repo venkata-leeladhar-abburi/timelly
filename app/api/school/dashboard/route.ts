@@ -15,6 +15,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 declare const globalThis: {
   schoolDashboardPurgeLastRunAt?: number;
@@ -314,7 +315,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

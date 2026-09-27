@@ -6,6 +6,7 @@ import { resolveFeesSchoolIdForSession } from "../../extra-head-templates/resolv
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
 import { runInTenantScope } from "@/lib/db/tenantContext";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 function canManage(role: string | null | undefined) {
   return role === "SCHOOLADMIN" || role === "SUPERADMIN" || role === "TEACHER";
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
     return NextResponse.json(result, { status: 201 });
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message = toClientErrorMessage(error, "Internal server error");
     const status = message.includes("not found") ? 404 : 500;
     logger.error("batch-assign error:", error);
     return NextResponse.json({ message }, { status });

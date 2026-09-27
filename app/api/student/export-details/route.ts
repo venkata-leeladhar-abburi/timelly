@@ -11,6 +11,7 @@ import {
 import { resolveStudentDisplayClass } from "@/lib/students/resolveStudentDisplayClass";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const MAX_EXPORT = 5000;
 
@@ -153,7 +154,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         message:
-          error instanceof Error ? error.message : "Internal server error",
+          toClientErrorMessage(error, "Internal server error"),
       },
       { status: 500 }
     );

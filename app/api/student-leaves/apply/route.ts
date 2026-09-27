@@ -9,6 +9,7 @@ import {
 } from "@/lib/notificationService";
 import { invalidateParentPortalCaches } from "@/lib/parent/invalidateParentPortalCaches";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function POST(req: Request) {
   try {
@@ -98,7 +99,7 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     logger.error("Student leave apply:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

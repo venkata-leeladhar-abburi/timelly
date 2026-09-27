@@ -5,6 +5,7 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { createNotification } from "@/lib/notificationService";
 import { requireSchoolId } from "@/lib/auth/tenant";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function PATCH(
   _req: Request,
@@ -57,7 +58,7 @@ export async function PATCH(
   } catch (e: unknown) {
     logger.error("Student leave approve:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

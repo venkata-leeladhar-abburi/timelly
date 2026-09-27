@@ -13,6 +13,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /** Day collection — ?from=YYYY-MM-DD&to=YYYY-MM-DD&part=summary | heads (fast) or full payload. */
 export async function GET(request: Request) {
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
   } catch (error: unknown) {
     logger.error("Dashboard collection error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

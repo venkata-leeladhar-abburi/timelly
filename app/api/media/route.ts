@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { supabaseAdmin, SUPABASE_BUCKET } from "@/lib/supabase";
 import { isValidInternalSecret } from "@/lib/internalSecret";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /**
  * Internal server-to-server callers (e.g. serverPdfLogo.ts during PDF generation)
@@ -114,7 +115,7 @@ export async function GET(req: Request) {
     });
   } catch (e: unknown) {
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

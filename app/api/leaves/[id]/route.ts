@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
 
@@ -95,7 +96,7 @@ export async function PUT(req: Request, { params }: { params: Params }) {
     return NextResponse.json(leave, { status: 200 });
     });
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Internal Server Error";
+    const message = toClientErrorMessage(e, "Internal Server Error");
     logger.error("Leaves update error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -136,7 +137,7 @@ export async function DELETE(req: Request, { params }: { params: Params }) {
     return NextResponse.json({ success: true }, { status: 200 });
     });
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Internal Server Error";
+    const message = toClientErrorMessage(e, "Internal Server Error");
     logger.error("Leaves delete error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }

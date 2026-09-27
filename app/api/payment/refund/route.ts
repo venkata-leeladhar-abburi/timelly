@@ -6,6 +6,7 @@ import { createNotification } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
 import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
 import { FEE_MUTATION_TX } from "@/lib/fees/prismaFeeMutationTx";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /** Thrown from inside the locked transaction to map back to a 4xx response, not a 500. */
 class RefundRequestError extends Error {
@@ -300,7 +301,7 @@ export async function POST(req: Request) {
     }
     logger.error("Refund error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

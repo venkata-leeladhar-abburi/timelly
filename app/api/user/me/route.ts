@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInOptionalTenantScope } from "@/lib/db/tenantContext";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher/teacherClassAccess";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET() {
   try {
@@ -83,7 +84,7 @@ export async function GET() {
   } catch (e: unknown) {
     logger.error("User me GET:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -180,7 +181,7 @@ export async function PUT(req: Request) {
   } catch (e: unknown) {
     logger.error("User me PUT:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

@@ -13,6 +13,7 @@ import {
 import { buildFeeDueReportWorkbook } from "@/lib/fees/feeDueReportExcel";
 import { studentStatusFilter } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -223,7 +224,7 @@ export async function GET(req: Request) {
     });
   } catch (error: unknown) {
     logger.error("Fee due report export error:", error);
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message = toClientErrorMessage(error, "Internal server error");
     return NextResponse.json({ message }, { status: 500 });
   }
 }

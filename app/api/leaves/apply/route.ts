@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { getServerSession } from "next-auth";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const VALID_LEAVE_TYPES = ["CASUAL", "SICK", "PAID", "UNPAID"] as const;
 
@@ -100,7 +101,7 @@ export async function POST(req: Request) {
     return NextResponse.json(leave, { status: 201 });
     });
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Internal Server Error";
+    const message = toClientErrorMessage(e, "Internal Server Error");
     logger.error("Leaves apply error:", e);
     return NextResponse.json({ error: message }, { status: 500 });
   }

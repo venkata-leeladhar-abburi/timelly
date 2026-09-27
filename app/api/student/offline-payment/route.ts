@@ -6,6 +6,7 @@ import { resolveOfflinePaymentCollectorFromSession } from "@/lib/fees/offlinePay
 import { isActiveStudent } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
 import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export async function POST(req: Request) {
     try {
@@ -129,7 +130,7 @@ export async function POST(req: Request) {
         });
     } catch (error: unknown) {
         logger.error("Error recording offline payment:", error);
-        const message = error instanceof Error ? error.message : "Failed to record offline payment";
+        const message = toClientErrorMessage(error, "Failed to record offline payment");
         return NextResponse.json({ message }, { status: 500 });
     }
 }

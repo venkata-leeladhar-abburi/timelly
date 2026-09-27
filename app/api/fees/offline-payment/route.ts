@@ -37,6 +37,7 @@ import {
 import { reconcileStudentFeeIntegrity } from "@/lib/fees/reconcileStudentFeeIntegrity";
 import { roundRupee } from "@/lib/formatRupee";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const selectedHeadSchema = z.union([
   z.object({
@@ -747,7 +748,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     logger.error("Offline payment error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

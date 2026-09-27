@@ -5,6 +5,7 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { TeacherAuditCategory } from "@prisma/client";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /* ================= HELPERS ================= */
 const SCORE_BASELINE = 50;
@@ -98,7 +99,7 @@ export async function GET(
   } catch (e: unknown) {
     logger.error("Teacher audit records GET:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -220,7 +221,7 @@ const category: TeacherAuditCategory =
   } catch (e: unknown) {
     logger.error("Teacher audit records POST:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

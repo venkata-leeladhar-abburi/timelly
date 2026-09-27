@@ -20,6 +20,7 @@ import { backfillPaymentAllocationComponentNames } from "@/lib/fees/backfillPaym
 import { isMessCategoryExtraFeeName } from "@/lib/fees/extraFeeResidencyScope";
 import { logger } from "@/lib/logger";
 import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function loadSchoolExtras(schoolId: string) {
   return prisma.extraFee.findMany({
@@ -82,7 +83,7 @@ export async function GET() {
   } catch (error: unknown) {
     logger.error("GET cleanup-duplicates error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -188,7 +189,7 @@ export async function POST() {
   } catch (error: unknown) {
     logger.error("POST cleanup-duplicates error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

@@ -33,6 +33,7 @@ import {
   resolveStudentAdmissionApplicationFees,
 } from "@/lib/admission/studentAdmissionApplicationPayments";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 type RouteParams =
   | { params: { id: string } }
@@ -400,7 +401,7 @@ export async function GET(_req: Request, context: RouteParams) {
   } catch (error: unknown) {
     logger.error("Student details error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -779,7 +780,7 @@ export async function PUT(req: Request, context: RouteParams) {
   } catch (error: unknown) {
     logger.error("Student update error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -824,7 +825,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
   } catch (error: unknown) {
     logger.error("Student delete error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

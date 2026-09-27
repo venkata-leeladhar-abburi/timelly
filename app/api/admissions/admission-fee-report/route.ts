@@ -5,6 +5,7 @@ import { admissionFeeTotalsByChannel } from "@/lib/fees/admissionFeeCollectionCh
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { assertCanManageAdmissions, getSessionSchoolId } from "../_utils";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 function parseYmd(value: string | null): Date | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return null;
@@ -161,7 +162,7 @@ export async function GET(req: Request) {
     }
     logger.error("Admission fee report error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

@@ -10,6 +10,7 @@ import type { Prisma } from "@prisma/client";
 import { extraFeeAppliesToStudent } from "@/lib/fees/extraFeeResidencyScope";
 import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const hyperpgBaseUrl = process.env.HYPERPG_BASE_URL || "https://sandbox.hyperpg.in";
 const globalHyperpgMerchantId = process.env.HYPERPG_MERCHANT_ID;
@@ -552,7 +553,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: "Failed to create order",
-        details: err instanceof Error ? err.message : "Unknown error",
+        details: toClientErrorMessage(err, "Unknown error"),
       },
       { status: 500 }
     );

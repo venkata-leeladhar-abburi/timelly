@@ -17,6 +17,7 @@ import {
 } from "@/lib/fees/studentFeeReadCache";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 type RouteParams =
   | { params: { id: string } }
@@ -179,7 +180,7 @@ export async function GET(req: Request, context: RouteParams) {
   } catch (error: unknown) {
     logger.error("Student details bundle error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

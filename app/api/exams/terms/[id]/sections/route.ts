@@ -6,6 +6,7 @@ import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -69,7 +70,7 @@ export async function GET(
   } catch (e: unknown) {
     logger.error("Term sections GET:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -173,7 +174,7 @@ export async function PUT(
   } catch (e: unknown) {
     logger.error("Term sections PUT:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

@@ -11,6 +11,7 @@ import { roundRupee } from "@/lib/formatRupee";
 import { storedDiscountRupeeAmount } from "@/lib/fees/studentFeeHeadDiscount";
 import { logger } from "@/lib/logger";
 import { FEE_LIST_SERVER_CACHE_TTL_MS } from "@/lib/fees/feeListServerCache";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /**
  * Fast fee records list for the Fees Records table (no per-head allocation work).
@@ -103,7 +104,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("Fee records list error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

@@ -9,6 +9,7 @@ import {
   getSchoolUserIds,
 } from "@/lib/notificationService";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     logger.error("Circular create:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

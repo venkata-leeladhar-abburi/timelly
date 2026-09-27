@@ -5,6 +5,7 @@ import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { activeStudentWhere } from "@/lib/students/studentStatus";
 import { logger } from "@/lib/logger";
 import { schoolIdViaAdminRelation, schoolIdViaTeacherClass } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function resolveSchoolId(session: {
   user: { id: string; schoolId?: string | null; role: string };
@@ -333,7 +334,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("Consolidated marks error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

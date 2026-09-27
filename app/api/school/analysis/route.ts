@@ -15,6 +15,7 @@ import {
 } from "@/lib/school/schoolDashboardServerCache";
 import { runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export async function GET(req: Request) {
   } catch (error) {
     logger.error("Analysis API error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

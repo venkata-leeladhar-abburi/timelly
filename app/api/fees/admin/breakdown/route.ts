@@ -10,6 +10,7 @@ import {
 } from "@/lib/fees/studentFeeReadCache";
 import { tenantCacheKey, swrGet, swrSet } from "@/lib/cache/tenantCache";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function getSchoolId(session: { user: { id: string; schoolId?: string | null } }) {
   let schoolId = session.user.schoolId;
@@ -103,7 +104,7 @@ export async function GET(req: Request) {
     return NextResponse.json(result, { status: 200 });
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Internal server error";
+    const message = toClientErrorMessage(error, "Internal server error");
     if (message.includes("Fee record not found")) {
       return NextResponse.json({ message }, { status: 404 });
     }

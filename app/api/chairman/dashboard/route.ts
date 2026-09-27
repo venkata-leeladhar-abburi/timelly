@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { computeCurrentAndPreviousFeeStats } from "@/lib/fees/computeFeeSummaryStats";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 function dateRangeFromYmd(ymd: string | null) {
   const valid = typeof ymd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? ymd : null;
@@ -145,7 +146,7 @@ export async function GET(req: NextRequest) {
   } catch (error: unknown) {
     logger.error("Chairman dashboard:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Failed to load dashboard" },
+      { message: toClientErrorMessage(error, "Failed to load dashboard") },
       { status: 500 }
     );
   }

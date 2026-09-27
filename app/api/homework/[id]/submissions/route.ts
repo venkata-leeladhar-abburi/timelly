@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import type { PrismaClient } from "@prisma/client";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 type TenantTx = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
@@ -117,7 +118,7 @@ export async function GET(req: Request, context: RouteContext) {
   } catch (e: unknown) {
     logger.error("Homework submissions error:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

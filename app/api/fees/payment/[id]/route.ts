@@ -7,6 +7,7 @@ import { canonicalizeGatewayForStorage } from "@/lib/fees/feePaymentGateway";
 import { invalidateStudentFeeReadCaches } from "@/lib/fees/studentFeeReadCache";
 import { deleteFastFeePayment } from "@/lib/fees/deleteFastFeePayment";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -224,7 +225,7 @@ export async function PATCH(req: Request, context: RouteParams) {
   } catch (error: unknown) {
     logger.error("PATCH /api/fees/payment/[id] error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -266,7 +267,7 @@ export async function DELETE(req: Request, context: RouteParams) {
     return NextResponse.json({ success: true, ...result }, { status: 200 });
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Internal server error";
+    const msg = toClientErrorMessage(error, "Internal server error");
     const status = msg.includes("not found")
       ? 404
       : msg.includes("blocked") || msg.includes("cannot") || msg.includes("Only school")

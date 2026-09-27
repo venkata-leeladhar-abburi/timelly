@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth/authOptions";
 import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /**
  * GET /api/fees/collectors
@@ -73,7 +74,7 @@ export async function GET() {
   } catch (error: unknown) {
     logger.error("Fee collectors error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

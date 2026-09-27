@@ -6,6 +6,7 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { resolveFeesSchoolId } from "@/lib/fees/resolveFeesSchoolId";
 import { logger } from "@/lib/logger";
 import { invalidateFeeListServerCaches } from "@/lib/fees/feeListServerCache";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const MAX_ROWS = 800;
 const WRITE_BATCH_SIZE = 100;
@@ -367,7 +368,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     logger.error("POST /api/fees/extra/bulk-by-timelly error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

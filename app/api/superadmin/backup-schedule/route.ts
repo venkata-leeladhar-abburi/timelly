@@ -5,6 +5,7 @@ import prisma from "@/lib/db";
 import { parseScheduleTime } from "@/lib/backupScheduleUtils";
 import { getOrCreateBackupSchedule } from "@/lib/fees/sendFeesBackupEmail";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
@@ -38,7 +39,7 @@ export async function GET() {
   } catch (error: unknown) {
     logger.error("Backup schedule GET error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }
@@ -121,7 +122,7 @@ export async function PUT(req: Request) {
   } catch (error: unknown) {
     logger.error("Backup schedule PUT error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

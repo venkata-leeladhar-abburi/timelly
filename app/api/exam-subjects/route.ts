@@ -5,6 +5,7 @@ import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const DEFAULT_EXAM_SUBJECTS = [
   "MATHEMATICS",
@@ -154,7 +155,7 @@ export async function GET() {
   } catch (e: unknown) {
     logger.error("Exam subjects GET:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -229,7 +230,7 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam subjects POST:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -311,7 +312,7 @@ export async function PATCH(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam subjects PATCH:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -369,7 +370,7 @@ export async function DELETE(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam subjects DELETE:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

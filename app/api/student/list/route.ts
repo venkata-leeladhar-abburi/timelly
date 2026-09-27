@@ -13,6 +13,7 @@ import {
 import { activeStudentWhere, studentStatusFilter } from "@/lib/students/studentStatus";
 import { resolveStudentDisplayClass } from "@/lib/students/resolveStudentDisplayClass";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /** Admission / roll tokens usually include digits; pure letter queries are treated as names. */
 function studentSearchQueryLooksLikeAdmissionOrRoll(q: string): boolean {
@@ -288,7 +289,7 @@ export async function GET(req: Request) {
   } catch (error: unknown) {
     logger.error("List students error:", error);
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Internal server error" },
+      { message: toClientErrorMessage(error, "Internal server error") },
       { status: 500 }
     );
   }

@@ -6,6 +6,7 @@ import { withTenantScopedClient } from "@/lib/db/tenantClient";
 import { randomUUID } from "crypto";
 import { logger } from "@/lib/logger";
 import { schoolIdViaTeacherClass, schoolIdViaTeacherRelation, schoolIdViaAdminRelation } from "@/lib/auth/tenant";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 const DEFAULT_EXAM_TYPES = ["TERM 1", "TERM 2", "FINAL"];
 
@@ -148,7 +149,7 @@ export async function GET() {
   } catch (e: unknown) {
     logger.error("Exam types GET:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -188,7 +189,7 @@ export async function POST(req: Request) {
       if (parsed !== undefined) maxMarks = parsed;
     } catch (err) {
       return NextResponse.json(
-        { message: err instanceof Error ? err.message : "Invalid maxMarks" },
+        { message: toClientErrorMessage(err, "Invalid maxMarks") },
         { status: 400 }
       );
     }
@@ -225,7 +226,7 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam types POST:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -271,7 +272,7 @@ export async function PATCH(req: Request) {
       maxMarks = parsed;
     } catch (err) {
       return NextResponse.json(
-        { message: err instanceof Error ? err.message : "Invalid maxMarks" },
+        { message: toClientErrorMessage(err, "Invalid maxMarks") },
         { status: 400 }
       );
     }
@@ -318,7 +319,7 @@ export async function PATCH(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam types PATCH:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -393,7 +394,7 @@ export async function DELETE(req: Request) {
   } catch (e: unknown) {
     logger.error("Exam types DELETE:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }

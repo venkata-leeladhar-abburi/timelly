@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { tenantDb as prisma, runInTenantScope } from "@/lib/db/tenantContext";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 type RouteContext = { params: Promise<{ id: string }> | { params: { id: string } } };
 
@@ -95,7 +96,7 @@ export async function PUT(req: Request, context: RouteContext) {
   } catch (e: unknown) {
     logger.error("Homework update error:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
@@ -130,7 +131,7 @@ export async function DELETE(req: Request, context: RouteContext) {
   } catch (e: unknown) {
     logger.error("Homework delete error:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e, "Internal server error") },
       { status: 500 }
     );
   }
