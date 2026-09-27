@@ -54,6 +54,29 @@ export function getErrorName(err: unknown): string | undefined {
   return undefined;
 }
 
+/**
+ * Message to return to an API client for an unexpected/uncaught error, instead of
+ * forwarding `error.message` directly (which can leak internal details — Prisma
+ * constraint names, file paths, gateway response bodies — to whoever called the
+ * route). See PRODUCTION_READINESS.md's error-handling finding.
+ *
+ * Not for the many places in this codebase that intentionally `throw new
+ * Error("some short user-facing message")` as flow control for an expected,
+ * already-validated failure (e.g. "Amount cannot exceed remaining due") — those
+ * are written to be shown to the user and should keep using `getErrorMessage`
+ * directly. This is specifically for the outermost catch block wrapping a whole
+ * route handler, where the error could be anything.
+ */
+export function toClientErrorMessage(
+  err: unknown,
+  fallback = "Internal server error"
+): string {
+  if (process.env.NODE_ENV !== "production") {
+    return getErrorMessage(err) || fallback;
+  }
+  return fallback;
+}
+
 export function getErrorMetaTarget(err: unknown): unknown {
   if (
     err &&

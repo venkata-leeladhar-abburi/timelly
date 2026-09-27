@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import prisma from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { toClientErrorMessage } from "@/lib/errors/errorInfo";
 
 /**
  * Set school active/deactive. When deactive, the school is paused (all working tabs blocked).
@@ -43,7 +44,7 @@ export async function PATCH(
   } catch (e: unknown) {
     logger.error("Superadmin school active PATCH:", e);
     return NextResponse.json(
-      { message: e instanceof Error ? e.message : "Internal server error" },
+      { message: toClientErrorMessage(e) },
       { status: 500 }
     );
   }
