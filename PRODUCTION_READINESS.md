@@ -1,15 +1,19 @@
 # Production Readiness Audit — Timelly
 
 **Status: re-verified against the current working tree on 2026-09-27**, then
-actively remediated in the same session — all six original High-priority
-items are now either fixed or explicitly deferred with a stated reason (see
-"High-priority remediation" below). Scope: `app/api/**/route.ts` (178 route
-files), `lib/`, `socket-server/`, `middleware.ts`, `prisma/`, CI config, and
-env files. Two areas are explicitly out of scope per current workstream
-ownership: RLS policies / bulk-route edits and `prisma/migrations/` (owned by
-a concurrent session working in this same repo — noted factually only, not
-touched), and the two known dormant fee-logic bugs in `lib/fees/` (pinned by
-tests, zero affected prod rows — see memory `fee-known-issues-dormant`).
+actively remediated across two passes in the same session. All items from the
+original top-5 and the High-priority checklist are now either fixed or
+explicitly deferred with a stated, still-current reason — nothing is silently
+left stale (see "Resolved" / "Deferred" below). Scope: `app/api/**/route.ts`
+(177 route files as of this pass — one deprecated route was deleted),
+`lib/`, `socket-server/`, `middleware.ts`, `prisma/`, CI config, and env
+files. The two known dormant fee-logic bugs in `lib/fees/` remain explicitly
+out of scope (pinned by tests, zero affected prod rows — see memory
+`fee-known-issues-dormant`). A second area, RLS policies / bulk fee-route
+edits, was out of scope for most of this pass while a concurrent session in
+this same repo was actively working there; that workstream landed mid-session
+(its migrations and fixes are now on `main`), which is what unblocked the
+second remediation pass below.
 
 ## Resolved (fixed and committed in this session)
 
@@ -40,54 +44,62 @@ tests, zero affected prod rows — see memory `fee-known-issues-dormant`).
   and `events/register` (20/10min per user).
 - ✅ **`.env.sydney.bak` moved out of the repo** working tree entirely (to a
   sibling `../timelly-env-backups/` directory, not deleted).
+- ✅ **Socket server auth added** (commit `b03e0a9`). `socket-server/index.ts`
+  now verifies the same NextAuth session JWT the main app issues (via
+  handshake cookie or `auth.token`) before allowing a connection, and
+  restricts `join-room`/`send-message` to rooms prefixed with the caller's
+  `schoolId` (SUPERADMIN bypasses). No frontend integration exists yet
+  (confirmed zero call sites for `join-room`/`send-message`/`receive-message`
+  outside this file), so this also establishes the room-naming convention
+  any future integration must follow.
+- ✅ **`TeacherDailyAttendance` formalized** (commit `b03e0a9`) as a real
+  Prisma model (`prisma/schema.prisma`) plus an idempotent migration
+  (`prisma/migrations/20260927020000_add_teacher_daily_attendance/`) that
+  is a no-op wherever the route's runtime `ensureTable()` DDL already
+  created the identical table — that DDL is left in place as a safety net,
+  not removed.
+- ✅ **`payment/refund` double-refund race** — already fixed by the
+  concurrent session's commit `65f9000` (wraps the refundable-amount check
+  and the write in one transaction). Verified, not re-touched.
+- ✅ **Dead-route sweep (scoped)** — deleted
+  `app/api/communication/zegoToken/` (route + test): a 410 stub, confirmed
+  zero references from the frontend. A full sweep of all 177 routes against
+  `app/_components/constants/routes.ts` for other unused routes was not
+  attempted — this was the one route already flagged by name.
+- ✅ **Error-message sanitization (scoped)** — added
+  `toClientErrorMessage()` to `lib/errors/errorInfo.ts` (returns a generic
+  message in production instead of forwarding a caught error's raw
+  `message`) and applied it to `superadmin/schools/[id]/active`, the
+  concrete example named in the original finding. **Not** rolled out to the
+  other ~176 routes that still return raw `error.message` from their
+  outermost catch block — that's a much larger sweep with real regression
+  risk (some routes intentionally throw short user-facing messages as flow
+  control, which this helper is designed to leave alone, but distinguishing
+  "intentional" from "leaky" case-by-case across 176 files wasn't attempted
+  in this pass). The helper and one worked example exist; the rest is a
+  follow-up.
 
-## Deferred (not fixed this session — explicit reason given)
+## Corrected from the prior pass
 
-- ⏸️ **Socket server auth (`socket-server/index.ts`)** — still the top
-  Blocker, unchanged. Not attempted: fixing it properly means designing a
-  token-minting flow (reuse NextAuth JWT vs. a short-lived ticket endpoint)
-  and touching a separately-deployed process, which is a bigger design
-  decision than the other items here, not something to bang out inline.
-- ⏸️ **`TeacherDailyAttendance` schema formalization** — still runtime DDL,
-  unchanged. Not attempted: `prisma/migrations/` is being actively written to
-  by a concurrent session in this same working tree during this pass (a new
-  migration appeared mid-session); adding a competing migration here risked
-  a collision. Do this once that workstream is clear.
-- ⏸️ **`FeeDiscountApproval.schoolId` index, `payment/refund` double-refund
-  race, dead-route sweep, error-message sanitization** — Medium/Low items,
-  not attempted this pass; see checklist below.
+- **`FeeDiscountApproval.schoolId` — not actually missing an index.** The
+  earlier finding was based on a truncated read of the model that stopped
+  before its index block. Re-read in full: the model has
+  `@@index([schoolId, status, createdAt])`, which covers the
+  discount-approvals route's exact
+  `WHERE schoolId = ? [AND status = ?] ORDER BY createdAt` query pattern.
+  No fix was needed; a bare `@@index([schoolId])` would have been redundant
+  next to the existing composite index.
 
-## Executive summary — top items remaining
+## Genuinely still open
 
-1. **BLOCKER — Realtime socket server still has no auth or tenant scoping.**
-   `socket-server/index.ts` (28 lines total, unchanged) accepts any
-   connection, lets any client `join-room` on any string, and broadcasts
-   `send-message` to that room with no session/JWT verification and no
-   `schoolId` check. Still hardcodes CORS `origin: "http://localhost:3000"`.
-
-2. **HIGH (carried over, deferred — see above) — Schema drift**:
-   `TeacherDailyAttendance` is still created/altered via raw DDL at request
-   time in `app/api/teacher/attendance/route.ts` (`ensureTable()`) and still
-   does not appear in `prisma/schema.prisma`.
-
-3. **MEDIUM — `FeeDiscountApproval.schoolId` has no index.**
-   `prisma/schema.prisma:1151-1155` — the model has a `schoolId` column and
-   relation but no `@@index([schoolId])`, unlike `NewsFeed`
-   (`prisma/schema.prisma:868`, correctly indexed). This is the exact table
-   the closed discount-approvals leak reads/writes, and it's queried by
-   `schoolId` on every request. Deferred alongside the migration item above
-   for the same collision-risk reason.
-
-4. **MEDIUM — Rate limiting doesn't yet cover everything.** Login, payment
-   order creation, and event registration are covered; `payment/verify`,
-   `parent/subscription/create-order`, and the public `qr`/`screen`/`download`
-   pages are not.
-
-5. **MEDIUM — `payment/refund` double-refund race not fully confirmed.**
-   The write is wrapped in a transaction, but whether the refundable-amount
-   check runs inside vs. before it is unconfirmed (and this file is currently
-   being edited by the other concurrent session, so it wasn't re-touched
-   here).
+- **Rate limiting doesn't cover everything.** Login, payment order creation,
+  and event registration are covered by `lib/rateLimit.ts`; `payment/verify`,
+  `parent/subscription/create-order`, and the public `qr`/`screen`/`download`
+  pages are not yet wired in (the utility exists, so this is a smaller lift
+  than before).
+- **Error-message sanitization** beyond the one route above — see "scoped"
+  note.
+- **Full dead-route sweep** beyond the one route above — see "scoped" note.
 
 ---
 
@@ -105,7 +117,7 @@ any `schoolId` usage at all, then manually reviewed every route with zero
 | Self-scoped routes with no explicit `schoolId` filter | `app/api/leaves/my/route.ts`, `marks/download/route.ts`, `payment/receipt/route.ts`, `parent/subscription/history/route.ts`, `chairman/me/route.ts`, `student-leaves/approval-authority/route.ts` | Low | These filter by `session.user.id`/`studentId`/`teacherId` (the caller's own record), which is safe as a data-leak vector even without a `schoolId` clause — but note for reviewers so they aren't mistaken for gaps in future scans. No action needed unless a route is later extended to accept an id param. |
 | Deprecated route kept only to avoid 404s | `app/api/communication/zegoToken/route.ts` | Low | Fine — returns 410. Consider deleting outright once confirmed unused. |
 | ~~`superadmin/schools/[id]/active` — functional no-op~~ **FIXED** — now calls `prisma.school.update(...)` and returns the persisted row | `app/api/superadmin/schools/[id]/active/route.ts` | ~~High~~ Resolved | Verified in current diff. Add the regression test noted in Testing section. |
-| `FeeDiscountApproval` model has `schoolId` column but no `@@index([schoolId])` | `prisma/schema.prisma:1151-1155` | **Medium (new)** | Add `@@index([schoolId])` to the model, matching the pattern already used on `NewsFeed` (`schema.prisma:868`). This table is read/written on every discount-approval request, keyed by `schoolId`. |
+| ~~`FeeDiscountApproval` model has `schoolId` column but no `@@index([schoolId])`~~ **CORRECTED** — re-read the full model (the earlier read was truncated) and it already has `@@index([schoolId, status, createdAt])`, covering this route's exact query pattern | `prisma/schema.prisma` | Not a bug | No fix needed. |
 | ~~`scripts/checkTenantIsolation.ts` only flagged total-miss cases~~ **FIXED** — a second check now flags `searchParams.get(...schoolId...)`/`body.schoolId` reads outside a superadmin allowlist | `scripts/checkTenantIsolation.ts` | ~~High~~ Resolved | Verified: `npx tsx scripts/checkTenantIsolation.ts` passes both checks against current code; `npx jest scripts/checkTenantIsolation` passes including the new regression case. |
 
 **Overall**: the "no `requireSchoolId`" grep initially flagged 171/178 routes,
@@ -161,10 +173,10 @@ found here.
 
 | Finding | Severity | Fix |
 |---|---|---|
-| **Schema drift**: `TeacherDailyAttendance` table is created/altered via raw DDL at runtime in `app/api/teacher/attendance/route.ts` (`ensureTable()`), and does **not** appear in `prisma/schema.prisma` at all. | High | This table is invisible to Prisma migrate, to `prisma db pull`, and to any future migration tooling. Formalize it: add a real Prisma model + migration, then remove the runtime `ensureTable()` DDL (or keep only as an idempotent safety net, not the primary path). **Deliberately not done this session**: `prisma/migrations/` had a new migration land mid-session from a concurrent session working in this same repo; adding a competing one here risked a collision. Do this once that workstream is clear, not blind. |
+| ~~Schema drift: `TeacherDailyAttendance` table created/altered via raw DDL at runtime, absent from `prisma/schema.prisma`~~ **FIXED** — added as a real model plus an idempotent migration (`prisma/migrations/20260927020000_add_teacher_daily_attendance/`) | `prisma/schema.prisma`, `app/api/teacher/attendance/route.ts` | Resolved | The route's runtime `ensureTable()` DDL is left in place as a safety net for environments where this migration hasn't run yet, not removed. |
 | Migrations present: `20260923104016_create_app_tenant_role`, `20260923104652_rls_policies_direct_schoolid_tables`, `20260923105153_rls_policies_indirect_schoolid_tables`, `20260924120000_rls_policies_teacher_attendance_and_school_join_tables`. These are the RLS-policy migrations owned by the other in-flight workstream — noted factually, not touched/critiqued here per instructions. | — | n/a (other workstream) |
 | `runInTenantScope` / `tenantDb` wrapper (`lib/db/tenantContext.ts`, used widely) exists as an app-level scoping mechanism — good defense-in-depth pattern layered on top of `requireSchoolId`, though (per CLAUDE.md) it is not itself a DB-level guarantee since Prisma connects as the table-owning role. | — | n/a |
-| Did not get to a full per-table index audit of every `schoolId` column in this pass (schema is large). Given the discount-approvals leak in #1, worth specifically confirming `FeeDiscountApproval.schoolId` and `NewsFeed.schoolId` are indexed (both are hit with high-cardinality raw SQL `WHERE` clauses). | Medium | Follow-up: `grep -n "@@index" prisma/schema.prisma` cross-referenced against every model with a `schoolId` column. |
+| `FeeDiscountApproval.schoolId` and `NewsFeed.schoolId` (both hit with high-cardinality raw SQL `WHERE` clauses) are both indexed — confirmed by reading the full models. Did not do a full per-table index audit of every other `schoolId` column in the schema. | Low (audit gap on the rest of the schema) | Follow-up if desired: `grep -n "@@index" prisma/schema.prisma` cross-referenced against every model with a `schoolId` column, beyond the two spot-checked here. |
 
 ## 7. Caching (lib/cache/, Redis/Upstash)
 
@@ -185,11 +197,24 @@ found here.
 
 ## 9. Socket server
 
-Re-verified against current `socket-server/index.ts` — file is byte-for-byte
-unchanged since the initial pass. Still the top open Blocker. Additional notes:
-- Entire file is 28 lines — essentially a proof-of-concept, not production-hardened.
-- No tenant scoping of `roomId` — any client that guesses/observes a room id (e.g. an appointment/conversation id) can join and both read and inject messages.
-- Runs as a separate process (`socket-server/index.ts`), deployed separately per CLAUDE.md — confirm its exposure surface (is port 3001 reachable directly, or only via a reverse proxy that could add auth at that layer?) before treating this as fully blocking; if it's only reachable through an authenticated proxy that validates the JWT before proxying, severity drops from Blocker to High. Recommend confirming deployment topology.
+**FIXED** (commit `b03e0a9`). `socket-server/index.ts` now:
+- Rejects any connection that doesn't present a valid NextAuth session token
+  (read from the handshake cookie, matching the main app's default
+  cookie-based JWT session, or from `socket.handshake.auth.token` for
+  non-browser clients) via `next-auth/jwt`'s `decode()` with the shared
+  `NEXTAUTH_SECRET` — no separate ticket-minting endpoint needed since the
+  app doesn't override `jwt.encode`/`decode` in `authOptions.ts`.
+- Restricts `join-room` and `send-message` to rooms whose id equals the
+  caller's `schoolId` or is prefixed with `${schoolId}:`; `SUPERADMIN`
+  sessions bypass this (consistent with superadmin being global elsewhere).
+- CORS origin is still hardcoded to `http://localhost:3000` — **not** fixed
+  this pass (a smaller remaining item; see checklist).
+
+Notes for whoever integrates a client against this: grepping the frontend for
+`join-room`/`send-message`/`receive-message`/`socket.io-client` turned up
+zero call sites — nothing currently connects to this server, so the room-id
+convention above (`schoolId` or `schoolId:*`) is a convention this fix
+establishes, not one it had to match against an existing integration.
 
 ## 10. Testing & CI
 
@@ -219,31 +244,36 @@ unchanged since the initial pass. Still the top open Blocker. Additional notes:
 
 ## Prioritized remediation checklist
 
-**Resolved this session** (commits `6402227`, `79320d7`, `8f81214` — `npx tsc --noEmit`, `npx jest` (2011/2012 passing; the 1 failure is a pre-existing, unrelated `media` route issue confirmed present before this session's changes too), and `npx tsx scripts/checkTenantIsolation.ts` all verified green)
+**Resolved this session** — two passes, commits `6402227`, `79320d7`,
+`8f81214`, `b03e0a9` (`npx tsc --noEmit` clean; `npx jest` 2010/2011 passing —
+the 1 failure is a pre-existing, unrelated `media` route issue confirmed
+present before this session's changes too, via `git stash`; `npx tsx
+scripts/checkTenantIsolation.ts` passes both checks)
 - [x] Removed the client-supplied `schoolId` fallback in `app/api/fees/discount-approvals/route.ts`; added a regression test.
 - [x] Fixed `app/api/superadmin/schools/[id]/active/route.ts` to persist `isActive`; added a new test file covering it.
 - [x] Backfilled `zod` request-body validation onto `fees/discount-approvals/[id]`, `fees/offline-payment`, `payment/create-order`, `payment/verify`.
 - [x] Extended `scripts/checkTenantIsolation.ts` with a second check for client-controlled `schoolId` reads, plus a named regression test.
 - [x] Added `lib/rateLimit.ts` and wired it into login, `payment/create-order`, `events/register`.
 - [x] Moved `.env.sydney.bak` out of the repo working tree (to `../timelly-env-backups/`).
+- [x] Added auth + tenant-scoped room ACL to `socket-server/index.ts` (NextAuth JWT verification + `schoolId`-prefixed room convention).
+- [x] Formalized `TeacherDailyAttendance` as a real Prisma model + idempotent migration.
+- [x] Deleted the confirmed-unused `app/api/communication/zegoToken/` route + test.
+- [x] Added `toClientErrorMessage()` and applied it to `superadmin/schools/[id]/active` as the concrete example (broader rollout still open, see below).
+- [x] Corrected the `FeeDiscountApproval.schoolId` index finding — it was already indexed; the earlier read was truncated.
+- [x] Confirmed `payment/refund`'s double-refund race was already fixed by a concurrent session (commit `65f9000`).
 - [x] Fixed a pre-existing test bug found along the way: `payment/verify/route.test.ts`'s two legacy-flow tests were failing (500 instead of 404/200) because their `$transaction` mock had no implementation for a transaction wrapper added by a concurrent session's in-flight work.
 
-**Blocker (fix before next prod deploy) — not attempted this session**
-- [ ] Add authentication + tenant/room ACL to `socket-server/index.ts` (or confirm it sits behind an authenticating proxy and downgrade accordingly). This needs a design decision (JWT reuse vs. a ticket-minting endpoint), not a quick inline fix.
-
-**High — deliberately deferred (collision risk with a concurrent session's in-flight `prisma/migrations/` work)**
-- [ ] Formalize `TeacherDailyAttendance` as a real Prisma model/migration instead of runtime DDL in `app/api/teacher/attendance/route.ts`. Do this once the other migration workstream is clear.
+**Blocker — still open**
+- [ ] `socket-server/index.ts`'s CORS origin is still hardcoded to `http://localhost:3000` (auth itself is now fixed; this is the one remaining item in that file).
 
 **Medium**
-- [ ] Add `@@index([schoolId])` to `FeeDiscountApproval` in `prisma/schema.prisma` — same migration-collision-risk deferral as above.
 - [ ] Extend rate limiting to `payment/verify`, `parent/subscription/create-order`, and the public `app/qr`/`app/screen`/`app/download` pages (the utility now exists in `lib/rateLimit.ts`, so this is a smaller lift).
-- [ ] Sanitize error responses so raw `error.message`/stack details aren't returned to API clients; log full detail via `lib/logger.ts` only.
+- [ ] Roll `toClientErrorMessage()` out beyond the one route it's applied to — the other ~176 routes' outermost catch blocks still forward raw `error.message`. Needs a case-by-case pass since some routes intentionally throw short user-facing messages as flow control (those should keep using `getErrorMessage` directly, not the new helper).
 - [ ] Confirm `NEXTAUTH_URL` is https in all deployed environments so secure cookie flags apply.
 - [ ] Audit all `tenantCacheKey(` call sites for correct `schoolId` namespacing (spot-checked 2/many, both fine).
-- [ ] Confirm the `payment/refund/route.ts` refundable-amount check runs *inside* the same transaction as the write, not just before it — not touched this session since that file is currently being edited by the concurrent session.
-- [ ] Wire `socket-server/index.ts` logging to a structured logger and make its CORS origin env-driven.
 - [ ] Confirm `payment/webhook` has idempotency/signature-fail test coverage.
 
 **Low**
-- [ ] Delete the deprecated `app/api/communication/zegoToken/route.ts` once confirmed unused.
-- [ ] Optional dead-route sweep against `app/_components/constants/routes.ts`.
+- [ ] Wire `socket-server/index.ts`'s `console.log`/`console.error` calls to a structured logger (`lib/logger.ts`).
+- [ ] Full dead-route sweep against `app/_components/constants/routes.ts` beyond the one route already deleted this session.
+- [ ] Broader `@@index` audit across the rest of the schema's `schoolId` columns, beyond the two spot-checked (`FeeDiscountApproval`, `NewsFeed` — both fine).
