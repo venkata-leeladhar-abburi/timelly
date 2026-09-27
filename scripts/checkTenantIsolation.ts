@@ -63,7 +63,6 @@ const ALLOWLIST = new Set<string>([
   "app/api/user/change-password/route.ts", // prisma.user.findUnique/update keyed on session.user.id
   "app/api/leaves/my/route.ts", // prisma.leaveRequest.findMany({ where: { teacherId: session.user.id } })
   "app/api/leaves/[id]/route.ts", // ownership re-checked against session.user.id after fetch, before mutating
-  "app/api/marks/download/route.ts", // prisma.mark.findMany({ where: { studentId: session.user.studentId } })
   "app/api/student/parent-details/route.ts", // prisma.student.findFirst({ where: { userId: session.user.id } })
   "app/api/student-leaves/approval-authority/route.ts", // prisma.student.findUnique keyed on session studentId/userId
   "app/api/communication/messages/route.ts", // appointment ownership re-checked against session.user.id/studentId after fetch
