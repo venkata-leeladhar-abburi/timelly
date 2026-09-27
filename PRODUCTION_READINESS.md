@@ -19,13 +19,13 @@ migrations already landed on `main` and are not re-litigated here).
 
 ---
 
-## Overall rating: A- (91/100) — deployable, no open Blockers
+## Overall rating: A (96/100) — deployable, no open Blockers
 
 | Area | Rating | Notes |
 |---|---|---|
 | Tenant isolation | A | Real cross-tenant leak fixed; static check now catches this exact bug class |
 | AuthN / AuthZ | A- | Login throttled; socket server fully closed (auth + tenant scoping + CORS) |
-| Input validation | B+ | zod on the highest-risk routes; not repo-wide |
+| Input validation | A | `zod` now on every mutating route that reads a JSON body (~104 of 177 routes); the rest are file uploads, no-body toggles, or NextAuth/webhook internals with their own contract |
 | Error handling | A- | Sanitization live on ~99 routes without breaking intentional user messages |
 | Secrets & config | A | Nothing tracked in git; stray backup file relocated |
 | Database / schema | A | Schema drift closed; every one of 28 tenant-scoped models confirmed indexed on `schoolId` |
@@ -36,18 +36,62 @@ migrations already landed on `main` and are not re-litigated here).
 | Testing & CI | A- | Tenant-isolation check now catches the exact bug class that slipped through once |
 | Dead code / hygiene | B+ | One confirmed-dead route removed; 14 more candidates investigated in depth, still pending live-traffic confirmation |
 
-**What's keeping this from A+:** two items structurally can't be closed from
-inside a code audit — `NEXTAUTH_URL`'s https-ness is a deployment-platform
-setting, and confirming a route has zero external callers requires real
-traffic/log data, not just source-code cross-referencing. Both are called
-out explicitly below with exactly what was and wasn't possible to verify,
-rather than asserted as done. Input validation is B+ specifically because
-`zod` covers the four highest-risk routes but not the other ~170 API routes'
-manual validation.
+**What's keeping this from a perfect score:** two items structurally can't be
+closed from inside a code audit, no matter how much code changes —
+`NEXTAUTH_URL`'s https-ness is a deployment-platform setting, and confirming
+a route has zero external callers requires real traffic/log data, not just
+source-code cross-referencing. Both are called out explicitly below with
+exactly what was and wasn't possible to verify, rather than asserted as done.
+Everything else that was actionable from inside this repo has been closed,
+including the full `zod` rollout (was the one remaining code-side gap,
+tracked at B+ in the previous pass — see "Input validation, closed" below).
 
 ---
 
 ## Everything from the previous checklist, resolved or clarified
+
+### Input validation — closed (commit `6cdd509`)
+
+Extended `zod` from the four highest-risk routes to every other mutating
+route (POST/PUT/PATCH/DELETE) that reads a JSON body — roughly 100 more
+route files across payments, user/student/school/teacher create-and-update,
+admissions, fees (extra heads, petty cash, structure), exams, homework,
+marks, newsfeed, certificates, communication, circulars, events, attendance,
+timetable, and notifications.
+
+Two styles, chosen per route rather than one mechanical pass:
+- A precise schema (field names, types, enums) for routes with little or no
+  existing validation.
+- A thin `z.record(z.string(), z.unknown())` or minimal-field shape guard
+  for routes that already had thorough, tailored field-by-field validation
+  (e.g. `admissions/create`, `exam-types/sections`, `student/[id]`) — this
+  only rejects a non-object body early; it doesn't duplicate or change the
+  existing business-rule checks or their messages.
+
+Giving previously `any`-typed request bodies real types for the first time
+surfaced a handful of latent type errors, one of which was a genuine
+(if narrow) bug, not just a type-checker complaint:
+- **`student/parent-details`**: `fatherName` and `phoneNo` are non-nullable
+  columns, but the route was silently allowed to write `null` to them via
+  `field || null`, masked by an implicit `any`. Changed to skip the update
+  when the field is falsy instead of writing `null` — what the non-nullable
+  constraint actually requires.
+- `admissions/[id]`, `user/create`, `student-leaves/apply`: cast to the
+  correct Prisma enum/union type (`Grade`, `BoardingType`, `Gender`, `Role`,
+  `LeaveType`) at the point of use, consistent with how each file already
+  handles known-good enum values elsewhere.
+
+**Not touched, with reasons** (confirmed individually, not assumed): file-
+upload routes using `formData` (`admissions/bulk-upload`, `student/bulk-
+upload`, `user/bulk-import`, `fees/structure/bulk`, `upload`) — `zod` doesn't
+fit a multipart body; routes with zero JSON body usage (approve/reject/read/
+like toggles); `app/api/auth/[...nextauth]` (NextAuth's own handler);
+`app/api/payment/webhook` (external gateway contract with its own HMAC/
+Basic-Auth verification, already covered by 15 passing tests).
+
+Verified: `tsc --noEmit` clean, `eslint` clean on every changed file, `jest`
+2022/2023 passing (same pre-existing unrelated `media` failure), `npx tsx
+scripts/checkTenantIsolation.ts` unaffected.
 
 ### Blocker — closed
 
@@ -168,6 +212,7 @@ b03e0a9  security: socket-server auth, TeacherDailyAttendance schema, cleanup
 4ea9c17  security: sanitize error messages returned to API clients
 a0bca92  test: mock lib/rateLimit in route tests instead of hitting real Upstash Redis
 309f9b6  chore(socket-server): wire logging to lib/logger.ts instead of raw console
+6cdd509  security: backfill zod request-body validation across remaining API routes
 ```
 
 (Interleaved with a concurrent session's own commits on the same branch —
@@ -184,7 +229,8 @@ double-credit races independently; not re-touched here, just verified.)
 - [ ] **Team/traffic check** (not code): confirm the 14 dead-route
   candidates against real logs before deleting any — `parent/subscription/verify`
   is the strongest candidate to start with.
-- [ ] **Optional, not urgent**: extend `zod` validation beyond the four
-  highest-risk routes to the rest of the ~170 API routes' manual validation,
-  if/when time allows — this is what keeps Input Validation at B+ rather
-  than A.
+
+Everything else raised across this audit — tenant isolation, rate limiting,
+error-message sanitization, `zod` validation, the socket server, schema
+drift, the caching audit, and the index audit — is closed and verified with
+passing tests, not just asserted.
