@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { decode } from "next-auth/jwt";
+import { logger } from "@/lib/logger";
 
 /**
  * Standalone realtime socket server (see CLAUDE.md: deployed separately from the
@@ -88,7 +89,7 @@ io.use(async (socket, next) => {
     socket.data = data;
     next();
   } catch (err) {
-    console.error("Socket auth error:", err);
+    logger.error("Socket auth error:", err);
     next(new Error("Unauthorized: session verification failed"));
   }
 });
@@ -102,7 +103,7 @@ function roomAllowed(data: AuthedSocketData, roomId: unknown): roomId is string 
 
 io.on("connection", (socket) => {
   const data = socket.data as AuthedSocketData;
-  console.log("Connected:", socket.id, "user:", data.userId);
+  logger.info("Connected:", socket.id, "user:", data.userId);
 
   socket.on("join-room", (roomId: unknown) => {
     if (!roomAllowed(data, roomId)) {
@@ -124,8 +125,8 @@ io.on("connection", (socket) => {
   );
 
   socket.on("disconnect", () => {
-    console.log("Disconnected:", socket.id);
+    logger.info("Disconnected:", socket.id);
   });
 });
 
-console.log(`Socket server running on :${PORT}`);
+logger.info(`Socket server running on :${PORT}`);
