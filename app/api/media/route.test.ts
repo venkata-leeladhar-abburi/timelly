@@ -24,6 +24,7 @@ jest.mock("@/lib/supabase", () => ({
 }));
 
 const ORIGINAL_SECRET = process.env.NEXTAUTH_SECRET;
+const ORIGINAL_INTERNAL_SECRET = process.env.INTERNAL_API_SECRET;
 
 function makeRequest(url: string, headers?: Record<string, string>) {
   return new Request(url, { headers });
@@ -34,10 +35,15 @@ describe("GET /api/media", () => {
     mockGetServerSession.mockReset();
     mockDownload.mockReset();
     process.env.NEXTAUTH_SECRET = "test-secret";
+    // getInternalSecret() (lib/internalSecret.ts) prefers INTERNAL_API_SECRET over
+    // NEXTAUTH_SECRET. A real INTERNAL_API_SECRET set in the dev .env would otherwise
+    // leak in here and shadow the "test-secret" fallback these tests assert against.
+    delete process.env.INTERNAL_API_SECRET;
   });
 
   afterAll(() => {
     process.env.NEXTAUTH_SECRET = ORIGINAL_SECRET;
+    process.env.INTERNAL_API_SECRET = ORIGINAL_INTERNAL_SECRET;
   });
 
   it("rejects anonymous requests with no session and no internal secret", async () => {
