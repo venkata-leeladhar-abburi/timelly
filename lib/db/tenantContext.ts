@@ -26,6 +26,12 @@ const scopeStorage = new AsyncLocalStorage<TenantTx>();
 export const TENANT_SCOPE_TIMEOUT_MS = Number(process.env.TENANT_SCOPE_TIMEOUT_MS) || 30_000;
 const TENANT_SCOPE_MAX_WAIT_MS = 10_000;
 
+// P2028 means Prisma failed to even ACQUIRE a connection to open the transaction within
+// maxWait - the transaction body (fn) never started, so nothing has run yet and retrying
+// is always safe, unlike a mid-query failure where a write might have already landed.
+const SCOPE_RETRY_COUNT = Number(process.env.TENANT_SCOPE_RETRY_COUNT || "2");
+const SCOPE_RETRY_DELAY_MS = Number(process.env.TENANT_SCOPE_RETRY_DELAY_MS || "300");
+
 export async function runInTenantScope<T>(
   schoolId: string,
   fn: (schoolId: string) => Promise<T>,
@@ -34,30 +40,41 @@ export async function runInTenantScope<T>(
   // Already inside a scope (nested helper) - reuse it; never open a second tx.
   if (scopeStorage.getStore()) return fn(schoolId);
   const timeout = options?.timeout ?? TENANT_SCOPE_TIMEOUT_MS;
-  const startedAt = Date.now();
-  try {
-    const result = await withTenantScopedClient(
-      schoolId,
-      (tx) => scopeStorage.run(tx, () => fn(schoolId)),
-      { timeout, maxWait: TENANT_SCOPE_MAX_WAIT_MS }
-    );
-    const ms = Date.now() - startedAt;
-    // Early warning well before the hard timeout turns into a 500 (P2028).
-    if (ms > timeout * 0.5) {
-      logger.warn("tenant_scope_slow", { schoolId, ms, timeout });
-    }
-    return result;
-  } catch (error) {
-    if ((error as { code?: string })?.code === "P2028") {
-      logger.error("tenant_scope_timeout (P2028)", {
+
+  for (let attempt = 0; attempt <= SCOPE_RETRY_COUNT; attempt++) {
+    const startedAt = Date.now();
+    try {
+      const result = await withTenantScopedClient(
         schoolId,
-        ms: Date.now() - startedAt,
-        timeout,
-        hint: "raise TENANT_SCOPE_TIMEOUT_MS or move this route's heavy reads out of the scope",
-      });
+        (tx) => scopeStorage.run(tx, () => fn(schoolId)),
+        { timeout, maxWait: TENANT_SCOPE_MAX_WAIT_MS }
+      );
+      const ms = Date.now() - startedAt;
+      // Early warning well before the hard timeout turns into a 500 (P2028).
+      if (ms > timeout * 0.5) {
+        logger.warn("tenant_scope_slow", { schoolId, ms, timeout });
+      }
+      return result;
+    } catch (error) {
+      const isPoolTimeout = (error as { code?: string })?.code === "P2028";
+      if (!isPoolTimeout || attempt === SCOPE_RETRY_COUNT) {
+        if (isPoolTimeout) {
+          logger.error("tenant_scope_timeout (P2028)", {
+            schoolId,
+            ms: Date.now() - startedAt,
+            timeout,
+            attempt: attempt + 1,
+            hint: "raise TENANT_SCOPE_TIMEOUT_MS or move this route's heavy reads out of the scope",
+          });
+        }
+        throw error;
+      }
+      logger.warn("tenant_scope_retry (P2028)", { schoolId, attempt: attempt + 1 });
+      await new Promise((r) => setTimeout(r, SCOPE_RETRY_DELAY_MS * (attempt + 1)));
     }
-    throw error;
   }
+  // Unreachable - loop always returns or throws.
+  throw new Error("runInTenantScope: exhausted retries without result");
 }
 
 export function isInTenantScope(): boolean {

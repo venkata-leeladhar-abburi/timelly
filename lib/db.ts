@@ -105,6 +105,38 @@ function isWriteOperation(operation: string) {
   return WRITE_OPERATIONS.has(operation);
 }
 
+// Transient connection drops (pooler recycling a connection, DB-side idle timeout) surface as
+// these Prisma error codes. Safe to retry only for reads: a retried write could double-apply
+// if the original actually committed before the connection reportedly closed.
+const RETRYABLE_PRISMA_CODES = new Set(["P1017", "P1001", "P2024"]);
+const RETRYABLE_READ_RETRIES = Number(process.env.PRISMA_READ_RETRY_COUNT || "2");
+const RETRYABLE_READ_RETRY_DELAY_MS = Number(process.env.PRISMA_READ_RETRY_DELAY_MS || "150");
+
+function isRetryableConnectionError(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  return typeof code === "string" && RETRYABLE_PRISMA_CODES.has(code);
+}
+
+async function withReadRetry<T>(run: () => Promise<T>, model?: string, operation?: string): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= RETRYABLE_READ_RETRIES; attempt++) {
+    try {
+      return await run();
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableConnectionError(error) || attempt === RETRYABLE_READ_RETRIES) throw error;
+      logger.warn("prisma_retry_connection_error", {
+        model,
+        operation,
+        attempt: attempt + 1,
+        code: (error as { code?: string })?.code,
+      });
+      await new Promise((r) => setTimeout(r, RETRYABLE_READ_RETRY_DELAY_MS * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 function getLocalCachedValue(cacheKey: string) {
   if (!localCacheEnabled) return null;
   const entry = localQueryCache.get(cacheKey);
@@ -176,7 +208,8 @@ const createPrisma = () => {
           if (inFlight) return inFlight;
         }
 
-        const promise = query(args);
+        const isRead = !!model && READ_OPERATIONS.has(operation);
+        const promise = isRead ? withReadRetry(() => query(args), model, operation) : query(args);
         if (cacheKey) inFlightQueries.set(cacheKey, promise);
 
         try {
