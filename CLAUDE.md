@@ -79,20 +79,44 @@ Every tenant-scoped API route must:
 2. Use that `schoolId` in **every** Prisma `where` clause touching the
    table — never trust a `schoolId` from the request body/query params.
 
-**There is no database-level tenant isolation.** RLS is enabled
-(`ENABLE ROW LEVEL SECURITY`) on most tables purely to satisfy Supabase's
-security advisor for its auto-generated REST/GraphQL API, which this app
-never uses. No RLS *policies* exist, and Prisma connects as the
-table-owning role, which bypasses RLS regardless. See
-[`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) for the full
-analysis and what adding real DB-level isolation would require.
+**Tenant isolation is now two-layered for most (not all) routes.** The
+paragraph that used to be here ("no RLS policies exist") described an
+earlier state of the project and is out of date — see
+[`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) §3 for the current,
+authoritative account. As of that doc: 106 of 178 route files run their
+queries through a second Postgres connection (the restricted `app_tenant`
+role, `DATABASE_URL_TENANT`) inside a transaction with
+`app.current_school_id` set, and real RLS policies on tenant-scoped tables
+enforce isolation at the DB level independent of the Prisma `where`
+clause. Two entry points exist: `withTenantScopedClient(schoolId, ...)`
+(`lib/db/tenantClient.ts`) for simple routes, and
+`runInTenantScope(schoolId, fn)` + `tenantDb`
+(`lib/db/tenantContext.ts`) for routes whose shared `lib/*` helpers need
+scoping without threading a `tx` through every call.
+
+**The remaining 72 routes still use the owner (non-RLS) connection**,
+deliberately — see `docs/SECURITY_REVIEW.md` §3.1–3.2 for the full list
+and reasoning (routes with no tenant context yet, e.g. `auth/[...nextauth]`
+and `school/create`; `superadmin/*`, which is cross-tenant by design;
+and a handful of routes that must see across tenants to find or validate
+the tenant, e.g. the Aadhaar-uniqueness check in `student/bulk-upload`).
+`lib/db/ownerConnectionRoutes.json` is the tracked baseline of these, and
+`lib/db/ownerConnectionRoutes.test.ts` fails if a new route silently joins
+that list. **For these routes, and for any table with RLS enabled but no
+policy attached** (`PaymentWebhookEvent`, `SystemSubscription`, `Account`,
+`Session`, `VerificationToken` — these return 0 rows to a tenant-scoped
+connection, so never query them from inside a scope), isolation still
+depends entirely on `requireSchoolId()` and the `schoolId` filter below.
 
 **When adding a new tenant-scoped table**: add a `schoolId` column with a
 `@relation` to `School`, index it, and route every query for that table
-through `requireSchoolId()`. Enabling RLS on the new table is optional
-hygiene (matches the existing convention, silences the advisor) but
-provides no actual protection under the current Prisma connection setup
-— it is not a substitute for the `schoolId` filter.
+through `requireSchoolId()` regardless of which connection is used. If the
+route can adopt `withTenantScopedClient`/`runInTenantScope`, do so and add
+a real RLS policy for the table (see the existing migrations referenced in
+`docs/SECURITY_REVIEW.md` §3 for the pattern); if it must stay on the
+owner connection, say why in a comment, matching the documented exceptions
+above — the `schoolId` filter is still mandatory either way, never a
+substitute for one or the other.
 
 ## Fail-open tradeoff (auth DB sync)
 
