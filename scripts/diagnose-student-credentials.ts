@@ -25,7 +25,7 @@ async function main() {
       where: { schoolId: school.id, status: "Active" },
       select: { admissionNumber: true, dob: true, user: { select: { password: true } } },
     });
-    const counts = { DEFAULT: 0, CUSTOM: 0, NO_LOGIN: 0, NO_DOB: 0 };
+    const counts = { DEFAULT: 0, CUSTOM: 0, NO_LOGIN: 0, NO_DOB: 0, PENDING: 0 };
     const listed: string[] = [];
     for (const s of students) {
       const r = await resolveStudentPasswordState(s.dob, s.user?.password);

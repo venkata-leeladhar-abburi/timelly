@@ -105,6 +105,9 @@ async function loadCredentialsCached(
     section: filters.section || undefined,
   });
 
+  // Some passwords still to check: the next request continues, so a partial list is never cached.
+  if (payload.pendingCount > 0) return payload;
+
   setSchoolDashboardServerCached(memKey, payload, 120_000);
 
   if (isRedisEnabled()) {
@@ -134,6 +137,15 @@ export async function GET(req: Request) {
     const verifiedOnly = searchParams.get("verifiedOnly") === "1";
 
     const payload = await loadCredentialsCached(schoolId, { classId, className, section });
+
+    if (format !== "json" && payload.pendingCount > 0) {
+      return NextResponse.json(
+        {
+          message: `Still checking passwords for ${payload.pendingCount} students. Try the download again in a minute.`,
+        },
+        { status: 409 }
+      );
+    }
 
     let rows = payload.students;
     if (verifiedOnly) {
@@ -176,7 +188,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(
       verifiedOnly
-        ? { students: rows, total: rows.length, verifiedCount, mismatchCount }
+        ? { students: rows, total: rows.length, verifiedCount, mismatchCount, pendingCount: payload.pendingCount }
         : payload,
       { status: 200 }
     );

@@ -5,6 +5,8 @@ export function passwordUnavailableLabel(row: Pick<StudentCredentialRow, "passwo
   switch (row.passwordState) {
     case "NO_LOGIN":
       return "No login yet. Reset to create one";
+    case "PENDING":
+      return "Checking password…";
     case "NO_DOB":
       return "No date of birth. Add it first";
     case "CUSTOM":

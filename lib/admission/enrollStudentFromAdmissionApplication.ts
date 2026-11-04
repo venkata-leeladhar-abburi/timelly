@@ -1,7 +1,7 @@
 import { Prisma, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { parseDobToDate } from "@/lib/dobCalendar";
-import { canonicalStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
+import { canonicalStudentPasswordFromDob, dobDefaultPasswordCheck } from "@/lib/students/studentDefaultPassword";
 import prisma from "@/lib/db";
 import { setApplicationEnrolled } from "@/lib/admission/admissionsListQuery";
 import { emailLocalPartFromFullName, normalizeEmailDomain, schoolDomainFromName } from "@/lib/school/schoolEmail";
@@ -272,7 +272,14 @@ export async function enrollStudentFromAdmissionApplication(params: {
       }
 
       const user = await tx.user.create({
-        data: { name, email: userEmail, password: hashedPassword, role: Role.STUDENT, schoolId },
+        data: {
+          name,
+          email: userEmail,
+          password: hashedPassword,
+          dobPasswordCheck: dobDefaultPasswordCheck(dobDate, hashedPassword),
+          role: Role.STUDENT,
+          schoolId,
+        },
       });
 
       const finalRollNo =

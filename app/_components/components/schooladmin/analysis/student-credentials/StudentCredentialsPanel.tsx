@@ -29,7 +29,7 @@ export default function StudentCredentialsPanel() {
       ) : null}
 
       {!page.initialLoading ? (
-        <StudentCredentialsMismatchAlert mismatchCount={page.mismatchCount} />
+        <StudentCredentialsMismatchAlert mismatchCount={page.mismatchCount} pendingCount={page.pendingCount} />
       ) : null}
 
       <StudentCredentialsFilters

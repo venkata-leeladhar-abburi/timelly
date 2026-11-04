@@ -15,7 +15,7 @@ function PasswordCell({ row, reset }: { row: StudentCredentialRow; reset: ResetO
   return (
     <div>
       <span className="text-xs text-amber-300/90 sm:text-sm">{passwordUnavailableLabel(row)}</span>
-      {row.passwordState !== "NO_DOB" ? <ResetOneButton row={row} {...reset} /> : null}
+      {row.passwordState !== "NO_DOB" && row.passwordState !== "PENDING" ? <ResetOneButton row={row} {...reset} /> : null}
     </div>
   );
 }

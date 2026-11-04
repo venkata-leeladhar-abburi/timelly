@@ -134,7 +134,8 @@ export async function fetchStudentCredentials(
     if (!res.ok) {
       throw new Error(data.message || "Failed to load credentials");
     }
-    setStudentCredentialsCached(key, data);
+    // A list with passwords still being checked is fetched again, so it is not worth keeping.
+    if (!data.pendingCount) setStudentCredentialsCached(key, data);
     return data;
   })();
 

@@ -16,7 +16,7 @@ import { studentApplicationForStudentCreateSelect } from "@/lib/admission/studen
 import { canonicalizeResidencyType } from "@/lib/students/residencyDisplay";
 import { invalidateStudentListCaches } from "@/lib/students/invalidateStudentListCaches";
 import { parseDobToDate } from "@/lib/dobCalendar";
-import { canonicalStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
+import { canonicalStudentPasswordFromDob, dobDefaultPasswordCheck } from "@/lib/students/studentDefaultPassword";
 import { logger } from "@/lib/logger";
 
 function normalizeResidencyType(value: unknown) {
@@ -467,6 +467,7 @@ export async function POST(req: Request) {
             name: effectiveName,
             email: userEmail,
             password: hashedPassword,
+            dobPasswordCheck: hashedPassword ? dobDefaultPasswordCheck(dobDate, hashedPassword) : null,
             role: Role.STUDENT,
             schoolId,
           },

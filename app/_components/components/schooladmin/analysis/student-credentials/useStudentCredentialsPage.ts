@@ -63,6 +63,7 @@ export function useStudentCredentialsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [rows, setRows] = useState<StudentCredentialRow[]>([]);
   const [mismatchCount, setMismatchCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
   const [revalidating, setRevalidating] = useState(false);
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
@@ -151,9 +152,15 @@ export function useStudentCredentialsPage() {
   }, [classes, selectedClass, selectedSection]);
 
   const applyPayload = useCallback(
-    (payload: { students: StudentCredentialRow[]; mismatchCount?: number; truncated?: boolean }) => {
+    (payload: {
+      students: StudentCredentialRow[];
+      mismatchCount?: number;
+      pendingCount?: number;
+      truncated?: boolean;
+    }) => {
       setRows(payload.students);
       setTruncated(Boolean(payload.truncated));
+      setPendingCount(payload.pendingCount ?? 0);
       setMismatchCount(
         typeof payload.mismatchCount === "number"
           ? payload.mismatchCount
@@ -184,19 +191,33 @@ export function useStudentCredentialsPage() {
     (async () => {
       try {
         setRevalidating(shellLoaded);
-        const payload = await fetchStudentCredentials(filterKey, {
+        let payload = await fetchStudentCredentials(filterKey, {
           signal: controller.signal,
           revalidate: shellLoaded,
         });
         if (cancelled) return;
         applyPayload(payload);
         setInitialLoading(false);
+        // The server checks passwords within a time budget per request and saves the results; keep asking
+        // until every password is checked (stop if a round makes no progress).
+        while (payload.pendingCount > 0) {
+          const before = payload.pendingCount;
+          setRevalidating(true);
+          payload = await fetchStudentCredentials(filterKey, {
+            signal: controller.signal,
+            revalidate: true,
+          });
+          if (cancelled) return;
+          applyPayload(payload);
+          if (payload.pendingCount >= before) break;
+        }
       } catch (err) {
         if (cancelled || controller.signal.aborted) return;
         if (!shellLoaded) {
           toast.error(err instanceof Error ? err.message : "Failed to load credentials");
           setRows([]);
           setMismatchCount(0);
+          setPendingCount(0);
         }
         setInitialLoading(false);
       } finally {
@@ -253,6 +274,10 @@ export function useStudentCredentialsPage() {
     if (exporting) return;
     setExporting(format);
     try {
+      if (pendingCount > 0) {
+        toast.error("Still checking passwords. Download once the list has finished loading.");
+        return;
+      }
       if (format === "pdf") {
         const verified = filteredRows.filter((r) => r.passwordVerified && r.accountActive);
         if (verified.length === 0) {
@@ -384,6 +409,7 @@ If the student chose their own password, it will be replaced by the default.`
     classOptions,
     sectionOptions,
     mismatchCount,
+    pendingCount,
     initialLoading,
     revalidating,
     exporting,

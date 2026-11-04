@@ -24,6 +24,7 @@ jest.mock("next-auth", () => ({
 jest.mock("@/lib/auth/authOptions", () => ({}));
 
 jest.mock("@/lib/students/studentDefaultPassword", () => ({
+  ...jest.requireActual("@/lib/students/studentDefaultPassword"),
   hashStudentPasswordFromDob: (...args: unknown[]) => mockHashStudentPasswordFromDob(...args),
 }));
 

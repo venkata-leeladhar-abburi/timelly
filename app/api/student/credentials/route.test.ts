@@ -110,6 +110,30 @@ describe("GET /api/student/credentials", () => {
     expect(res.status).toBe(403);
   });
 
+  it("does not cache a list that still has passwords to check, and refuses exports of it", async () => {
+    mockGetServerSession.mockResolvedValue(adminSession);
+    mockComputeStudentCredentials.mockResolvedValue({
+      students: [studentRow, { ...studentRow, passwordVerified: false, passwordState: "PENDING" }],
+      pendingCount: 1,
+    });
+
+    const list = await GET(request());
+    expect(list.status).toBe(200);
+    expect((await list.json()).pendingCount).toBe(1);
+    expect(mockSetSchoolDashboardServerCached).not.toHaveBeenCalled();
+
+    const csv = await GET(request("?format=csv&verifiedOnly=1"));
+    expect(csv.status).toBe(409);
+    expect((await csv.json()).message).toMatch(/still checking passwords for 1 students/i);
+  });
+
+  it("caches a complete list", async () => {
+    mockGetServerSession.mockResolvedValue(adminSession);
+    mockComputeStudentCredentials.mockResolvedValue({ ...payload, pendingCount: 0 });
+    await GET(request());
+    expect(mockSetSchoolDashboardServerCached).toHaveBeenCalledTimes(1);
+  });
+
   it("returns a mem-cached payload without recomputing", async () => {
     mockGetServerSession.mockResolvedValue(adminSession);
     mockGetSchoolDashboardServerCached.mockReturnValue({ students: [{ ...studentRow, name: "Cached" }] });

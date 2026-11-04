@@ -84,6 +84,8 @@ model User {
   name     String?
   email    String?
   password String? // hashed
+  // Saved result of checking `password` against the DOB default (key:match); see lib/students/studentDefaultPassword.ts
+  dobPasswordCheck String?
 
   role            Role
   allowedFeatures String[] @default([]) // granular access: e.g. ["marks-entry", "attendance-mark"]

@@ -46,7 +46,7 @@ function parseOptionalNumber(value: unknown) {
 }
 
 import { parseDobToDate } from "@/lib/dobCalendar";
-import { canonicalStudentPasswordFromDob } from "@/lib/students/studentDefaultPassword";
+import { canonicalStudentPasswordFromDob, dobDefaultPasswordCheck } from "@/lib/students/studentDefaultPassword";
 
 function parseDob(rawDob: unknown): Date {
   if (!rawDob) {
@@ -348,6 +348,7 @@ export async function POST(req: Request) {
                   name,
                   email: userEmail,
                   password: hashedPassword,
+                  dobPasswordCheck: dobDefaultPasswordCheck(dobDate, hashedPassword),
                 },
               });
 
@@ -507,6 +508,7 @@ export async function POST(req: Request) {
                 name,
                 email: userEmail,
                 password: hashedPassword,
+                dobPasswordCheck: dobDefaultPasswordCheck(dobDate, hashedPassword),
                 role: Role.STUDENT,
                 schoolId,
               },

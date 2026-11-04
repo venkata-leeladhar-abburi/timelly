@@ -54,7 +54,7 @@ describe("resolveStudentPasswordState", () => {
     const istMidnight = new Date("2012-05-02T18:30:00.000Z");
     expect(passwordCandidatesFromDob(istMidnight)).toContain("20120503");
     const r = await resolveStudentPasswordState(istMidnight, await bcrypt.hash("20120503", 4));
-    expect(r).toEqual({ password: "20120503", verified: true, state: "DEFAULT" });
+    expect(r).toMatchObject({ password: "20120503", verified: true, state: "DEFAULT" });
   });
   it("explains each way a password cannot be shown", async () => {
     const hash = await bcrypt.hash("something-else", 4);

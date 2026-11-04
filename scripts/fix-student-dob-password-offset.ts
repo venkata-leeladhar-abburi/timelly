@@ -15,6 +15,7 @@ import bcrypt from "bcryptjs";
 import prisma from "../lib/db";
 import {
   canonicalStudentPasswordFromDob,
+  dobDefaultPasswordCheck,
   hashStudentPasswordFromDob,
   passwordCandidatesFromDob,
 } from "@/lib/students/studentDefaultPassword";
@@ -67,9 +68,10 @@ async function main() {
     for (const s of shifted) {
       if (details) console.log(`  ${s.admissionNumber}\tDOB ${formatDobYmd(s.dob)}`);
       if (apply) {
+        const password = await hashStudentPasswordFromDob(s.dob);
         await prisma.user.update({
           where: { id: s.userId },
-          data: { password: await hashStudentPasswordFromDob(s.dob) },
+          data: { password, dobPasswordCheck: dobDefaultPasswordCheck(s.dob, password) },
         });
         totalFixed += 1;
       }
