@@ -86,6 +86,7 @@ export function AdmissionFormView({
               { label: "Day Scholar", value: "Day Scholar" },
               { label: "Hostel", value: "Hosteller" },
               { label: "RTE", value: "RTE" },
+              { label: "Staff Child", value: "Staff Child" },
             ]}
           />
           <Select

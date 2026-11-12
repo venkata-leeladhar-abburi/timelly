@@ -236,7 +236,7 @@ export default function BulkFeeEdit() {
           Residency
           <select className={`${inputClass} mt-1`} value={residency} onChange={(e) => setResidency(e.target.value)}>
             <option value="">Hostel and day scholars</option>
-            <option value="HOSTELLER">Hostellers only</option>
+            <option value="HOSTELLER">Hostel only</option>
             <option value="DAY_SCHOLAR">Day scholars only</option>
           </select>
         </label>

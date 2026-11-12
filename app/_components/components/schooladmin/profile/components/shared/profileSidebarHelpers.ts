@@ -7,6 +7,7 @@ export const RESIDENCY_OPTIONS = [
   { label: "Day Scholar", value: "Day Scholar" },
   { label: "Hostel", value: "Hosteller" },
   { label: "RTE", value: "RTE" },
+  { label: "Staff Child", value: "Staff Child" },
 ] as const;
 
 export function residencySelectValue(value?: string | null): string {

@@ -41,6 +41,7 @@ function normalizeResidencyType(value: unknown) {
     return "Hosteller";
   }
   if (normalized === "rte") return "RTE";
+  if (normalized === "staffchild") return "Staff Child";
   return raw;
 }
 

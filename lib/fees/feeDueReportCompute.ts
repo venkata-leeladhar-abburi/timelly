@@ -15,6 +15,7 @@ import {
   residencyConversionStudentIds,
 } from "@/lib/fees/residencyConversion";
 import { isStudentRte, isTuitionNamedExtraFee } from "@/lib/students/studentRte";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 import { previousYearFeeHeadLabel } from "@/lib/fees/feeYearClassification";
 import { feeHeadNameMatches } from "@/lib/fees/feeReportFilters";
 
@@ -591,7 +592,7 @@ export function buildFeeDueReportPayload(args: {
       section: s.classDisplay,
       parent: s.parent,
       mobile: s.mobile,
-      category: (s.category || "Day Scholar").trim() || "Day Scholar",
+      category: formatResidencyTypeForDisplay(s.category),
       totalFee: roundMoney(currentYearTotalFee),
       totalDiscount: roundMoney(currentYearTotalDiscount),
       feesPaid: roundMoney(currentYearFeesPaid),

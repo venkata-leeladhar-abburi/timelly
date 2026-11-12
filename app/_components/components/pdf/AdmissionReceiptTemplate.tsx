@@ -1,5 +1,6 @@
 import React, { forwardRef } from "react";
 import { format } from "date-fns";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 
 export interface AdmissionReceiptData {
   schoolName: string;
@@ -77,7 +78,7 @@ const SingleReceipt = ({ data }: { data: AdmissionReceiptData }) => {
           <div className="space-y-1.5 text-xs">
             <div><span style={{ color: "#64748b" }}>Name:</span> <span className="font-semibold">{data.studentName}</span></div>
             <div><span style={{ color: "#64748b" }}>Class:</span> <span className="font-semibold">{data.className}</span></div>
-            <div><span style={{ color: "#64748b" }}>Type:</span> <span className="font-semibold">{data.residencyType}</span></div>
+            <div><span style={{ color: "#64748b" }}>Type:</span> <span className="font-semibold">{formatResidencyTypeForDisplay(data.residencyType)}</span></div>
           </div>
         </div>
         <div className="rounded-xl p-3 border" style={{ backgroundColor: "#f0f9ff", borderColor: "#dbeafe" }}>

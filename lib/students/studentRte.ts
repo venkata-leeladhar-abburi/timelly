@@ -1,12 +1,13 @@
-import { isRteResidencyType } from "@/lib/students/residencyDisplay";
+import { isRteResidencyType, isStaffChildResidencyType } from "@/lib/students/residencyDisplay";
 
 /**
  * RTE (Right to Education): no tuition from the class global fee breakdown.
+ * Staff Child follows exactly the same rule, so it is treated as "no tuition" here too.
  * Kept in a small module so route bundles do not depend on Turbopack merging
  * `extraFeeResidencyScope` named exports incorrectly.
  */
 export function isStudentRte(residencyType: string | null | undefined): boolean {
-  return isRteResidencyType(residencyType);
+  return isRteResidencyType(residencyType) || isStaffChildResidencyType(residencyType);
 }
 
 /**

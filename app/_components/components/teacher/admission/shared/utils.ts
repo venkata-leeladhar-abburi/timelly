@@ -40,6 +40,7 @@ export function normalizeResidencyType(value: string | null | undefined): string
   if (v === "dayscholar" || v === "dayscholer") return "Day Scholar";
   if (v === "hostel" || v === "hostler" || v === "hosteler" || v === "hosteller" || v === "hoster") return "Hosteller";
   if (v === "rte") return "RTE";
+  if (v === "staffchild") return "Staff Child";
   return value?.trim() || "Day Scholar";
 }
 

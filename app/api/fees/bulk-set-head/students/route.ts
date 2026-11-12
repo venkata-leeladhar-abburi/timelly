@@ -57,7 +57,7 @@ export async function GET(req: Request) {
           admissionNumber: s.admissionNumber,
           name: s.user?.name ?? "",
           className: s.class ? `${s.class.name}${s.class.section ? `-${s.class.section}` : ""}` : "",
-          residency: isStudentHosteller(s.residencyType) ? "Hosteller" : "Day Scholar",
+          residency: isStudentHosteller(s.residencyType) ? "Hostel" : "Day Scholar",
         }));
       return NextResponse.json({ students, max: BULK_MAX_STUDENTS });
     });

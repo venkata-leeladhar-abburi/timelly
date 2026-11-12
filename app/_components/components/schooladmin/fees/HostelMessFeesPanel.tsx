@@ -67,10 +67,10 @@ export default function HostelMessFeesPanel(props: HostelMessFeesPanelProps) {
 
       <div className="max-w-md rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-5">
         <h4 className="text-sm font-semibold text-amber-100">{schoolResidencyHeadName}</h4>
-        <p className="mt-0.5 text-xs text-white/50">School-wide · hostellers only</p>
+        <p className="mt-0.5 text-xs text-white/50">School-wide · Hostel only</p>
         {schoolScopeMismatch && (
           <p className="mt-3 rounded-lg border border-amber-500/30 bg-black/20 px-3 py-2 text-xs text-amber-100">
-            Not limited to hostellers yet ({scopeLabel(schoolHead.lump?.residencyScope)}).
+            Not limited to Hostel yet ({scopeLabel(schoolHead.lump?.residencyScope)}).
           </p>
         )}
         <div className="mt-4">

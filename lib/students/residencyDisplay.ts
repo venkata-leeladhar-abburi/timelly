@@ -12,13 +12,19 @@ export function isRteResidencyType(value: string | null | undefined): boolean {
   return n === "rte" || n.startsWith("rte");
 }
 
-/** Normalize residency for DB storage (Day Scholar | Hosteller | RTE | passthrough). */
+/** Children of the school's staff: a fourth category, treated like RTE for tuition (see studentRte.ts). */
+export function isStaffChildResidencyType(value: string | null | undefined): boolean {
+  return compactResidency(value) === "staffchild";
+}
+
+/** Normalize residency for DB storage (Day Scholar | Hosteller | RTE | Staff Child | passthrough). */
 export function canonicalizeResidencyType(value: string | null | undefined): string {
   const raw = (value ?? "").trim();
   if (!raw) return "Day Scholar";
   const n = compactResidency(raw);
   if (n === "dayscholar" || n === "dayscholer") return "Day Scholar";
   if (isRteResidencyType(raw)) return "RTE";
+  if (isStaffChildResidencyType(raw)) return "Staff Child";
   if (
     n === "hostel" ||
     n === "hosteller" ||
@@ -37,6 +43,7 @@ export function formatResidencyTypeForDisplay(value: string | null | undefined):
   const n = compactResidency(raw);
   if (n === "dayscholar" || n === "dayscholer") return "Day Scholar";
   if (isRteResidencyType(raw)) return "RTE";
+  if (isStaffChildResidencyType(raw)) return "Staff Child";
   if (
     n === "hostel" ||
     n === "hosteller" ||

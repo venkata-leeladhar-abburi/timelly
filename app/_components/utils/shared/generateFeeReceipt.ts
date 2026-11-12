@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { formatResidencyTypeForDisplay } from "@/lib/students/residencyDisplay";
 
 export interface ReceiptData {
     schoolName: string;
@@ -97,7 +98,7 @@ export const generateFeeReceipt = (data: ReceiptData) => {
         [`Class:`, data.className],
         [`Grade:`, data.gradeSought || "-"],
         [`Boarding:`, data.boardingType || "-"],
-        [`Residency:`, data.residencyType || "-"],
+        [`Residency:`, data.residencyType ? formatResidencyTypeForDisplay(data.residencyType) : "-"],
         [`Parent Name:`, data.parentName || "-"],
         [`Parent Phone:`, data.parentPhone || "-"],
     ];
